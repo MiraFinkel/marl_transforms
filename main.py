@@ -1,8 +1,6 @@
 from utils import *
 from visualize import *
-
-
-
+import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
 
 if __name__ == '__main__':
     taxi_env.set_display(False)

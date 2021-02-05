@@ -1,5 +1,6 @@
 from constants import *
 from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
+import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
 import ray.rllib.agents.pg as pg
 import ray.rllib.agents.a3c as a3c
 import ray
@@ -65,7 +66,7 @@ def evaluate(env, agent, config):
     print(" ================ STARTING EVALUATION ================ ")
     print(" ===================================================== ")
 
-    TaxiEnv.set_display(True)
+    taxi_env.set_display(True)
     obs = env.reset()
     done = False
     episode_reward = 0
@@ -79,4 +80,4 @@ def evaluate(env, agent, config):
         # sum up reward for all agents
         episode_reward += sum(reward.values())
     print(episode_reward)
-    TaxiEnv.set_display(False)
+    taxi_env.set_display(False)
