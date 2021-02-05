@@ -20,7 +20,7 @@ LIN_TS = "lin_ts"
 
 AGENT = PG
 # ================= Train variables ================ #
-ITER_NUM = 2000
+ITER_NUM = 1000
 NUM_GPUS = 0
 NUM_WORKERS = 1
 WITH_DEBUG = True

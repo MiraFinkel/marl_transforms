@@ -8,7 +8,7 @@ if __name__ == '__main__':
     agent_name = AGENT
     iteration_num = ITER_NUM
 
-    episode_reward_mean = train(env_name, agent_name, with_transform=False)
+    episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=False)
     # episode_reward_mean0 = train(env_name, agent_name, with_transform=True, transform_idx=0)
     # episode_reward_mean1 = train(env_name, agent_name, with_transform=True, transform_idx=1)
     # episode_reward_mean2 = train(env_name, agent_name, with_transform=True, transform_idx=2)

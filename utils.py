@@ -40,13 +40,13 @@ def get_taxi_config(env, number_of_taxis):
     return config
 
 
-def train(env_name, agent_name, with_transform=False, transform_idx=0):
+def train(env_name, agent_name, iteration_num, with_transform=False, transform_idx=0):
     env, env_to_agent = get_env(env_name, with_transform, transform_idx)
     ray.init(num_gpus=NUM_GPUS, local_mode=WITH_DEBUG)
     config = get_taxi_config(env, NUM_TAXI)
     agent = get_agent(agent_name, config, env_to_agent)
     episode_reward_mean = []
-    for it in range(ITER_NUM):
+    for it in range(iteration_num):
         result = agent.train()
         print(s.format(
             it + 1,
