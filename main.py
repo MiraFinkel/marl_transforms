@@ -10,11 +10,12 @@ if __name__ == '__main__':
     iteration_num = 5
 
     ray.init(num_gpus=NUM_GPUS, local_mode=WITH_DEBUG)
-    # episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=False)
-    episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=True,
-                                transform_idx=[TAXIS_LOC_IDX, FUELS_IDX, PASS_START_LOC_IDX, PASS_DEST_IDX])
+    episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=False)
+    # episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=True,
+    #                             transform_idxes=[TAXIS_LOC_IDX, FUELS_IDX, PASS_START_LOC_IDX, PASS_DEST_IDX])
     taxi_env.set_display(True)
     evaluate()
+    # evaluate([TAXIS_LOC_IDX, FUELS_IDX, PASS_START_LOC_IDX, PASS_DEST_IDX])
     ray.shutdown()
 
     results = [episode_reward_mean]

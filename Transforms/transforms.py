@@ -35,6 +35,9 @@ class MappingFunction(ABC):
         return p, s, r, d
 
 
+global_reduction_idxes = None
+
+
 class DimReductionMultiAgents(MappingFunction):
     """
     A wrapper class to the Multi-Taxi environment class.
@@ -49,7 +52,7 @@ class DimReductionMultiAgents(MappingFunction):
         """
         super(DimReductionMultiAgents, self).__init__(env)
         if reduction_idxes is None:
-            reduction_idxes = [DIM_REDUCTION_IDX]
+            reduction_idxes = global_reduction_idxes
         self.reduction_idxes = reduction_idxes
         self._mapping_dict = {}
 
@@ -80,9 +83,9 @@ class DimReductionMultiAgents(MappingFunction):
 
         for idx in self.reduction_idxes:
             passengers_information = self._get_passengers_information(passengers_information, idx)
-            if self.reduction_idxes == FUELS_IDX:
-                fuels = [self._env.max_fuel]
-            elif self.reduction_idxes == TAXIS_LOC_IDX:
+            if idx == FUELS_IDX:
+                fuels = [self._env.max_fuel[agent_index]]
+            elif idx == TAXIS_LOC_IDX:
                 observations = [0, 0]
                 for _ in closest_taxis_indices:
                     observations += [0, 0]
@@ -99,9 +102,9 @@ class DimReductionMultiAgents(MappingFunction):
         :return: Reduced passengers information
         """
         if idx == PASS_START_LOC_IDX:
-            passengers_information[0] = [0, 0] * len(passengers_information[0])
+            passengers_information[0] = [0] * len(passengers_information[0])
         elif idx == PASS_DEST_IDX:
-            passengers_information[1] = [0, 0] * len(passengers_information[1])
+            passengers_information[1] = [0] * len(passengers_information[1])
         elif idx == PASS_STATUS_IDX:
             passengers_information[2] = [0] * len(passengers_information[2])
         return passengers_information
@@ -119,6 +122,8 @@ class DimReductionMultiAgents(MappingFunction):
 
     def set_reduction_idx(self, new_idxes):
         self.reduction_idxes = new_idxes
+        global global_reduction_idxes
+        global_reduction_idxes = new_idxes
 
 
 MAPPING_CLASS = DimReductionMultiAgents

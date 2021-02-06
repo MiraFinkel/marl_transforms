@@ -9,12 +9,12 @@ agent = None
 config = None
 
 
-def get_env(env_name, with_transform=False, transform_idx=0):
+def get_env(env_name, with_transform=False, transform_idxes=None):
     """
     TODO Guy: to expand the function to work with particle environment
     :param env_name:
     :param with_transform:
-    :param transform_idx:
+    :param transform_idxes:
     :return:
     """
     global env
@@ -25,7 +25,7 @@ def get_env(env_name, with_transform=False, transform_idx=0):
     else:
         transform_env = TransformEnvironment()
         env = TransformEnvironment()  # TODO Mira - do I need the transformed environment? or the original one?
-        transform_env._mapping_class.set_reduction_idx(transform_idx)
+        transform_env._mapping_class.set_reduction_idx(transform_idxes)
         return transform_env, TransformEnvironment
 
 
@@ -95,8 +95,8 @@ def get_config(env, number_of_taxis):
     return config
 
 
-def train(env_name, agent_name, iteration_num, with_transform=False, transform_idx=0):
-    env, env_to_agent = get_env(env_name, with_transform, transform_idx)
+def train(env_name, agent_name, iteration_num, with_transform=False, transform_idxes=None):
+    env, env_to_agent = get_env(env_name, with_transform, transform_idxes)
     config = get_config(env, NUM_TAXI)
     agent = get_agent(agent_name, config, env_to_agent)
     episode_reward_mean = []
@@ -111,10 +111,10 @@ def train(env_name, agent_name, iteration_num, with_transform=False, transform_i
         ))
         episode_reward_mean.append(result["episode_reward_mean"])
 
-    return episode_reward_mean, env, agent, config
+    return episode_reward_mean
 
 
-def evaluate():
+def evaluate(reduction_idxes=None):
     print()
     print(" ===================================================== ")
     print(" ================ STARTING EVALUATION ================ ")
@@ -122,6 +122,8 @@ def evaluate():
     print()
 
     global env, agent, config
+    if reduction_idxes:
+        env._mapping_class.set_reduction_idx(reduction_idxes)
     obs = env.reset()
     done = False
     episode_reward = 0
@@ -137,31 +139,3 @@ def evaluate():
     print(episode_reward)
 
 
-def get_initialized_env():
-    global env
-    return env
-
-
-def set_initialized_env(new_env):
-    global env
-    env = new_env
-
-
-def get_initialized_agent():
-    global agent
-    return agent
-
-
-def set_initialized_agent(new_agent):
-    global agent
-    agent = new_agent
-
-
-def get_initialized_config():
-    global config
-    return config
-
-
-def set_initialized_config(new_config):
-    global config
-    config = new_config

@@ -4,8 +4,6 @@ from constants import *
 
 
 def prepare_result_graph(result, sub_plot_name=""):
-    # plt.plot(range(len(result['hist_stats']['episode_reward'])), result['hist_stats']['episode_reward'],
-    #          label=sub_plot_name)
     plt.plot(range(len(result)), result, label=sub_plot_name)
     plt.xlabel('epochs')
     plt.ylabel('episode_reward_mean')
