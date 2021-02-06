@@ -4,6 +4,9 @@ from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
 import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
 
 s = "{:3d} reward {:6.2f}/{:6.2f}/{:6.2f} len {:6.2f}"
+env = None
+agent = None
+config = None
 
 
 def get_env(env_name, with_transform=False, transform_idx=0):
@@ -14,57 +17,62 @@ def get_env(env_name, with_transform=False, transform_idx=0):
     :param transform_idx:
     :return:
     """
+    global env
     if not with_transform:
         if env_name == TAXI:
-            return TaxiEnv(), TaxiEnv
+            env = TaxiEnv()
+            return env, TaxiEnv
     else:
         transform_env = TransformEnvironment()
+        env = TransformEnvironment()  # TODO Mira - do I need the transformed environment? or the original one?
         transform_env._mapping_class.set_reduction_idx(transform_idx)
         return transform_env, TransformEnvironment
 
 
 def get_agent(agent_name, config, env_to_agent):
+    global agent
     if agent_name == A2C:
         import ray.rllib.agents.a3c as a2c
-        return a2c.A2CTrainer(config=config, env=env_to_agent)
+        agent = a2c.A2CTrainer(config=config, env=env_to_agent)
     elif agent_name == A3C:
         import ray.rllib.agents.a3c as a3c
-        return a3c.A3CTrainer(config=config, env=env_to_agent)
+        agent = a3c.A3CTrainer(config=config, env=env_to_agent)
     elif agent_name == BC:
         import ray.rllib.agents.marwil as bc
-        return bc.BCTrainer(config=config, env=env_to_agent)
+        agent = bc.BCTrainer(config=config, env=env_to_agent)
     elif agent_name == DQN:
         import ray.rllib.agents.dqn as dqn
-        return dqn.DQNTrainer(config=config, env=env_to_agent)
+        agent = dqn.DQNTrainer(config=config, env=env_to_agent)
     elif agent_name == APEX_DQN:
         import ray.rllib.agents.dqn as dqn
-        return dqn.ApexTrainer(config=config, env=env_to_agent)
+        agent = dqn.ApexTrainer(config=config, env=env_to_agent)
     elif agent_name == IMPALA:
         import ray.rllib.agents.impala as impala
-        return impala.ImpalaTrainer(config=config, env=env_to_agent)
+        agent = impala.ImpalaTrainer(config=config, env=env_to_agent)
     elif agent_name == MARWIL:
         import ray.rllib.agents.marwil as marwil
-        return marwil.MARWILTrainer(config=config, env=env_to_agent)
+        agent = marwil.MARWILTrainer(config=config, env=env_to_agent)
     elif agent_name == PG:
         import ray.rllib.agents.pg as pg
-        return pg.PGTrainer(config=config, env=env_to_agent)
+        agent = pg.PGTrainer(config=config, env=env_to_agent)
     elif agent_name == PPO:
         import ray.rllib.agents.ppo as ppo
-        return ppo.PPOTrainer(config=config, env=env_to_agent)
+        agent = ppo.PPOTrainer(config=config, env=env_to_agent)
     elif agent_name == APPO:
         import ray.rllib.agents.ppo as ppo
-        return ppo.APPOTrainer(config=config, env=env_to_agent)
+        agent = ppo.APPOTrainer(config=config, env=env_to_agent)
     elif agent_name == SAC:
         import ray.rllib.agents.sac as sac
-        return sac.SACTrainer(config=config, env=env_to_agent)
+        agent = sac.SACTrainer(config=config, env=env_to_agent)
     elif agent_name == LIN_UCB:
         import ray.rllib.contrib.bandits.agents.lin_ucb as lin_ucb
-        return lin_ucb.LinUCBTrainer(config=config, env=env_to_agent)
+        agent = lin_ucb.LinUCBTrainer(config=config, env=env_to_agent)
     elif agent_name == LIN_TS:
         import ray.rllib.contrib.bandits.agents.lin_ts as lin_ts
-        return lin_ts.LinTSTrainer(config=config, env=env_to_agent)
+        agent = lin_ts.LinTSTrainer(config=config, env=env_to_agent)
     else:
         raise Exception("Not valid agent name")
+    return agent
 
 
 def get_config(env, number_of_taxis):
@@ -74,6 +82,7 @@ def get_config(env, number_of_taxis):
     :param number_of_taxis:
     :return:
     """
+    global config
     config = {}
     if number_of_taxis == 2:
         config = {'multiagent': {'policies': {'taxi_1': (None, env.obs_space, env.action_space, {'gamma': TAXI1_GAMMA}),
@@ -105,13 +114,14 @@ def train(env_name, agent_name, iteration_num, with_transform=False, transform_i
     return episode_reward_mean, env, agent, config
 
 
-def evaluate(env, agent, config):
+def evaluate():
     print()
     print(" ===================================================== ")
     print(" ================ STARTING EVALUATION ================ ")
     print(" ===================================================== ")
     print()
 
+    global env, agent, config
     obs = env.reset()
     done = False
     episode_reward = 0
@@ -125,3 +135,33 @@ def evaluate(env, agent, config):
         # sum up reward for all agents
         episode_reward += sum(reward.values())
     print(episode_reward)
+
+
+def get_initialized_env():
+    global env
+    return env
+
+
+def set_initialized_env(new_env):
+    global env
+    env = new_env
+
+
+def get_initialized_agent():
+    global agent
+    return agent
+
+
+def set_initialized_agent(new_agent):
+    global agent
+    agent = new_agent
+
+
+def get_initialized_config():
+    global config
+    return config
+
+
+def set_initialized_config(new_config):
+    global config
+    config = new_config

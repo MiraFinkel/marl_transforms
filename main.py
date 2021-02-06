@@ -6,13 +6,13 @@ if __name__ == '__main__':
     # TODO Guy: to add "set_display" to particle environment
     taxi_env.set_display(False)
     env_name = TAXI
-    agent_name = A2C
-    iteration_num = 100
+    agent_name = PPO
+    iteration_num = 2
 
     ray.init(num_gpus=NUM_GPUS, local_mode=WITH_DEBUG)
     episode_reward_mean, env, agent, config = train(env_name, agent_name, iteration_num, with_transform=False)
     taxi_env.set_display(True)
-    evaluate(env, agent, config)
+    evaluate()
     ray.shutdown()
 
     results = [episode_reward_mean]
