@@ -15,7 +15,6 @@ from gym.utils import seeding
 import numpy as np
 import random
 
-import main
 from .config import TAXI_ENVIROMENT_REWARDS, BASE_AVAILABLE_ACTIONS, ALL_ACTIONS_NAMES
 from ray.rllib.env import MultiAgentEnv
 
