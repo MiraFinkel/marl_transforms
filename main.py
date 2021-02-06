@@ -6,11 +6,13 @@ if __name__ == '__main__':
     # TODO Guy: to add "set_display" to particle environment
     taxi_env.set_display(False)
     env_name = TAXI
-    agent_name = PPO
-    iteration_num = 2
+    agent_name = A2C
+    iteration_num = 5
 
     ray.init(num_gpus=NUM_GPUS, local_mode=WITH_DEBUG)
-    episode_reward_mean, env, agent, config = train(env_name, agent_name, iteration_num, with_transform=False)
+    # episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=False)
+    episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=True,
+                                transform_idx=[TAXIS_LOC_IDX, FUELS_IDX, PASS_START_LOC_IDX, PASS_DEST_IDX])
     taxi_env.set_display(True)
     evaluate()
     ray.shutdown()
@@ -18,10 +20,15 @@ if __name__ == '__main__':
     results = [episode_reward_mean]
     names = [WITHOUT_TRANSFORM]
 
-    plot_result_graph(results, names, "episode_reward_mean")
+    plot_result_graph(agent_name, results, names, "episode_reward_mean")
 
-    # episode_reward_mean0 = train(env_name, agent_name, with_transform=True, transform_idx=0)
-    # episode_reward_mean1 = train(env_name, agent_name, with_transform=True, transform_idx=1)
-    # episode_reward_mean2 = train(env_name, agent_name, with_transform=True, transform_idx=2)
-    # episode_reward_mean3 = train(env_name, agent_name, with_transform=True, transform_idx=3)
-    # episode_reward_mean4 = train(env_name, agent_name, with_transform=True, transform_idx=4)
+    # episode_reward_mean0 = train(env_name, agent_name, iteration_num, with_transform=True,
+    #                              transform_idx=TAXIS_LOC_IDX)
+    # episode_reward_mean1 = train(env_name, agent_name, iteration_num, with_transform=True,
+    #                              transform_idx=FUELS_IDX)
+    # episode_reward_mean2 = train(env_name, agent_name, iteration_num, with_transform=True,
+    #                              transform_idx=PASS_START_LOC_IDX)
+    # episode_reward_mean3 = train(env_name, agent_name, iteration_num, with_transform=True,
+    #                              transform_idx=PASS_DEST_IDX)
+    # episode_reward_mean4 = train(env_name, agent_name, iteration_num, with_transform=True,
+    #                              transform_idx=PASS_STATUS_IDX)

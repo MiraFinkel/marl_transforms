@@ -12,9 +12,9 @@ def prepare_result_graph(result, sub_plot_name=""):
     plt.ylim(-300, 500)
 
 
-def plot_result_graph(results, names, title):
+def plot_result_graph(agent_name, results, names, title):
     for res, name in zip(results, names):
         prepare_result_graph(res, name)
-    plt.title("agent: " + "pg" + ", " + title)
+    plt.title("agent: " + agent_name + ", " + title)
     plt.legend()
     plt.show()

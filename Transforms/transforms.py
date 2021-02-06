@@ -36,64 +36,89 @@ class MappingFunction(ABC):
 
 
 class DimReductionMultiAgents(MappingFunction):
-    def __init__(self, env, reduction_idx=DIM_REDUCTION_IDX):
+    """
+    A wrapper class to the Multi-Taxi environment class.
+    This abstraction exposed to the agent the whole state except for the features in place of the reduction indexes.
+    """
+
+    def __init__(self, env, reduction_idxes=None):
+        """
+        The constructor of the dimension reduction class.
+        :param env: The original environment
+        :param reduction_idxes: list - A list of indexes of the state that the agent won't see.
+        """
         super(DimReductionMultiAgents, self).__init__(env)
-        self.reduction_idx = reduction_idx
+        if reduction_idxes is None:
+            reduction_idxes = [DIM_REDUCTION_IDX]
+        self.reduction_idxes = reduction_idxes
         self._mapping_dict = {}
 
     def mapping_step(self, state, action_dict):
+        """
+        A wrapper function for an abstract step in the transformed environment.
+        Executing a list of actions (action for each taxi) at the domain current state.
+        :param state: current state
+        :param action_dict: {taxi_name: action} - action of specific taxis to take on the step
+        :return: The observation after the transform.
+        """
         obs = {}
         for taxi_id in action_dict.keys():
             obs[taxi_id] = self._get_abstract_observation(state, taxi_id)
         return obs
 
     def _get_abstract_observation(self, state, taxi_id):
+        """
+
+        :param state:
+        :param taxi_id:
+        :return:
+        """
         agent_index = self._env.taxis_names.index(taxi_id)
         taxis, fuels, passengers_start_locations, destinations, passengers_status = state
-        passengers_information = self._get_passengers_information(passengers_start_locations, destinations,
-                                                                  passengers_status)
-        closest_taxis_indices = []
-        fuels = [fuels[agent_index]]
-        for i in range(self._env.num_taxis):
-            if self._env.get_l1_distance(taxis[agent_index], taxis[i]) <= self._env.window_size and i != agent_index:
-                closest_taxis_indices.append(i)
-        if self.reduction_idx == FUELS_IDX:
-            fuels = [100]
-            observations = taxis[agent_index].copy()
-            for i in closest_taxis_indices:
-                observations += taxis[i]
-        elif self.reduction_idx == TAXIS_LOC_IDX:
-            observations = [0, 0]
-            for i in closest_taxis_indices:
-                observations += [0, 0]
-        else:
-            observations = taxis[agent_index].copy()
-            for i in closest_taxis_indices:
-                observations += taxis[i]
+        passengers_information = [flatten(passengers_start_locations), flatten(destinations), passengers_status]
+        closest_taxis_indices, observations, fuels = self._get_original_info(taxis, agent_index, fuels)
+
+        for idx in self.reduction_idxes:
+            passengers_information = self._get_passengers_information(passengers_information, idx)
+            if self.reduction_idxes == FUELS_IDX:
+                fuels = [self._env.max_fuel]
+            elif self.reduction_idxes == TAXIS_LOC_IDX:
+                observations = [0, 0]
+                for _ in closest_taxis_indices:
+                    observations += [0, 0]
+        passengers_information = passengers_information[0] + passengers_information[1] + passengers_information[2]
         observations += [0, 0] * (self._env.num_taxis - 1 - len(closest_taxis_indices)) + fuels + \
                         [0] * (self._env.num_taxis - 1) + passengers_information
         observations = np.reshape(observations, (1, len(observations)))
-
         return observations
 
-    def _get_passengers_information(self, passengers_start_locations, destinations, passengers_status):
-        if self.reduction_idx < 2:
-            passengers_start_locations = flatten(passengers_start_locations)
-            destinations = flatten(destinations)
-        elif self.reduction_idx == PASS_START_LOC_IDX:
-            passengers_start_locations = [0, 0] * len(passengers_start_locations)
-            destinations = flatten(destinations)
-        elif self.reduction_idx == PASS_DEST_IDX:
-            passengers_start_locations = flatten(passengers_start_locations)
-            destinations = [0, 0] * len(destinations)
-        elif self.reduction_idx == PASS_STATUS_IDX:
-            passengers_start_locations = flatten(passengers_start_locations)
-            destinations = flatten(destinations)
-            passengers_status = [0] * len(passengers_status)
-        return passengers_start_locations + destinations + passengers_status
+    def _get_passengers_information(self, passengers_information, idx):
+        """
+        Recive a index that need to be ignored and return the reduced observation
+        :param passengers_information: List with the original passengers information
+        :return: Reduced passengers information
+        """
+        if idx == PASS_START_LOC_IDX:
+            passengers_information[0] = [0, 0] * len(passengers_information[0])
+        elif idx == PASS_DEST_IDX:
+            passengers_information[1] = [0, 0] * len(passengers_information[1])
+        elif idx == PASS_STATUS_IDX:
+            passengers_information[2] = [0] * len(passengers_information[2])
+        return passengers_information
 
-    def set_reduction_idx(self, new_idx):
-        self.reduction_idx = new_idx
+    def _get_original_info(self, taxis, agent_index, fuels):
+        closest_taxis_indices = []
+        for i in range(self._env.num_taxis):
+            if self._env.get_l1_distance(taxis[agent_index], taxis[i]) <= self._env.window_size and i != agent_index:
+                closest_taxis_indices.append(i)
+        observations = taxis[agent_index].copy()
+        for i in closest_taxis_indices:
+            observations += taxis[i]
+        fuels = [fuels[agent_index]]
+        return closest_taxis_indices, observations, fuels
+
+    def set_reduction_idx(self, new_idxes):
+        self.reduction_idxes = new_idxes
 
 
 MAPPING_CLASS = DimReductionMultiAgents

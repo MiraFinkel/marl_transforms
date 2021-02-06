@@ -215,27 +215,6 @@ class TaxiEnv(MultiAgentEnv):
         self.np_random = None
         self.reset()
 
-    # def _init_P(self):
-    #     num_states = self._get_num_states()
-    #     initial_state_distribution = np.zeros(num_states)
-    #     for row in range(self.num_rows):
-    #         for col in range(self.num_columns):
-    #             for pass_idx in range(len(self.passengers_locations) + self.num_taxis):
-    #                 for dest_idx in range(len(self.passengers_locations)):
-    #                     state = self.encode(row, col, pass_idx, dest_idx)
-    #                     if pass_idx < len(self.passengers_locations) and pass_idx != dest_idx:
-    #                         initial_state_distribution[state] += 1
-    #                     state, action_dict, new_state, reward, done = get()
-    #                     self.P[state][action_dict].append((1.0, new_state, reward, done))
-
-    # def step(self, action_dict: dict):
-    #     transitions = self.P[self.s][action_dict]
-    #     i = categorical_sample([t[0] for t in transitions], self.np_random)
-    #     p, s, r, d = transitions[i]
-    #     self.state = s
-    #     self.last_action = action_dict
-    #     return int(s), r, d, {"prob": p}
-
     def _get_num_states(self):
         map_dim = (self.num_rows * self.num_columns)
         passengers_loc_dim = 1
@@ -246,22 +225,6 @@ class TaxiEnv(MultiAgentEnv):
             passengers_dest_dim *= len(self.passengers_locations) - i
         num_states = map_dim * passengers_loc_dim * passengers_dest_dim
         return num_states
-
-    # def encode(self, taxi_row, taxi_col, pass_loc, dest_idx):
-    #     i = taxi_row
-    #     i *= self.num_rows
-    #     i += taxi_col
-    #     i *= self.num_columns
-    #     i += pass_loc
-    #     i *= len(self.passengers_locations)
-    #     i += dest_idx
-    #     return i
-    #
-    # def decode(self, i):
-    #     out = []
-    #     out.append(i % len(self.passengers_locations))
-    #     i = i // len(self.passengers_locations)
-    #     out.append(i % )
 
     def _get_observation_space_list(self) -> list:
         """
