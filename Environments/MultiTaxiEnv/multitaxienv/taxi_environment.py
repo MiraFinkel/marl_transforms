@@ -19,6 +19,7 @@ from .config import TAXI_ENVIROMENT_REWARDS, BASE_AVAILABLE_ACTIONS, ALL_ACTIONS
 from ray.rllib.env import MultiAgentEnv
 
 display = False
+action_abstraction = False
 
 orig_MAP = [
     "+---------+",
@@ -39,10 +40,28 @@ MAP = [
     "+-------+",
 ]
 
+WITHOUT_BORDERS_MAP = [
+    "+-------+",
+    "|X: :F:X|",
+    "| : : : |",
+    "| : : : |",
+    "|X: :G:X|",
+    "+-------+",
+]
+
 
 def set_display(val):
     global display
     display = val
+
+
+def set_action_abstraction(val):
+    global action_abstraction
+    action_abstraction = val
+
+
+def with_action_abstraction():
+    return action_abstraction
 
 
 # TODO change documentation to refer to rllib
@@ -141,10 +160,13 @@ class TaxiEnv(MultiAgentEnv):
         else:
             self.max_fuel = max_fuel
 
-        if domain_map is None:
-            self.desc = np.asarray(MAP, dtype='c')
+        if with_action_abstraction():
+            self.desc = np.asarray(WITHOUT_BORDERS_MAP, dtype='c')
         else:
-            self.desc = np.asarray(domain_map, dtype='c')
+            if domain_map is None:
+                self.desc = np.asarray(MAP, dtype='c')
+            else:
+                self.desc = np.asarray(domain_map, dtype='c')
 
         if taxis_capacity is None:
             self.taxis_capacity = [1] * num_passengers

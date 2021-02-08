@@ -7,9 +7,10 @@ if __name__ == '__main__':
     taxi_env.set_display(False)
     env_name = TAXI
     agent_name = A2C
-    iteration_num = 5
+    iteration_num = 2
 
     ray.init(num_gpus=NUM_GPUS, local_mode=WITH_DEBUG)
+    taxi_env.set_action_abstraction(True)
     episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=False)
     # episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=True,
     #                             transform_idxes=[TAXIS_LOC_IDX, FUELS_IDX, PASS_START_LOC_IDX, PASS_DEST_IDX])
