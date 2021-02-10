@@ -10,13 +10,11 @@ if __name__ == '__main__':
     number_of_agents = 1
     iteration_num = 2
 
-    print("miras branch!")
-
     ray.init(num_gpus=NUM_GPUS, local_mode=WITH_DEBUG)
     # taxi_env.set_action_abstraction(True)
-    episode_reward_mean = train(env_name, agent_name, iteration_num, number_of_agents,  with_transform=False)
-    # episode_reward_mean = train(env_name, agent_name, iteration_num, with_transform=True,
-    #                             transform_idxes=[TAXIS_LOC_IDX, FUELS_IDX, PASS_START_LOC_IDX, PASS_DEST_IDX])
+    # episode_reward_mean = train(env_name, agent_name, iteration_num, number_of_agents,  with_transform=False)
+    episode_reward_mean = train(env_name, agent_name, iteration_num, number_of_agents, with_transform=True,
+                                transform_idxes=[FUELS_IDX])
     taxi_env.set_display(True)
     # evaluate(number_of_agents)
     # evaluate([TAXIS_LOC_IDX, FUELS_IDX, PASS_START_LOC_IDX, PASS_DEST_IDX])
