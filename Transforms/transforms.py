@@ -81,6 +81,7 @@ class DimReductionMultiAgents(MappingFunction):
         passengers_information = [flatten(passengers_start_locations), flatten(destinations), passengers_status]
         closest_taxis_indices, observations, fuels = self._get_original_info(taxis, agent_index, fuels)
 
+        self.reduction_idxes = self.reduction_idxes if self.reduction_idxes else []
         for idx in self.reduction_idxes:
             passengers_information = self._get_passengers_information(passengers_information, idx)
             if idx == FUELS_IDX:

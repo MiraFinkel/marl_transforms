@@ -139,10 +139,11 @@ def evaluate(number_of_agents, reduction_idxes=None):
     episode_reward = 0
     while not done:
         if number_of_agents == 1:  # single agent
-            done = True
-            # action = agent.compute_action(np.array(obs)) # TODO Mira - not working on single agent
-            # obs, reward, done, info = env.step(action)
-            # episode_reward += reward
+            agent_name = list(obs.keys())[0]
+            action = agent.compute_action(obs[agent_name])
+            obs, reward, done, info = env.step({agent_name: action})
+            done = done['__all__']
+            episode_reward += reward[agent_name]
         else:  # multi-agent
             action = {}
             for agent_id, agent_obs in obs.items():
