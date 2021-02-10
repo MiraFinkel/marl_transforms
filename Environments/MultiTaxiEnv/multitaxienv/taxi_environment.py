@@ -20,6 +20,7 @@ from ray.rllib.env import MultiAgentEnv
 
 display = False
 action_abstraction = False
+number_of_agents = 2
 
 orig_MAP = [
     "+---------+",
@@ -58,6 +59,11 @@ def set_display(val):
 def set_action_abstraction(val):
     global action_abstraction
     action_abstraction = val
+
+
+def set_number_of_agents(val):
+    global number_of_agents
+    number_of_agents = val
 
 
 def with_action_abstraction():
@@ -138,7 +144,7 @@ class TaxiEnv(MultiAgentEnv):
 
     metadata = {'render.modes': ['human', 'ansi']}
 
-    def __init__(self, _=0, num_taxis: int = 2, num_passengers: int = 2, max_fuel: list = None,
+    def __init__(self, _=0, num_taxis: int = number_of_agents, num_passengers: int = 2, max_fuel: list = None,
                  domain_map: list = None, taxis_capacity: list = None, collision_sensitive_domain: bool = True,
                  fuel_type_list: list = None, option_to_stand_by: bool = False):
         """
@@ -153,7 +159,7 @@ class TaxiEnv(MultiAgentEnv):
             fuel_type_list: list of fuel types of each taxi
             option_to_stand_by: can taxis simply stand in place
         """
-
+        self.set_number_of_taxis()
         # Initializing default values
         if max_fuel is None:
             self.max_fuel = [100] * num_taxis  # TODO - needs to figure out how to insert np.inf into discrete obs.space
@@ -203,18 +209,18 @@ class TaxiEnv(MultiAgentEnv):
 
         self.coordinates = [[i, j] for i in range(num_rows) for j in range(num_columns)]
 
-        self.num_taxis = num_taxis
-        self.taxis_names = ["taxi_" + str(index + 1) for index in range(num_taxis)]
+        # self.num_taxis = num_taxis
+        self.taxis_names = ["taxi_" + str(index + 1) for index in range(self.num_taxis)]
 
         self.collision_sensitive_domain = collision_sensitive_domain
 
         # Indicator list of 1's (collided) and 0's (not-collided) of all taxis
-        self.collided = np.zeros(num_taxis)
+        self.collided = np.zeros(self.num_taxis)
 
         self.option_to_standby = option_to_stand_by
 
         # A list to indicate whether the engine of taxi i is on (1) or off (0), all taxis start as on.
-        self.engine_status_list = list(np.ones(num_taxis).astype(bool))
+        self.engine_status_list = list(np.ones(self.num_taxis).astype(bool))
 
         self.num_passengers = num_passengers
 
@@ -223,7 +229,7 @@ class TaxiEnv(MultiAgentEnv):
             = self._set_available_actions_dictionary()
         self.num_actions = len(self.available_actions_indexes)
         self.action_space = gym.spaces.Discrete(self.num_actions)
-        self.obs_space = gym.spaces.MultiDiscrete(self._get_observation_space_list())
+        self.observation_space = gym.spaces.MultiDiscrete(self._get_observation_space_list())
         self.bounded = False
 
         self.last_action = None
@@ -236,6 +242,10 @@ class TaxiEnv(MultiAgentEnv):
 
         self.np_random = None
         self.reset()
+
+    def set_number_of_taxis(self):
+        global number_of_agents
+        self.num_taxis = number_of_agents
 
     def _get_num_states(self):
         map_dim = (self.num_rows * self.num_columns)

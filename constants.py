@@ -15,8 +15,6 @@ SAC = "sac"
 LIN_UCB = "lin_usb"
 LIN_TS = "lin_ts"
 
-
-
 AGENT = PG
 # ================= Train variables ================ #
 ITER_NUM = 1000
@@ -38,6 +36,4 @@ ENV = TransformEnvironment
 TAXI = "taxi"
 ENV_NAME = TAXI
 # ----------------- Env variables ------------------ #
-NUM_TAXI = 2
-TAXI1_GAMMA = 0.85
-TAXI2_GAMMA = 0.95
+agents_gamma = {'taxi_1': 0.85, 'taxi_2': 0.95, 'taxi_3': 0.85, 'taxi_4': 0.95}

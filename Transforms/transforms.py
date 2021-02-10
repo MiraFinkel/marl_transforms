@@ -136,7 +136,7 @@ class TransformEnvironment(MultiAgentEnv):
         if mapping_class:
             self._mapping_class = mapping_class(self._env)
         self.action_space = self._env.action_space
-        self.obs_space = self._env.obs_space
+        self.obs_space = self._env.observation_space
 
     def reset(self):
         """

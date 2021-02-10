@@ -3,13 +3,14 @@ from constants import *
 from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
 import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
 
-s = "{:3d} reward {:6.2f}/{:6.2f}/{:6.2f} len {:6.2f}"
+# s = "{:3d} reward {:6.2f}/{:6.2f}/{:6.2f} len {:6.2f}"
+s = "{:3d} mean reward: {:6.2f}, variance: {:6.2f}, running time: {:6.2f}"
 env = None
 agent = None
 config = None
 
 
-def get_env(env_name, with_transform=False, transform_idxes=None):
+def get_env(env_name, number_of_agents=1, with_transform=False, transform_idxes=None):
     """
     TODO Guy: to expand the function to work with particle environment
     :param env_name:
@@ -20,9 +21,11 @@ def get_env(env_name, with_transform=False, transform_idxes=None):
     global env
     if not with_transform:
         if env_name == TAXI:
+            taxi_env.set_number_of_agents(number_of_agents)
             env = TaxiEnv()
             return env, TaxiEnv
     else:
+        taxi_env.set_number_of_agents(number_of_agents)
         transform_env = TransformEnvironment()
         env = TransformEnvironment()  # TODO Mira - do I need the transformed environment? or the original one?
         transform_env._mapping_class.set_reduction_idx(transform_idxes)
@@ -75,38 +78,45 @@ def get_agent(agent_name, config, env_to_agent):
     return agent
 
 
-def get_config(env, number_of_taxis):
+def get_multi_agent_policies(env, number_of_agents):
+    policies = {}
+    for i in range(number_of_agents):
+        name = 'taxi_' + str(i + 1)
+        policies[name] = (None, env.observation_space, env.action_space, {'gamma': agents_gamma[name]})
+    return policies
+
+
+def get_config(env_name, env, number_of_agents):
     """
     TODO Guy: to expand the function to work with particle environment
     :param env:
-    :param number_of_taxis:
+    :param number_of_agents:
     :return:
     """
     global config
     config = {}
-    if number_of_taxis == 2:
-        config = {'multiagent': {'policies': {'taxi_1': (None, env.obs_space, env.action_space, {'gamma': TAXI1_GAMMA}),
-                                              'taxi_2': (None, env.obs_space, env.action_space, {'gamma': TAXI2_GAMMA})
-                                              },
-                                 "policy_mapping_fn": lambda taxi_id: taxi_id},
-                  "num_gpus": NUM_GPUS,
-                  "num_workers": NUM_WORKERS}
-
+    if env_name == TAXI:
+        if number_of_agents == 1:  # single agent config
+            config = {"num_gpus": NUM_GPUS, "num_workers": NUM_WORKERS}
+        else:  # multi-agent config
+            policies = get_multi_agent_policies(env, number_of_agents)
+            config = {'multiagent': {'policies': policies, "policy_mapping_fn": lambda taxi_id: taxi_id},
+                      "num_gpus": NUM_GPUS,
+                      "num_workers": NUM_WORKERS}
     return config
 
 
-def train(env_name, agent_name, iteration_num, with_transform=False, transform_idxes=None):
-    env, env_to_agent = get_env(env_name, with_transform, transform_idxes)
-    config = get_config(env, NUM_TAXI)
+def train(env_name, agent_name, iteration_num, number_of_agents=1, with_transform=False, transform_idxes=None):
+    env, env_to_agent = get_env(env_name, number_of_agents, with_transform, transform_idxes)
+    config = get_config(env_name, env, number_of_agents)
     agent = get_agent(agent_name, config, env_to_agent)
     episode_reward_mean = []
     for it in range(iteration_num):
         result = agent.train()
         print(s.format(
             it + 1,
-            result["episode_reward_min"],
             result["episode_reward_mean"],
-            result["episode_reward_max"],
+            result["episode_reward_max"] - result["episode_reward_min"],
             result["episode_len_mean"]
         ))
         episode_reward_mean.append(result["episode_reward_mean"])
@@ -114,7 +124,7 @@ def train(env_name, agent_name, iteration_num, with_transform=False, transform_i
     return episode_reward_mean
 
 
-def evaluate(reduction_idxes=None):
+def evaluate(number_of_agents, reduction_idxes=None):
     print()
     print(" ===================================================== ")
     print(" ================ STARTING EVALUATION ================ ")
@@ -128,14 +138,17 @@ def evaluate(reduction_idxes=None):
     done = False
     episode_reward = 0
     while not done:
-        action = {}
-        for agent_id, agent_obs in obs.items():
-            policy_id = config['multiagent']['policy_mapping_fn'](agent_id)
-            action[agent_id] = agent.compute_action(agent_obs, policy_id=policy_id)
-        obs, reward, done, info = env.step(action)
-        done = done['__all__']
-        # sum up reward for all agents
-        episode_reward += sum(reward.values())
+        if number_of_agents == 1:  # single agent
+            done = True
+            # action = agent.compute_action(np.array(obs)) # TODO Mira - not working on single agent
+            # obs, reward, done, info = env.step(action)
+            # episode_reward += reward
+        else:  # multi-agent
+            action = {}
+            for agent_id, agent_obs in obs.items():
+                policy_id = config['multiagent']['policy_mapping_fn'](agent_id)
+                action[agent_id] = agent.compute_action(agent_obs, policy_id=policy_id)
+            obs, reward, done, info = env.step(action)
+            done = done['__all__']
+            episode_reward += sum(reward.values())  # sum up reward for all agents
     print(episode_reward)
-
-
