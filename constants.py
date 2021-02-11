@@ -1,21 +1,7 @@
 from Transforms.transforms import *
 
-# ===================== Agents ===================== #
-A2C = "a2c"
-A3C = "a3c"
-BC = "bc"
-DQN = "dqn"
-APEX_DQN = "apex_dqn"
-IMPALA = "impala"
-MARWIL = "marwil"
-PG = "pg"
-PPO = "ppo"
-APPO = "appo"
-SAC = "sac"
-LIN_UCB = "lin_usb"
-LIN_TS = "lin_ts"
 
-AGENT = PG
+
 # ================= Train variables ================ #
 ITER_NUM = 1000
 NUM_GPUS = 0
