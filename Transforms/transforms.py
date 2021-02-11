@@ -1,6 +1,7 @@
 from copy import deepcopy
 from abc import ABC, abstractmethod
-from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
+from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv, set_action_abstraction, \
+    set_no_fuel_transform
 from ray.rllib.env import MultiAgentEnv
 import numpy as np
 from Transforms.transform_constans import *
@@ -164,3 +165,22 @@ class TransformEnvironment(MultiAgentEnv):
             abstract_obs = self._mapping_class.mapping_step(cur_s, action)
             new_obs = abstract_obs
         return new_obs, reward, done, info
+
+
+def delete_relaxation_transform1(env):
+    """
+    No walls
+    """
+    set_action_abstraction(True)
+    new_env = TaxiEnv()
+    return new_env
+
+
+def delete_relaxation_transform2(env):
+    """
+    No fuel problem
+    """
+    set_action_abstraction(True)
+    set_no_fuel_transform(True)
+    new_env = TaxiEnv()
+    return new_env

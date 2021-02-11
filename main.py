@@ -1,84 +1,66 @@
 from utils import *
 from visualize import *
-import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
+from Agents.rl_agent import *
+import Agents.rl_agent as rl_agent
 import Agents.rl_agent
 import ray
 
 if __name__ == '__main__':
-    # TODO Guy: to add "set_display" to particle environment
-
-
     # define the environment
-    taxi_env.set_display(False)
     env_name = TAXI
     number_of_agents = 1
     env, env_to_agent = get_env(env_name, number_of_agents)
 
-
     # define the agents that are operating in the environment
-    ray.init(num_gpus=NUM_GPUS, local_mode=WITH_DEBUG)
+    ray.init(num_gpus=NUM_GPUS, local_mode=True)
 
-    #todo Mira: move this to a seperate funtion
     # create agent and train it in env
-    agent_name = Agents.rl_agent.PPO
-    config = get_config(env_name, env, number_of_agents)
-    agent = Agents.rl_agent.get_rl_agent(agent_name, config, env_to_agent)
-
-    # train the agent in the environment
+    agent_name = PPO
     iteration_num = 2
-    episode_reward_mean = Agents.rl_agent.train(agent, iteration_num)
+    agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_to_agent, env_name, number_of_agents,
+                                                                 agent_name, iteration_num, display=False)
 
     # evaluate the performance of the agent
-    taxi_env.set_display(True)
-    Agents.rl_agent.run_episode(env, agent, number_of_agents, config)
-
+    rl_agent.run_episode(env, agent, number_of_agents, config, display=True)
 
     # the target policy (which is part of our input and defined by the user)
-    target_policy = {}
-    target_policy[3,3,dc,dc,dc,dc] = 'up'
-    target_policy[4,4,dc,dc,dc,dc] = 'down'
-
+    target_policy = {(3, 3, None, None, None, None, None, None): 0,  # up
+                     (4, 4, None, None, None, None, None, None): 1}  # down
 
     # compare policy with target policy
-    # get the policy of the agents for all the states defined in the target policy e.g. [3,3,0,2,3,4,5] [3,3,0,2,3,4,8] [3,3,0,2,3,4,7]
+    # get the policy of the agents for all the states defined in the target policy e.g. [3,3,0,2,3,4,5] [3,3,0,2,3,4,8]
+    # TODO Mira: I think we don't need the mapping function here, because the data structure will bw too big (?)
     # compare the target policy with the agent's policy
 
-
     # create a transformed environment
-    transforms = []
-    transforms.append(delete_relaxation_transform)
+    transforms = [delete_relaxation_transform1, delete_relaxation_transform2]
     explanation = None
-    for transform in transfors:
-        # create trasnformed environment
-        trans_env = x_transformed(env)
-        # create and train agents in env
-        # check if the target policy is achieved in trans_env
-        # if it is than
-        explanation = transform
 
-    if explaination is None:
+    # transformed_env, transformed_env_to_agent = get_env(env_name, number_of_agents, with_transform=True)
+    transform_rewards = []
+    transformed_env = env
+    for transform in transforms:
+        # create transformed environment
+        transformed_env = transform(transformed_env)
+
+        # create and train agents in env
+        agent, transform_episode_reward_mean = rl_agent.create_agent_and_train(transformed_env, env_to_agent,
+                                                                               env_name, number_of_agents, agent_name,
+                                                                               iteration_num, display=False)
+        transform_rewards.append(transform_episode_reward_mean)
+        # check if the target policy is achieved in trans_env
+        if target_policy_achieved(transformed_env, agent, target_policy):
+            explanation = transform
+            break
+
+    if explanation is None:
         print("no explanation found - you are too dumb for our system")
     else:
-        print("explanation found %s:"%explanation)
+        print("explanation found %s:" % explanation)
 
-
-
-    results = [episode_reward_mean]
-    names = [WITHOUT_TRANSFORM]
+    results = [episode_reward_mean] + transform_rewards
+    names = [WITHOUT_TRANSFORM, "no walls", "no fuel"]
     plot_result_graph(agent_name, results, names, "episode_reward_mean")
-
-    # episode_reward_mean0 = train(env_name, agent_name, iteration_num, with_transform=True,
-    #                              transform_idx=TAXIS_LOC_IDX)
-    # episode_reward_mean1 = train(env_name, agent_name, iteration_num, with_transform=True,
-    #                              transform_idx=FUELS_IDX)
-    # episode_reward_mean2 = train(env_name, agent_name, iteration_num, with_transform=True,
-    #                              transform_idx=PASS_START_LOC_IDX)
-    # episode_reward_mean3 = train(env_name, agent_name, iteration_num, with_transform=True,
-    #                              transform_idx=PASS_DEST_IDX)
-    # episode_reward_mean4 = train(env_name, agent_name, iteration_num, with_transform=True,
-    #                              transform_idx=PASS_STATUS_IDX)
-
-
 
     # shut_down
     ray.shutdown()

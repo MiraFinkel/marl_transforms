@@ -20,6 +20,7 @@ from ray.rllib.env import MultiAgentEnv
 
 display = False
 action_abstraction = False
+fuel_transform = False
 number_of_agents = 2
 
 orig_MAP = [
@@ -43,17 +44,12 @@ MAP = [
 
 WITHOUT_BORDERS_MAP = [
     "+-------+",
-    "|X: :F:X|",
+    "|X: : :X|",
     "| : : : |",
     "| : : : |",
-    "|X: :G:X|",
+    "|X: : :X|",
     "+-------+",
 ]
-
-
-def set_display(val):
-    global display
-    display = val
 
 
 def set_action_abstraction(val):
@@ -66,8 +62,17 @@ def set_number_of_agents(val):
     number_of_agents = val
 
 
+def set_no_fuel_transform(val):
+    global fuel_transform
+    fuel_transform = val
+
+
 def with_action_abstraction():
     return action_abstraction
+
+
+def no_fuel_transform():
+    return fuel_transform
 
 
 # TODO change documentation to refer to rllib
@@ -144,7 +149,7 @@ class TaxiEnv(MultiAgentEnv):
 
     metadata = {'render.modes': ['human', 'ansi']}
 
-    def __init__(self, _=0, num_taxis: int = number_of_agents, num_passengers: int = 2, max_fuel: list = None,
+    def __init__(self, _=0, num_taxis: int = number_of_agents, num_passengers: int = 1, max_fuel: list = None,
                  domain_map: list = None, taxis_capacity: list = None, collision_sensitive_domain: bool = True,
                  fuel_type_list: list = None, option_to_stand_by: bool = False):
         """
@@ -628,7 +633,12 @@ class TaxiEnv(MultiAgentEnv):
         if fuel == 0:
             reward = ('no_fuel')
         else:
-            fuel = max(0, fuel - 1)
+
+            if no_fuel_transform():
+                fuel = fuel
+            else:
+                fuel = max(0, fuel - 1)
+
             taxis_locations[taxi] = [wanted_row, wanted_col]
 
         return reward, fuel, taxis_locations
@@ -996,3 +1006,38 @@ class TaxiEnv(MultiAgentEnv):
 
         return 15 * (self.passenger_destination_l1_distance(passenger_index, passenger_start_row, passenger_start_col) -
                      self.passenger_destination_l1_distance(passenger_index, taxi_current_row, taxi_currrent_col))
+
+    def set_display(self, val):
+        global display
+        display = val
+
+    def get_states_from_partial_obs(self, partial_obs):  # TODO Mira: add the multi agent case
+        states = []
+
+        for taxi_x in range(self.num_columns):  # 0
+            for taxi_y in range(self.num_rows):  # 1
+                for fuel in range(self.max_fuel[0]):  # 2
+                    for passenger_start_x, passenger_start_y in self.passengers_locations:  # 3, 4
+                        for passenger_dist_x, passenger_dist_y in self.passengers_locations:  # 5, 6
+                            for status in range(3):  # 7
+                                state = partial_obs.copy()
+                                state[0] = partial_obs[0] if partial_obs[0] else taxi_x
+                                state[1] = partial_obs[1] if partial_obs[1] else taxi_y
+                                state[2] = partial_obs[2] if partial_obs[2] else fuel
+                                state[3] = partial_obs[3] if partial_obs[3] else passenger_start_x
+                                state[4] = partial_obs[4] if partial_obs[4] else passenger_start_y
+                                state[5] = partial_obs[5] if partial_obs[5] else passenger_dist_x
+                                state[6] = partial_obs[6] if partial_obs[6] else passenger_dist_y
+                                state[7] = partial_obs[7] if partial_obs[7] else status
+                                states.append(state)
+        return states
+
+
+def get_states(cur_range, init_state, idx, states):
+    for i in range(cur_range):
+        if init_state[idx] == i:
+            continue
+        state = init_state.copy()
+        state[idx] = i
+        states.append(state)
+    return states

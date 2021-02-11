@@ -1,7 +1,10 @@
 import Agents.agent
-import ray
+# import ray
 import numpy as np
+
 # ===================== Agents ===================== #
+from constants import NUM_GPUS
+
 A2C = "a2c"
 A3C = "a3c"
 BC = "bc"
@@ -15,7 +18,14 @@ APPO = "appo"
 SAC = "sac"
 LIN_UCB = "lin_usb"
 LIN_TS = "lin_ts"
+# ===================== Agents ===================== #
+NUM_WORKERS = 1
+WITH_DEBUG = True
+TAXI = "taxi"
+agents_gamma = {'taxi_1': 0.85, 'taxi_2': 0.95, 'taxi_3': 0.85, 'taxi_4': 0.95}
+
 FORMAT_STRING = "{:3d} mean reward: {:6.2f}, variance: {:6.2f}, running time: {:6.2f}"
+
 
 def get_rl_agent(agent_name, config, env_to_agent):
     if agent_name == A2C:
@@ -61,10 +71,11 @@ def get_rl_agent(agent_name, config, env_to_agent):
         raise Exception("Not valid agent name")
     return agent
 
+
 class RLAgent(Agents.agent.Agent):
 
     # init agents and their observations
-    def __init__(self, decision_maker, observation = None ):
+    def __init__(self, decision_maker, observation=None):
         self.decision_maker = decision_maker
         self.observation = observation
 
@@ -89,7 +100,8 @@ def train(agent, iteration_num):
     return episode_reward_mean
 
 
-def run_episode(env, agent_rep, number_of_agents, config):
+def run_episode(env, agent_rep, number_of_agents, config, display=False):
+    env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
     print()
     print(" ===================================================== ")
     print(" ================ STARTING EVALUATION ================ ")
@@ -116,23 +128,57 @@ def run_episode(env, agent_rep, number_of_agents, config):
             episode_reward += sum(reward.values())  # sum up reward for all agents
     print(episode_reward)
 
+
+def create_agent_and_train(env, env_to_agent, env_name, number_of_agents, agent_name, iteration_num, display=False):
+    env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
+    config = get_config(env_name, env, number_of_agents)
+    agent = get_rl_agent(agent_name, config, env_to_agent)
+
+    # train the agent in the environment
+    episode_reward_mean = train(agent, iteration_num)
+    return agent, episode_reward_mean
+
+
+def get_config(env_name, env, number_of_agents):
+    """
+    TODO Guy: to expand the function to work with particle environment
+    :param env_name
+    :param env:
+    :param number_of_agents:
+    :return:
+    """
+    config = {}
+    if env_name == TAXI:
+        if number_of_agents == 1:  # single agent config
+            config = {"num_gpus": NUM_GPUS, "num_workers": NUM_WORKERS}
+        else:  # multi-agent config
+            policies = get_multi_agent_policies(env, number_of_agents)
+            config = {'multiagent': {'policies': policies, "policy_mapping_fn": lambda taxi_id: taxi_id},
+                      "num_gpus": NUM_GPUS,
+                      "num_workers": NUM_WORKERS}
+    return config
+
+
+def get_multi_agent_policies(env, number_of_agents):
+    policies = {}
+    for i in range(number_of_agents):
+        name = 'taxi_' + str(i + 1)
+        policies[name] = (None, env.observation_space, env.action_space, {'gamma': agents_gamma[name]})
+    return policies
+
+
 # get the action performed by the agents in each observation
-def get_policy_action( agent_rep, number_of_agents, obs, reshape = False):
-
+def get_policy_action(agent_rep, obs, reshape=False):
     # [taxi location], [current_fuel], [passengers_start_locations], [destinations], [passengers_status]
     if reshape:
         obs = np.reshape(obs, (1, len(obs)))
     action = agent_rep.compute_action(obs)
-    print(action)
     return action
 
-def get_policy_action_partial_obs( agent_rep, number_of_agents, partial_obs, reshape = False):
 
+def get_policy_action_partial_obs(agent_rep, partial_obs, reshape=False):
     # [taxi location], [current_fuel], [passengers_start_locations], [destinations], [passengers_status]
     if reshape:
-        obs = np.reshape(obs, (1, len(obs)))
-    action = agent_rep.compute_action(obs)
-    print(action)
+        partial_obs = np.reshape(partial_obs, (1, len(partial_obs)))  # TODO Mira - Add reshape for multi-agent
+    action = agent_rep.compute_action(partial_obs)
     return action
-
-

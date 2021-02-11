@@ -2,18 +2,18 @@ from constants import *
 from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
 import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
 
-# s = "{:3d} reward {:6.2f}/{:6.2f}/{:6.2f} len {:6.2f}"
-
 env = None
 agent = None
 config = None
 
 
-def get_env(env_name, number_of_agents=1, with_transform=False, transform_idxes=None):
+def get_env(env_name, number_of_agents=1, with_transform=False, transform=None, transform_idxes=None):
     """
     TODO Guy: to expand the function to work with particle environment
     :param env_name:
+    :param number_of_agents:
     :param with_transform:
+    :param transform:
     :param transform_idxes:
     :return:
     """
@@ -31,31 +31,27 @@ def get_env(env_name, number_of_agents=1, with_transform=False, transform_idxes=
         return transform_env, TransformEnvironment
 
 
-def get_multi_agent_policies(env, number_of_agents):
-    policies = {}
-    for i in range(number_of_agents):
-        name = 'taxi_' + str(i + 1)
-        policies[name] = (None, env.observation_space, env.action_space, {'gamma': agents_gamma[name]})
-    return policies
+def is_partial_obs_equal_to_state(partial_obs, state):
+    if len(partial_obs) != len(state):
+        raise Exception("The length of the partial observation differs from the state")
+    for i in range(len(partial_obs)):
+        if partial_obs[i] is None:
+            continue
+        if partial_obs[i] != state[i]:
+            return False
+    return True
 
 
-def get_config(env_name, env, number_of_agents):
-    """
-    TODO Guy: to expand the function to work with particle environment
-    :param env:
-    :param number_of_agents:
-    :return:
-    """
-    global config
-    config = {}
-    if env_name == TAXI:
-        if number_of_agents == 1:  # single agent config
-            config = {"num_gpus": NUM_GPUS, "num_workers": NUM_WORKERS}
-        else:  # multi-agent config
-            policies = get_multi_agent_policies(env, number_of_agents)
-            config = {'multiagent': {'policies': policies, "policy_mapping_fn": lambda taxi_id: taxi_id},
-                      "num_gpus": NUM_GPUS,
-                      "num_workers": NUM_WORKERS}
-    return config
-
-
+def target_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the multi agent case
+    for partial_obs in target_policy.keys():
+        original_partial_obs = partial_obs
+        partial_obs = list(partial_obs)
+        states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
+        for state in states_from_partial_obs:
+            if is_partial_obs_equal_to_state(partial_obs, state):
+                state = np.array(state)
+                state = np.reshape(state, (1, len(state)))
+                action = agent.compute_action(state)
+                if action != target_policy[original_partial_obs]:
+                    return False
+    return True

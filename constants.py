@@ -4,9 +4,7 @@ from Transforms.transforms import *
 
 # ================= Train variables ================ #
 ITER_NUM = 1000
-NUM_GPUS = 0
-NUM_WORKERS = 1
-WITH_DEBUG = True
+
 # =================== Transforms =================== #
 WITH_TRANSFORM = True
 TRANSFORM = DimReductionMultiAgents
@@ -19,7 +17,8 @@ NO_PASS_DEST_LOC_TRANSFORM = "no pass dest transform"
 NO_PASS_STATUS_LOC_TRANSFORM = "no pass status transform"
 # ================== Environments ================== #
 ENV = TransformEnvironment
-TAXI = "taxi"
+
 ENV_NAME = TAXI
 # ----------------- Env variables ------------------ #
-agents_gamma = {'taxi_1': 0.85, 'taxi_2': 0.95, 'taxi_3': 0.85, 'taxi_4': 0.95}
+
+NUM_GPUS = 0
