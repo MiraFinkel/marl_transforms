@@ -43,12 +43,13 @@ MAP = [
 ]
 
 WITHOUT_BORDERS_MAP = [
-    "+-------+",
-    "|X: : :X|",
-    "| : : : |",
-    "| : : : |",
-    "|X: : :X|",
-    "+-------+",
+    "+---------+",
+    "|X: :F: :X|",
+    "| : : : : |",
+    "| : : : : |",
+    "| : : : : |",
+    "|X: :G:X: |",
+    "+---------+",
 ]
 
 
@@ -175,7 +176,7 @@ class TaxiEnv(MultiAgentEnv):
             self.desc = np.asarray(WITHOUT_BORDERS_MAP, dtype='c')
         else:
             if domain_map is None:
-                self.desc = np.asarray(MAP, dtype='c')
+                self.desc = np.asarray(orig_MAP, dtype='c')
             else:
                 self.desc = np.asarray(domain_map, dtype='c')
 
@@ -1019,7 +1020,7 @@ class TaxiEnv(MultiAgentEnv):
                 for fuel in range(self.max_fuel[0]):  # 2
                     for passenger_start_x, passenger_start_y in self.passengers_locations:  # 3, 4
                         for passenger_dist_x, passenger_dist_y in self.passengers_locations:  # 5, 6
-                            for status in range(3):  # 7
+                            for status in range(1, 4):  # 7
                                 state = partial_obs.copy()
                                 state[0] = partial_obs[0] if partial_obs[0] else taxi_x
                                 state[1] = partial_obs[1] if partial_obs[1] else taxi_y
