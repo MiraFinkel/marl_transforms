@@ -83,6 +83,9 @@ class RLAgent(Agents.agent.Agent):
         return self.decision_maker
 
 
+g_config = {}
+
+
 def train(agent, iteration_num):
     episode_reward_mean = []
     # episode is until the system terminates
@@ -100,14 +103,14 @@ def train(agent, iteration_num):
     return episode_reward_mean
 
 
-def run_episode(env, agent_rep, number_of_agents, config, display=False):
+def run_episode(env, agent_rep, number_of_agents, display=False):
     env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
     print()
     print(" ===================================================== ")
     print(" ================ STARTING EVALUATION ================ ")
     print(" ===================================================== ")
     print()
-
+    global g_config
     obs = env.reset()
     done = False
     episode_reward = 0
@@ -121,7 +124,7 @@ def run_episode(env, agent_rep, number_of_agents, config, display=False):
         else:  # multi-agent
             action = {}
             for agent_id, agent_obs in obs.items():
-                policy_id = config['multiagent']['policy_mapping_fn'](agent_id)
+                policy_id = g_config['multiagent']['policy_mapping_fn'](agent_id)
                 action[agent_id] = agent_rep.compute_action(agent_obs, policy_id=policy_id)
             obs, reward, done, info = env.step(action)
             done = done['__all__']
@@ -156,6 +159,8 @@ def get_config(env_name, env, number_of_agents):
             config = {'multiagent': {'policies': policies, "policy_mapping_fn": lambda taxi_id: taxi_id},
                       "num_gpus": NUM_GPUS,
                       "num_workers": NUM_WORKERS}
+    global g_config
+    g_config = config
     return config
 
 

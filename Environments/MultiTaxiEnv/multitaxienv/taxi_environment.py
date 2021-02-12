@@ -19,9 +19,7 @@ from .config import TAXI_ENVIROMENT_REWARDS, BASE_AVAILABLE_ACTIONS, ALL_ACTIONS
 from ray.rllib.env import MultiAgentEnv
 
 display = False
-action_abstraction = False
-fuel_transform = False
-number_of_agents = 2
+number_of_agents = 1
 
 orig_MAP = [
     "+---------+",
@@ -42,38 +40,10 @@ MAP = [
     "+-------+",
 ]
 
-WITHOUT_BORDERS_MAP = [
-    "+---------+",
-    "|X: :F: :X|",
-    "| : : : : |",
-    "| : : : : |",
-    "| : : : : |",
-    "|X: :G:X: |",
-    "+---------+",
-]
-
-
-def set_action_abstraction(val):
-    global action_abstraction
-    action_abstraction = val
-
 
 def set_number_of_agents(val):
     global number_of_agents
     number_of_agents = val
-
-
-def set_no_fuel_transform(val):
-    global fuel_transform
-    fuel_transform = val
-
-
-def with_action_abstraction():
-    return action_abstraction
-
-
-def no_fuel_transform():
-    return fuel_transform
 
 
 # TODO change documentation to refer to rllib
@@ -172,13 +142,10 @@ class TaxiEnv(MultiAgentEnv):
         else:
             self.max_fuel = max_fuel
 
-        if with_action_abstraction():
-            self.desc = np.asarray(WITHOUT_BORDERS_MAP, dtype='c')
+        if domain_map is None:
+            self.desc = np.asarray(orig_MAP, dtype='c')
         else:
-            if domain_map is None:
-                self.desc = np.asarray(orig_MAP, dtype='c')
-            else:
-                self.desc = np.asarray(domain_map, dtype='c')
+            self.desc = np.asarray(domain_map, dtype='c')
 
         if taxis_capacity is None:
             self.taxis_capacity = [1] * num_passengers
@@ -634,11 +601,7 @@ class TaxiEnv(MultiAgentEnv):
         if fuel == 0:
             reward = ('no_fuel')
         else:
-
-            if no_fuel_transform():
-                fuel = fuel
-            else:
-                fuel = max(0, fuel - 1)
+            fuel = max(0, fuel - 1)
 
             taxis_locations[taxi] = [wanted_row, wanted_col]
 
