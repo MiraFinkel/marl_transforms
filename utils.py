@@ -2,10 +2,6 @@ from constants import *
 from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
 import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
 
-env = None
-agent = None
-config = None
-
 
 def get_env(env_name, number_of_agents=1, with_transform=False, transform=None, transform_idxes=None):
     """
@@ -43,15 +39,22 @@ def is_partial_obs_equal_to_state(partial_obs, state):
 
 
 def target_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the multi agent case
+    num_of_success_policies = 0
+    num_of_failed_policies = 0
+    result = True
     for partial_obs in target_policy.keys():
         original_partial_obs = partial_obs
         partial_obs = list(partial_obs)
         states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
         for state in states_from_partial_obs:
-            if is_partial_obs_equal_to_state(partial_obs, state):
-                state = np.array(state)
-                state = np.reshape(state, (1, len(state)))
-                action = agent.compute_action(state)
-                if action != target_policy[original_partial_obs]:
-                    return False
-    return True
+            state = np.array(state)
+            state = np.reshape(state, (1, len(state)))
+            action = agent.compute_action(state)
+            if action != target_policy[original_partial_obs]:
+                num_of_failed_policies += 1
+                result = False
+            else:
+                num_of_success_policies += 1
+    print("=========> num_of_success_policies: ", num_of_success_policies)
+    print("=========> num_of_failed_policies: ", num_of_failed_policies)
+    return result
