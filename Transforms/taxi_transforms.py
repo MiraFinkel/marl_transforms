@@ -17,7 +17,7 @@ class TaxiTransformedEnv(TaxiEnv):
                 partial_obs[6] is None or partial_obs[6] == obs[6]):
             taxi_x = [partial_obs[0]] if partial_obs[0] else list(range(self.num_columns))
             taxi_y = [partial_obs[1]] if partial_obs[1] else list(range(self.num_rows))
-            fuel = [partial_obs[2]] if partial_obs[2] else list(range(self.max_fuel[0]))
+            fuel = [100]  # [partial_obs[2]] if partial_obs[2] else list(range(self.max_fuel[0]))
             passenger_start_x, passenger_start_y = [obs[3]], [obs[4]]
             passenger_dest_x, passenger_dest_y = [obs[5]], [obs[6]]
             passenger_status = [partial_obs[7]] if partial_obs[7] else list(range(1, 4))

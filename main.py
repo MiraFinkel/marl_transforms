@@ -1,4 +1,6 @@
-from Transforms.taxi_transforms import taxi_infinite_fuel_transform
+from Environments.MultiTaxiEnv.multitaxienv.config import NEW_TAXI_ENVIRONMENT_REWARDS
+from Transforms.taxi_transforms import taxi_move_through_walls_transform, taxi_infinite_fuel_transform, \
+    taxi_reward_transform
 from utils import *
 from visualize import *
 from Agents.rl_agent import *
@@ -11,6 +13,20 @@ if __name__ == '__main__':
     number_of_agents = 1
     agent_name = PPO
     iteration_num = 2
+
+    # get the environment
+    env, env_to_agent = get_env(env_name, number_of_agents)
+
+    # define the agents that are operating in the environment
+    ray.init(num_gpus=NUM_GPUS, local_mode=True)
+
+    # create agent and train it in env
+    agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_to_agent, env_name, number_of_agents,
+                                                                 agent_name, iteration_num, display=False)
+
+    # evaluate the performance of the agent
+    # rl_agent.run_episode(env, agent, number_of_agents, display=True)  # TODO Mira: add evaluation function?
+
     # the target policy (which is part of our input and defined by the user)
     target_policy = {
         # (0, 1, None, 0, 0, None, None, 2): 3,  # left
@@ -40,40 +56,30 @@ if __name__ == '__main__':
         # (4, 4, None, None, None, 4, 3, 3): 3,  # left
         (4, 3, None, None, None, 4, 3, 3): 5}  # dropoff
 
-    # get the environment
-    env, env_to_agent = get_env(env_name, number_of_agents)
-
-    # define the agents that are operating in the environment
-    ray.init(num_gpus=NUM_GPUS, local_mode=True)
-
-    # create agent and train it in env
-    agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_to_agent, env_name, number_of_agents,
-                                                                 agent_name, iteration_num, display=False)
-
-    # evaluate the performance of the agent
-    rl_agent.run_episode(env, agent, number_of_agents, display=True)  # TODO Mira: add evaluation function?
-
     # compare policy with target policy
     # get the policy of the agents for all the states defined in the target policy e.g. [3,3,0,2,3,4,5] [3,3,0,2,3,4,8]
     # TODO Mira: I think we don't need the mapping function here, because the data structure will bw too big (?)
     # compare the target policy with the agent's policy
 
     # create a transformed environment
-    transforms = [taxi_infinite_fuel_transform]
+    transforms = [taxi_infinite_fuel_transform, taxi_reward_transform]
+    with_reward_transform = False
     explanation = None
 
-    # transformed_env, transformed_env_to_agent = get_env(env_name, number_of_agents, with_transform=True)
     transform_rewards = []
     transformed_env = env
     for transform in transforms:
         # create transformed environment
         transformed_env = transform(transformed_env)
+        if with_reward_transform:
+            transformed_env.set_reward_dict(NEW_TAXI_ENVIRONMENT_REWARDS)
 
         # create and train agents in env
         agent, transform_episode_reward_mean = rl_agent.create_agent_and_train(transformed_env, env_to_agent,
                                                                                env_name, number_of_agents, agent_name,
                                                                                iteration_num, display=False)
         transform_rewards.append(transform_episode_reward_mean)
+        with_reward_transform = True
         # check if the target policy is achieved in trans_env
         if target_policy_achieved(transformed_env, agent, target_policy):
             explanation = transform
@@ -87,7 +93,7 @@ if __name__ == '__main__':
     # rl_agent.run_episode(transformed_env, agent, number_of_agents, display=True)
     # visualize rewards
     results = [episode_reward_mean] + transform_rewards
-    names = [WITHOUT_TRANSFORM, "no fuel"]
+    names = [WITHOUT_TRANSFORM, "no fuel", "rewards"]
     plot_result_graph(agent_name, results, names, "episode_reward_mean")
 
     # shut_down

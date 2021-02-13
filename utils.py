@@ -39,6 +39,7 @@ def is_partial_obs_equal_to_state(partial_obs, state):
 
 
 def target_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the multi agent case
+    print(" ============================================================== ")
     num_of_success_policies = 0
     num_of_failed_policies = 0
     result = True
@@ -50,10 +51,15 @@ def target_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the
             state = np.reshape(np.array(state), (1, len(state)))
             action = agent.compute_action(state)
             if action != target_policy[original_partial_obs]:
+                # print("[FAIL]: action: {}, target_policy[partial_obs]: {}".format(action, target_policy[original_partial_obs]))
+                # print("[FAIL]: state: {}".format(state))
                 num_of_failed_policies += 1
                 result = False
             else:
+                # print("[SUCCESS]: action: {}, target_policy[partial_obs]: {}".format(action, target_policy[original_partial_obs]))
+                # print("[SUCCESS]: state: {}".format(state))
                 num_of_success_policies += 1
+    print(" ============================================================== ")
     print("=========> num_of_success_policies: ", num_of_success_policies)
     print("=========> num_of_failed_policies: ", num_of_failed_policies)
     return result
