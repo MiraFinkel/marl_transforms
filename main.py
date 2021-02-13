@@ -12,32 +12,33 @@ if __name__ == '__main__':
     agent_name = PPO
     iteration_num = 2
     # the target policy (which is part of our input and defined by the user)
-    target_policy = {(0, 1, None, 0, 0, None, None, 2): 3,  # left
-                     (1, 0, None, 0, 0, None, None, 2): 0,  # up
-                     (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
-                     (4, 1, None, 4, 0, None, None, 2): 3,  # left
-                     (3, 0, None, 4, 0, None, None, 2): 1,  # down
-                     (4, 0, None, 4, 0, None, None, 2): 4,  # pickup
-                     (0, 3, None, 0, 4, None, None, 2): 2,  # right
-                     (1, 4, None, 0, 4, None, None, 2): 0,  # up
-                     (0, 4, None, 0, 4, None, None, 2): 4,  # pickup
-                     (4, 2, None, 4, 3, None, None, 2): 2,  # right
-                     (3, 3, None, 4, 3, None, None, 2): 1,  # down
-                     (4, 4, None, 4, 3, None, None, 2): 3,  # left
-                     (4, 3, None, 4, 3, None, None, 2): 4,  # pickup <==
-                     (0, 1, None, None, None, 0, 0, 3): 3,  # left
-                     (1, 0, None, None, None, 0, 0, 3): 0,  # up
-                     (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
-                     (4, 1, None, None, None, 4, 0, 3): 3,  # left
-                     (3, 0, None, None, None, 4, 0, 3): 1,  # down
-                     (4, 0, None, None, None, 4, 0, 3): 5,  # dropoff
-                     (0, 3, None, None, None, 0, 4, 3): 2,  # right
-                     (1, 4, None, None, None, 0, 4, 3): 0,  # up
-                     (0, 4, None, None, None, 0, 4, 3): 5,  # dropoff
-                     (4, 2, None, None, None, 4, 3, 3): 2,  # right
-                     (3, 3, None, None, None, 4, 3, 3): 1,  # down
-                     (4, 4, None, None, None, 4, 3, 3): 3,  # left
-                     (4, 3, None, None, None, 4, 3, 3): 5}  # dropoff
+    target_policy = {
+        # (0, 1, None, 0, 0, None, None, 2): 3,  # left
+        # (1, 0, None, 0, 0, None, None, 2): 0,  # up
+        (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
+        # (4, 1, None, 4, 0, None, None, 2): 3,  # left
+        # (3, 0, None, 4, 0, None, None, 2): 1,  # down
+        (4, 0, None, 4, 0, None, None, 2): 4,  # pickup
+        # (0, 3, None, 0, 4, None, None, 2): 2,  # right
+        # (1, 4, None, 0, 4, None, None, 2): 0,  # up
+        (0, 4, None, 0, 4, None, None, 2): 4,  # pickup
+        # (4, 2, None, 4, 3, None, None, 2): 2,  # right
+        # (3, 3, None, 4, 3, None, None, 2): 1,  # down
+        # (4, 4, None, 4, 3, None, None, 2): 3,  # left
+        (4, 3, None, 4, 3, None, None, 2): 4,  # pickup <==
+        # (0, 1, None, None, None, 0, 0, 3): 3,  # left
+        # (1, 0, None, None, None, 0, 0, 3): 0,  # up
+        (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
+        # (4, 1, None, None, None, 4, 0, 3): 3,  # left
+        # (3, 0, None, None, None, 4, 0, 3): 1,  # down
+        (4, 0, None, None, None, 4, 0, 3): 5,  # dropoff
+        # (0, 3, None, None, None, 0, 4, 3): 2,  # right
+        # (1, 4, None, None, None, 0, 4, 3): 0,  # up
+        (0, 4, None, None, None, 0, 4, 3): 5,  # dropoff
+        # (4, 2, None, None, None, 4, 3, 3): 2,  # right
+        # (3, 3, None, None, None, 4, 3, 3): 1,  # down
+        # (4, 4, None, None, None, 4, 3, 3): 3,  # left
+        (4, 3, None, None, None, 4, 3, 3): 5}  # dropoff
 
     # get the environment
     env, env_to_agent = get_env(env_name, number_of_agents)

@@ -47,8 +47,7 @@ def target_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the
         partial_obs = list(partial_obs)
         states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
         for state in states_from_partial_obs:
-            state = np.array(state)
-            state = np.reshape(state, (1, len(state)))
+            state = np.reshape(np.array(state), (1, len(state)))
             action = agent.compute_action(state)
             if action != target_policy[original_partial_obs]:
                 num_of_failed_policies += 1
