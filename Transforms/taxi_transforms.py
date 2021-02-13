@@ -1,10 +1,34 @@
+from itertools import product
+
 from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
 
 
-class TaxiNoWallsTransform(TaxiEnv):
-
+class TaxiTransformedEnv(TaxiEnv):
     def __init__(self, **kwargs):
         super().__init__(kwargs)
+
+    def get_states_from_partial_obs(self, partial_obs):  # TODO Mira: add the multi agent case
+        states = []
+        obs = self.reset()
+        obs = obs[list(obs.keys())[0]].tolist()[0]  # get the observation as a list
+        if (partial_obs[3] is None or partial_obs[3] == obs[3]) and (
+                partial_obs[4] is None or partial_obs[4] == obs[4]) and (
+                partial_obs[5] is None or partial_obs[5] == obs[5]) and (
+                partial_obs[6] is None or partial_obs[6] == obs[6]):
+            taxi_x = [partial_obs[0]] if partial_obs[0] else list(range(self.num_columns))
+            taxi_y = [partial_obs[1]] if partial_obs[1] else list(range(self.num_rows))
+            fuel = [partial_obs[2]] if partial_obs[2] else list(range(self.max_fuel[0]))
+            passenger_start_x, passenger_start_y = [obs[3]], [obs[4]]
+            passenger_dest_x, passenger_dest_y = [obs[5]], [obs[6]]
+            passenger_status = [partial_obs[7]] if partial_obs[7] else list(range(1, 4))
+            states = list(
+                product(taxi_x, taxi_y, fuel, passenger_start_x, passenger_start_y, passenger_dest_x, passenger_dest_y,
+                        passenger_status, repeat=1))
+            states = [list(state) for state in states]
+        return states
+
+
+class TaxiNoWallsTransform(TaxiTransformedEnv):
 
     def _take_movement(self, action: str, row: int, col: int) -> (bool, int, int):
         """
@@ -42,9 +66,7 @@ class TaxiNoWallsTransform(TaxiEnv):
         return moved, new_row, new_col
 
 
-class TaxiInfiniteFuelTransform(TaxiEnv):
-    def __init__(self, **kwargs):
-        super().__init__(kwargs)
+class TaxiInfiniteFuelTransform(TaxiTransformedEnv):
 
     def _update_movement_wrt_fuel(self, taxi: int, taxis_locations: list, wanted_row: int, wanted_col: int,
                                   reward: int, fuel: int) -> (int, int, list):
@@ -65,9 +87,9 @@ class TaxiInfiniteFuelTransform(TaxiEnv):
         return reward, fuel, taxis_locations
 
 
-class TaxiRewardTransform(TaxiEnv):
+class TaxiRewardTransform(TaxiTransformedEnv):
     def __init__(self, **kwargs):
-        super().__init__(kwargs)
+        super().__init__()
         self.reward_dict = {}
         self.display = False
 

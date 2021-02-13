@@ -975,33 +975,4 @@ class TaxiEnv(MultiAgentEnv):
         global display
         display = val
 
-    def get_states_from_partial_obs(self, partial_obs):  # TODO Mira: add the multi agent case
-        states = []
 
-        for taxi_x in range(self.num_columns):  # 0
-            for taxi_y in range(self.num_rows):  # 1
-                for fuel in range(self.max_fuel[0]):  # 2
-                    for passenger_start_x, passenger_start_y in self.passengers_locations:  # 3, 4
-                        for passenger_dist_x, passenger_dist_y in self.passengers_locations:  # 5, 6
-                            for status in range(1, 4):  # 7
-                                state = partial_obs.copy()
-                                state[0] = partial_obs[0] if partial_obs[0] else taxi_x
-                                state[1] = partial_obs[1] if partial_obs[1] else taxi_y
-                                state[2] = partial_obs[2] if partial_obs[2] else fuel
-                                state[3] = partial_obs[3] if partial_obs[3] else passenger_start_x
-                                state[4] = partial_obs[4] if partial_obs[4] else passenger_start_y
-                                state[5] = partial_obs[5] if partial_obs[5] else passenger_dist_x
-                                state[6] = partial_obs[6] if partial_obs[6] else passenger_dist_y
-                                state[7] = partial_obs[7] if partial_obs[7] else status
-                                states.append(state)
-        return states
-
-
-def get_states(cur_range, init_state, idx, states):
-    for i in range(cur_range):
-        if init_state[idx] == i:
-            continue
-        state = init_state.copy()
-        state[idx] = i
-        states.append(state)
-    return states
