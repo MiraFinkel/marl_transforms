@@ -9,7 +9,7 @@ import ray
 
 if __name__ == '__main__':
     # define the environment
-    env_name = SPEAKER_LISTENER
+    env_name = TAXI
     number_of_agents = 1
     agent_name = PPO
     iteration_num = 2
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     env, env_to_agent = get_env(env_name, number_of_agents)
 
     # define the agents that are operating in the environment
-    ray.init(num_gpus=0, local_mode=True)
+    ray.init(num_gpus=NUM_GPUS, local_mode=True)
 
     # create agent and train it in env
     agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_to_agent, env_name, number_of_agents,
