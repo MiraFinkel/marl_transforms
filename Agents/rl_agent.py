@@ -3,7 +3,7 @@ import Agents.agent
 import numpy as np
 
 # ===================== Agents ===================== #
-from constants import NUM_GPUS
+NUM_GPUS = 0
 
 A2C = "a2c"
 A3C = "a3c"
@@ -22,6 +22,7 @@ LIN_TS = "lin_ts"
 NUM_WORKERS = 1
 WITH_DEBUG = True
 TAXI = "taxi"
+SPEAKER_LISTENER = "simple_speaker_listener"
 agents_gamma = {'taxi_1': 0.85, 'taxi_2': 0.95, 'taxi_3': 0.85, 'taxi_4': 0.95}
 
 FORMAT_STRING = "{:3d} mean reward: {:6.2f}, variance: {:6.2f}, running time: {:6.2f}"
@@ -83,9 +84,6 @@ class RLAgent(Agents.agent.Agent):
         return self.decision_maker
 
 
-g_config = {}
-
-
 def train(agent, iteration_num):
     episode_reward_mean = []
     # episode is until the system terminates
@@ -103,14 +101,14 @@ def train(agent, iteration_num):
     return episode_reward_mean
 
 
-def run_episode(env, agent_rep, number_of_agents, display=False):
+def run_episode(env, agent_rep, number_of_agents, config, display=False):
     env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
     print()
     print(" ===================================================== ")
     print(" ================ STARTING EVALUATION ================ ")
     print(" ===================================================== ")
     print()
-    global g_config
+
     obs = env.reset()
     done = False
     episode_reward = 0
@@ -124,7 +122,7 @@ def run_episode(env, agent_rep, number_of_agents, display=False):
         else:  # multi-agent
             action = {}
             for agent_id, agent_obs in obs.items():
-                policy_id = g_config['multiagent']['policy_mapping_fn'](agent_id)
+                policy_id = config['multiagent']['policy_mapping_fn'](agent_id)
                 action[agent_id] = agent_rep.compute_action(agent_obs, policy_id=policy_id)
             obs, reward, done, info = env.step(action)
             done = done['__all__']
@@ -133,7 +131,6 @@ def run_episode(env, agent_rep, number_of_agents, display=False):
 
 
 def create_agent_and_train(env, env_to_agent, env_name, number_of_agents, agent_name, iteration_num, display=False):
-    env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
     config = get_config(env_name, env, number_of_agents)
     agent = get_rl_agent(agent_name, config, env_to_agent)
 
@@ -145,10 +142,10 @@ def create_agent_and_train(env, env_to_agent, env_name, number_of_agents, agent_
 def get_config(env_name, env, number_of_agents):
     """
     TODO Guy: to expand the function to work with particle environment
-    :param env_name
-    :param env:
-    :param number_of_agents:
-    :return:
+    :param env_name The name of the env to create
+    :param env: The env obj itself
+    :param number_of_agents: number of agents to deploy in the environment
+    :return: config for environemtn
     """
     config = {}
     if env_name == TAXI:
@@ -159,8 +156,17 @@ def get_config(env_name, env, number_of_agents):
             config = {'multiagent': {'policies': policies, "policy_mapping_fn": lambda taxi_id: taxi_id},
                       "num_gpus": NUM_GPUS,
                       "num_workers": NUM_WORKERS}
-    global g_config
-    g_config = config
+    if env_name == SPEAKER_LISTENER:
+        config = {
+            "num_gpus": 0,
+            "lr_schedule": [[0, 0.007], [20000000, 0.0000000001]],
+            "framework": "torch",
+            "env_config": {"name": "simple_speaker_listener"},
+            "clip_rewards": True,
+            "num_envs_per_worker": 1,
+            "rollout_fragment_length": 20,
+            "monitor": True,
+        }
     return config
 
 
