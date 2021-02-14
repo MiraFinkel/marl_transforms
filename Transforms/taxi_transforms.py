@@ -31,8 +31,8 @@ class TaxiTransformedEnv(TaxiEnv):
         passenger_start_x, passenger_start_y, passenger_dest_x, passenger_dest_y = self._get_passenger_info(partial_obs)
         return (passenger_start_x is None or passenger_start_x == obs[3]) and (
                 passenger_start_y is None or passenger_start_y == obs[4]) and (
-                passenger_dest_x is None or passenger_dest_x == obs[5]) and (
-                passenger_dest_y is None or passenger_dest_y == obs[6])
+                       passenger_dest_x is None or passenger_dest_x == obs[5]) and (
+                       passenger_dest_y is None or passenger_dest_y == obs[6])
 
     def _get_passenger_info(self, partial_obs):
         passenger_start_x, passenger_start_y = partial_obs[3], partial_obs[4]
@@ -297,7 +297,7 @@ def taxi_move_through_walls_transform(env):
     Taxi can move through walls
     """
     new_env = TaxiNoWallsTransform()
-    return new_env
+    return new_env, TaxiNoWallsTransform
 
 
 def taxi_infinite_fuel_transform(env):
@@ -305,7 +305,7 @@ def taxi_infinite_fuel_transform(env):
     Infinite fuel environment
     """
     new_env = TaxiInfiniteFuelTransform()
-    return new_env
+    return new_env, TaxiInfiniteFuelTransform
 
 
 def taxi_reward_transform(env, new_rewards=None):
@@ -314,4 +314,4 @@ def taxi_reward_transform(env, new_rewards=None):
     """
     new_env = TaxiRewardTransform()
     new_env.set_reward_dict(new_rewards)
-    return new_env
+    return new_env, TaxiRewardTransform
