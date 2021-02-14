@@ -4,7 +4,7 @@ from Transforms.transforms import *
 
 # ================= Train variables ================ #
 ITER_NUM = 1000
-
+SPEAKER_LISTENER = "simple_speaker_listener"
 # =================== Transforms =================== #
 WITH_TRANSFORM = True
 TRANSFORM = DimReductionMultiAgents

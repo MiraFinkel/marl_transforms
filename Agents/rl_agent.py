@@ -22,6 +22,8 @@ LIN_TS = "lin_ts"
 NUM_WORKERS = 1
 WITH_DEBUG = True
 TAXI = "taxi"
+SPEAKER_LISTENER = "simple_speaker_listener"
+
 agents_gamma = {'taxi_1': 0.85, 'taxi_2': 0.95, 'taxi_3': 0.85, 'taxi_4': 0.95}
 
 FORMAT_STRING = "{:3d} mean reward: {:6.2f}, variance: {:6.2f}, running time: {:6.2f}"
@@ -133,7 +135,7 @@ def run_episode(env, agent_rep, number_of_agents, display=False):
 
 
 def create_agent_and_train(env, env_to_agent, env_name, number_of_agents, agent_name, iteration_num, display=False):
-    env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
+    # env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
     config = get_config(env_name, env, number_of_agents)
     agent = get_rl_agent(agent_name, config, env_to_agent)
 
@@ -159,6 +161,17 @@ def get_config(env_name, env, number_of_agents):
             config = {'multiagent': {'policies': policies, "policy_mapping_fn": lambda taxi_id: taxi_id},
                       "num_gpus": NUM_GPUS,
                       "num_workers": NUM_WORKERS}
+    if env_name == SPEAKER_LISTENER:
+        config = {
+            "num_gpus": 0,
+            "lr_schedule": [[0, 0.007], [20000000, 0.0000000001]],
+            "framework": "torch",
+            "env_config": {"name": "simple_speaker_listener"},
+            "clip_rewards": True,
+            "num_envs_per_worker": 1,
+            "rollout_fragment_length": 20,
+            "monitor": True,
+        }
     global g_config
     g_config = config
     return config
