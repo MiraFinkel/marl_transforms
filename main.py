@@ -9,7 +9,7 @@ import ray
 
 if __name__ == '__main__':
     # define the environment
-    env_name = SPEAKER_LISTENER
+    env_name = TAXI
     number_of_agents = 1
     agent_name = PPO
     iteration_num = 2
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     env, env_to_agent = get_env(env_name, number_of_agents)
 
     # define the agents that are operating in the environment
-    ray.init(num_gpus=0, local_mode=True)
+    ray.init(num_gpus=NUM_GPUS, local_mode=True)
 
     # create agent and train it in env
     agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_to_agent, env_name, number_of_agents,
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # compare the target policy with the agent's policy
 
     # create a transformed environment
-    transforms = [taxi_infinite_fuel_transform, taxi_reward_transform]
+    transforms = [taxi_move_through_walls_transform, taxi_infinite_fuel_transform]
     with_reward_transform = False
     explanation = None
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     transformed_env = env
     for transform in transforms:
         # create transformed environment
-        transformed_env = transform(transformed_env)
+        transformed_env, env_to_agent = transform(transformed_env)
         if with_reward_transform:
             transformed_env.set_reward_dict(NEW_TAXI_ENVIRONMENT_REWARDS)
 
