@@ -131,11 +131,11 @@ MAPPING_CLASS = DimReductionMultiAgents
 
 
 class TransformEnvironment(MultiAgentEnv):
-    def __init__(self, env_name=ENV_NAME, mapping_class=MAPPING_CLASS, **kwargs):
-        self._env = TaxiEnv(kwargs)
+    def __init__(self, mapping_class=MAPPING_CLASS, **kwargs):
         self._mapping_class = None
         if mapping_class:
-            self._mapping_class = mapping_class(self._env)
+            self._mapping_class = mapping_class
+        self._env = TaxiEnv(kwargs)
         self.action_space = self._env.action_space
         self.observation_space = self._env.observation_space
 

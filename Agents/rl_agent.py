@@ -161,7 +161,7 @@ def get_config(env_name, env, number_of_agents):
             config = {'multiagent': {'policies': policies, "policy_mapping_fn": lambda taxi_id: taxi_id},
                       "num_gpus": NUM_GPUS,
                       "num_workers": NUM_WORKERS}
-    if env_name == SPEAKER_LISTENER:
+    elif env_name == SPEAKER_LISTENER:
         config = {
             "num_gpus": 0,
             "lr_schedule": [[0, 0.007], [20000000, 0.0000000001]],

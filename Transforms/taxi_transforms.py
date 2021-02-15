@@ -1,6 +1,16 @@
 from itertools import product
+import numpy as np
+from ray.rllib.env import MultiAgentEnv
 
-from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
+from Environments.MultiTaxiEnv.multitaxienv.config import TAXI_ENVIROMENT_REWARDS
+from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv, display
+
+number_of_agents = 1
+
+
+def set_number_of_agents(val):
+    global number_of_agents
+    number_of_agents = val
 
 
 class TaxiTransformedEnv(TaxiEnv):
@@ -41,6 +51,8 @@ class TaxiTransformedEnv(TaxiEnv):
 
 
 class TaxiNoWallsTransform(TaxiTransformedEnv):
+    def __init__(self, x=None, **kwargs):
+        super().__init__(**kwargs)
 
     def _take_movement(self, action: str, row: int, col: int) -> (bool, int, int):
         """
@@ -79,6 +91,8 @@ class TaxiNoWallsTransform(TaxiTransformedEnv):
 
 
 class TaxiInfiniteFuelTransform(TaxiTransformedEnv):
+    def __init__(self, x=None, **kwargs):
+        super().__init__(**kwargs)
 
     def _update_movement_wrt_fuel(self, taxi: int, taxis_locations: list, wanted_row: int, wanted_col: int,
                                   reward: int, fuel: int) -> (int, int, list):
@@ -100,8 +114,8 @@ class TaxiInfiniteFuelTransform(TaxiTransformedEnv):
 
 
 class TaxiRewardTransform(TaxiTransformedEnv):
-    def __init__(self, **kwargs):
-        super().__init__()
+    def __init__(self, x=None, **kwargs):
+        super().__init__(**kwargs)
         self.reward_dict = {}
         self.display = False
 
@@ -304,6 +318,8 @@ def taxi_infinite_fuel_transform(env):
     """
     Infinite fuel environment
     """
+    import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
+    taxi_env.set_number_of_agents(1)
     new_env = TaxiInfiniteFuelTransform()
     return new_env, TaxiInfiniteFuelTransform
 

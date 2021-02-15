@@ -79,7 +79,6 @@ if __name__ == '__main__':
                                                                                env_name, number_of_agents, agent_name,
                                                                                iteration_num, display=False)
         transform_rewards.append(transform_episode_reward_mean)
-        with_reward_transform = True
         # check if the target policy is achieved in trans_env
         if target_policy_achieved(transformed_env, agent, target_policy):
             explanation = transform
