@@ -7,6 +7,15 @@ from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv, dis
 
 number_of_agents = 1
 
+NEW_MAP = [
+    "+-------+",
+    "|X: : :X|",
+    "| : : : |",
+    "| : : : |",
+    "|X: : :X|",
+    "+-------+",
+]
+
 
 def set_number_of_agents(val):
     global number_of_agents
@@ -48,6 +57,11 @@ class TaxiTransformedEnv(TaxiEnv):
         passenger_start_x, passenger_start_y = partial_obs[3], partial_obs[4]
         passenger_dest_x, passenger_dest_y = partial_obs[5], partial_obs[6]
         return passenger_start_x, passenger_start_y, passenger_dest_x, passenger_dest_y
+
+
+class TaxiSmallMapTransform(TaxiTransformedEnv):
+    def __init__(self, x=None, **kwargs):
+        super().__init__(domain_map=NEW_MAP)
 
 
 class TaxiNoWallsTransform(TaxiTransformedEnv):
@@ -304,6 +318,14 @@ class TaxiRewardTransform(TaxiTransformedEnv):
 
         return 15 * (self.passenger_destination_l1_distance(passenger_index, passenger_start_row, passenger_start_col) -
                      self.passenger_destination_l1_distance(passenger_index, taxi_current_row, taxi_currrent_col))
+
+
+def taxi_small_map_transform(env):
+    """
+    set the rewards in the environment
+    """
+    new_env = TaxiSmallMapTransform()
+    return new_env, TaxiSmallMapTransform
 
 
 def taxi_move_through_walls_transform(env):

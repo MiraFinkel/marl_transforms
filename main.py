@@ -1,6 +1,6 @@
 from Environments.MultiTaxiEnv.multitaxienv.config import NEW_TAXI_ENVIRONMENT_REWARDS
 from Transforms.taxi_transforms import taxi_move_through_walls_transform, taxi_infinite_fuel_transform, \
-    taxi_reward_transform
+    taxi_reward_transform, taxi_small_map_transform
 from utils import *
 from visualize import *
 from Agents.rl_agent import *
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # compare the target policy with the agent's policy
 
     # create a transformed environment
-    transforms = [taxi_move_through_walls_transform, taxi_infinite_fuel_transform]
+    transforms = [taxi_small_map_transform]
     with_reward_transform = False
     explanation = None
 
@@ -79,7 +79,6 @@ if __name__ == '__main__':
                                                                                env_name, number_of_agents, agent_name,
                                                                                iteration_num, display=False)
         transform_rewards.append(transform_episode_reward_mean)
-        with_reward_transform = True
         # check if the target policy is achieved in trans_env
         if target_policy_achieved(transformed_env, agent, target_policy):
             explanation = transform
