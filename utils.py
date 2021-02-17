@@ -1,4 +1,3 @@
-from Transforms.taxi_transforms import TaxiInfiniteFuelTransform
 from constants import *
 import numpy as np
 
@@ -11,11 +10,9 @@ def get_env(env_name, number_of_agents=1):
     :return:
     """
     if env_name == TAXI:
-        from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
-        import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
-        taxi_env.set_number_of_agents(number_of_agents)
-        env = TaxiEnv()
-        return env, TaxiEnv
+        from Transforms.taxi_transforms import TaxiSimpleEnv
+        env = TaxiSimpleEnv()
+        return env, TaxiSimpleEnv
     if env_name == SPEAKER_LISTENER:
         from supersuit import pad_observations_v0, pad_action_space_v0
         from pettingzoo.mpe import simple_speaker_listener_v3
@@ -52,7 +49,7 @@ def target_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the
         original_partial_obs = partial_obs
         partial_obs = list(partial_obs)
         states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
-        for state in states_from_partial_obs:
+        for i, state in enumerate(states_from_partial_obs):
             state = np.reshape(np.array(state), (1, len(state)))
             action = agent.compute_action(state)
             if action != target_policy[original_partial_obs]:

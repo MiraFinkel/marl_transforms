@@ -11,7 +11,7 @@ if __name__ == '__main__':
     env_name = TAXI
     number_of_agents = 1
     agent_name = PPO
-    iteration_num = 2
+    iteration_num = 1
 
     # get the environment
     env, env_to_agent = get_env(env_name, number_of_agents)
@@ -28,32 +28,14 @@ if __name__ == '__main__':
 
     # the target policy (which is part of our input and defined by the user)
     target_policy = {
-        # (0, 1, None, 0, 0, None, None, 2): 3,  # left
-        # (1, 0, None, 0, 0, None, None, 2): 0,  # up
         (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
-        # (4, 1, None, 4, 0, None, None, 2): 3,  # left
-        # (3, 0, None, 4, 0, None, None, 2): 1,  # down
-        (4, 0, None, 4, 0, None, None, 2): 4,  # pickup
-        # (0, 3, None, 0, 4, None, None, 2): 2,  # right
-        # (1, 4, None, 0, 4, None, None, 2): 0,  # up
-        (0, 4, None, 0, 4, None, None, 2): 4,  # pickup
-        # (4, 2, None, 4, 3, None, None, 2): 2,  # right
-        # (3, 3, None, 4, 3, None, None, 2): 1,  # down
-        # (4, 4, None, 4, 3, None, None, 2): 3,  # left
-        (4, 3, None, 4, 3, None, None, 2): 4,  # pickup <==
-        # (0, 1, None, None, None, 0, 0, 3): 3,  # left
-        # (1, 0, None, None, None, 0, 0, 3): 0,  # up
+        (3, 0, None, 3, 0, None, None, 2): 4,  # pickup
+        (0, 3, None, 0, 3, None, None, 2): 4,  # pickup
+        (3, 3, None, 3, 3, None, None, 2): 4,  # pickup <==
         (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
-        # (4, 1, None, None, None, 4, 0, 3): 3,  # left
-        # (3, 0, None, None, None, 4, 0, 3): 1,  # down
-        (4, 0, None, None, None, 4, 0, 3): 5,  # dropoff
-        # (0, 3, None, None, None, 0, 4, 3): 2,  # right
-        # (1, 4, None, None, None, 0, 4, 3): 0,  # up
-        (0, 4, None, None, None, 0, 4, 3): 5,  # dropoff
-        # (4, 2, None, None, None, 4, 3, 3): 2,  # right
-        # (3, 3, None, None, None, 4, 3, 3): 1,  # down
-        # (4, 4, None, None, None, 4, 3, 3): 3,  # left
-        (4, 3, None, None, None, 4, 3, 3): 5}  # dropoff
+        (3, 0, None, None, None, 3, 0, 3): 5,  # dropoff
+        (0, 3, None, None, None, 0, 3, 3): 5,  # dropoff
+        (3, 3, None, None, None, 3, 3, 3): 5}  # dropoff
 
     # compare policy with target policy
     # get the policy of the agents for all the states defined in the target policy e.g. [3,3,0,2,3,4,5] [3,3,0,2,3,4,8]
@@ -61,8 +43,7 @@ if __name__ == '__main__':
     # compare the target policy with the agent's policy
 
     # create a transformed environment
-    transforms = [taxi_lock_starting_position_transform]
-    with_reward_transform = False
+    transforms = [taxi_deterministic_position_transform]
     explanation = None
 
     transform_rewards = []
@@ -70,8 +51,6 @@ if __name__ == '__main__':
     for transform in transforms:
         # create transformed environment
         transformed_env, env_to_agent = transform(transformed_env)
-        if with_reward_transform:
-            transformed_env.set_reward_dict(NEW_TAXI_ENVIRONMENT_REWARDS)
 
         # create and train agents in env
         agent, transform_episode_reward_mean = rl_agent.create_agent_and_train(transformed_env, env_to_agent,
