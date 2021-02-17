@@ -1,7 +1,7 @@
 from itertools import product
 import numpy as np
 from ray.rllib.env import MultiAgentEnv
-
+import random
 from Environments.MultiTaxiEnv.multitaxienv.config import TAXI_ENVIROMENT_REWARDS
 from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv, display
 
@@ -320,9 +320,83 @@ class TaxiRewardTransform(TaxiTransformedEnv):
                      self.passenger_destination_l1_distance(passenger_index, taxi_current_row, taxi_currrent_col))
 
 
+class TaxiLockTaxiStartPositionTransform(TaxiTransformedEnv):
+    def __init__(self, x=None, **kwargs):
+        super().__init__(**kwargs)
+
+    def reset(self):
+        taxis_locations = [[2, 2]]
+        self.collided = np.zeros(self.num_taxis)
+        self.bounded = False
+        self.window_size = 5
+        self.counter = 0
+
+        # refuel everybody
+        fuels = [self.max_fuel[i] for i in range(self.num_taxis)]
+
+        # reset passengers
+        passengers_start_location = [start for start in
+                                     random.choices(self.passengers_locations, k=self.num_passengers)]
+        passengers_destinations = [random.choice([x for x in self.passengers_locations if x != start])
+                                   for start in passengers_start_location]
+
+        # Status of each passenger: delivered (1), in_taxi (positive number>2), waiting (2)
+        passengers_status = [2 for _ in range(self.num_passengers)]
+        self.state = [taxis_locations, fuels, passengers_start_location, passengers_destinations, passengers_status]
+
+        self.last_action = None
+        # Turning all engines on
+        self.engine_status_list = list(np.ones(self.num_taxis))
+
+        # resetting dones
+        self.dones = {taxi_id: False for taxi_id in self.taxis_names}
+        self.dones['__all__'] = False
+        obs = {}
+        for taxi_id in self.taxis_names:
+            obs[taxi_id] = self.get_observation(self.state, taxi_id)
+
+        return obs
+
+
+class TaxiNonDeterministicPositionTransform(TaxiTransformedEnv):
+    def __init__(self, x=None, **kwargs):
+        super().__init__(**kwargs)
+
+    def reset(self):
+        taxis_locations = [[2, 2]]
+        self.collided = np.zeros(self.num_taxis)
+        self.bounded = False
+        self.window_size = 5
+        self.counter = 0
+
+        # refuel everybody
+        fuels = [self.max_fuel[i] for i in range(self.num_taxis)]
+
+        # reset passengers
+        passengers_start_location = [[0, 0]]
+        passengers_destinations = [[4, 0]]
+
+        # Status of each passenger: delivered (1), in_taxi (positive number>2), waiting (2)
+        passengers_status = [2 for _ in range(self.num_passengers)]
+        self.state = [taxis_locations, fuels, passengers_start_location, passengers_destinations, passengers_status]
+
+        self.last_action = None
+        # Turning all engines on
+        self.engine_status_list = list(np.ones(self.num_taxis))
+
+        # resetting dones
+        self.dones = {taxi_id: False for taxi_id in self.taxis_names}
+        self.dones['__all__'] = False
+        obs = {}
+        for taxi_id in self.taxis_names:
+            obs[taxi_id] = self.get_observation(self.state, taxi_id)
+
+        return obs
+
+
 def taxi_small_map_transform(env):
     """
-    set the rewards in the environment
+    set the map to be different
     """
     new_env = TaxiSmallMapTransform()
     return new_env, TaxiSmallMapTransform
@@ -353,3 +427,19 @@ def taxi_reward_transform(env, new_rewards=None):
     new_env = TaxiRewardTransform()
     new_env.set_reward_dict(new_rewards)
     return new_env, TaxiRewardTransform
+
+
+def taxi_lock_starting_position_transform(env):
+    """
+    set the rewards in the environment
+    """
+    new_env = TaxiLockTaxiStartPositionTransform()
+    return new_env, TaxiLockTaxiStartPositionTransform
+
+
+def taxi_non_deterministic_position_transform(env):
+    """
+    set the rewards in the environment
+    """
+    new_env = TaxiNonDeterministicPositionTransform()
+    return new_env, TaxiNonDeterministicPositionTransform
