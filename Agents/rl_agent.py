@@ -131,11 +131,49 @@ def run_episode(env, agent_rep, number_of_agents, display=False):
             obs, reward, done, info = env.step(action)
             done = done['__all__']
             episode_reward += sum(reward.values())  # sum up reward for all agents
+    print("obs: ", obs)
+    print("reward: ", reward)
+    print("done: ", done)
+    print("info: ", info)
     print(episode_reward)
+    return episode_reward
+
+
+def evaluate(num_episodes, env, agent, number_of_agents, display=False):
+    episode_rewards = [0.0]
+    agent_rewards = [[0.0]]
+    final_ep_rewards = []
+
+    episode_step = 1
+    episode_len = 0
+
+    print("Starting iterations...")
+    for i in range(num_episodes):
+        ep_results = run_episode(env, agent, number_of_agents, display=display)
+
+        t_reward, a_rewards, t_steps = ep_results
+
+        episode_len = t_steps
+        episode_rewards[-1] += t_reward
+
+        for (idx, a_reward) in enumerate(a_rewards):
+            agent_rewards[idx][-1] += a_reward
+            agent_rewards[idx].append(0)
+
+        agent.reset()
+
+        if len(episode_rewards) % arglist.save_rate == 0:
+            final_ep_rewards.append(np.mean(episode_rewards[-arglist.save_rate:]))
+            print(" episode length: {}, total episodes: {}, mean episode reward:{}".format(
+                episode_len, len(episode_rewards), final_ep_rewards[-1]
+            ))
+
+        episode_rewards.append(0)
+        episode_step += 1
 
 
 def create_agent_and_train(env, env_to_agent, env_name, number_of_agents, agent_name, iteration_num, display=False):
-    # env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
+    env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
     config = get_config(env_name, env, number_of_agents)
     agent = get_rl_agent(agent_name, config, env_to_agent)
 
