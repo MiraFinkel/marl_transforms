@@ -10,8 +10,8 @@ if __name__ == '__main__':
     # define the environment
     env_name = TAXI
     number_of_agents = 1
-    agent_name = PPO
-    iteration_num = 1
+    agent_name = IMPALA
+    iteration_num = 5
 
     # get the environment
     env, env_to_agent = get_env(env_name, number_of_agents)
@@ -57,6 +57,7 @@ if __name__ == '__main__':
                                                                                env_name, number_of_agents, agent_name,
                                                                                iteration_num, display=False)
         transform_rewards.append(transform_episode_reward_mean)
+        rl_agent.run_episode(transformed_env, agent, number_of_agents, display=True)
         # check if the target policy is achieved in trans_env
         if target_policy_achieved(transformed_env, agent, target_policy):
             explanation = transform
