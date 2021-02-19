@@ -139,7 +139,7 @@ def run_episode(env, agent_rep, number_of_agents, display=False):
     return episode_reward
 
 
-def evaluate(num_episodes, env, agent, number_of_agents, display=False):
+def evaluate(num_episodes, env, agent, number_of_agents, save_rate=100, display=False):
     episode_rewards = [0.0]
     agent_rewards = [[0.0]]
     final_ep_rewards = []
@@ -162,8 +162,8 @@ def evaluate(num_episodes, env, agent, number_of_agents, display=False):
 
         agent.reset()
 
-        if len(episode_rewards) % arglist.save_rate == 0:
-            final_ep_rewards.append(np.mean(episode_rewards[-arglist.save_rate:]))
+        if len(episode_rewards) % save_rate == 0:
+            final_ep_rewards.append(np.mean(episode_rewards[-save_rate:]))
             print(" episode length: {}, total episodes: {}, mean episode reward:{}".format(
                 episode_len, len(episode_rewards), final_ep_rewards[-1]
             ))

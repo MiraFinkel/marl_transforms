@@ -12,7 +12,7 @@ NEW_MAP = [
     "|X: : :X|",
     "| : : : |",
     "| : : : |",
-    "|X: : :X|",
+    "|X: :F:X|",
     "+-------+",
 ]
 
@@ -23,12 +23,12 @@ NEW_REWARD = dict(
     bad_dropoff=-15,
     bad_refuel=-10,
     bad_fuel=-50,
-    pickup=500,
+    pickup=100,
     standby_engine_off=-1,
     turn_engine_on=-10e6,
     turn_engine_off=-10e6,
     standby_engine_on=-1,
-    intermediate_dropoff=50,
+    intermediate_dropoff=-15,
     final_dropoff=1000,
     hit_wall=-2,
     collision=-35,
