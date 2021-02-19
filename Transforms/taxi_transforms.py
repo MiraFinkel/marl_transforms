@@ -23,13 +23,13 @@ NEW_REWARD = dict(
     bad_dropoff=-15,
     bad_refuel=-10,
     bad_fuel=-50,
-    pickup=100,
+    pickup=400,
     standby_engine_off=-1,
     turn_engine_on=-10e6,
     turn_engine_off=-10e6,
     standby_engine_on=-1,
-    intermediate_dropoff=-15,
-    final_dropoff=1000,
+    intermediate_dropoff=50,
+    final_dropoff=10000,
     hit_wall=-2,
     collision=-35,
     collided=-20,
@@ -612,16 +612,14 @@ def taxi_small_map_transform(env):
     """
     set the map to be different
     """
-    new_env = TaxiSmallMapTransform()
-    return new_env, TaxiSmallMapTransform
+    return TaxiSmallMapTransform
 
 
 def taxi_move_through_walls_transform(env):
     """
     Taxi can move through walls
     """
-    new_env = TaxiNoWallsTransform()
-    return new_env, TaxiNoWallsTransform
+    return TaxiNoWallsTransform
 
 
 def taxi_infinite_fuel_transform(env):
@@ -630,29 +628,25 @@ def taxi_infinite_fuel_transform(env):
     """
     import Environments.MultiTaxiEnv.multitaxienv.taxi_environment as taxi_env
     taxi_env.set_number_of_agents(1)
-    new_env = TaxiInfiniteFuelTransform()
-    return new_env, TaxiInfiniteFuelTransform
+    return TaxiInfiniteFuelTransform
 
 
 def taxi_reward_transform(env, new_rewards=None):
     """
     set the rewards in the environment
     """
-    new_env = TaxiRewardTransform()
-    return new_env, TaxiRewardTransform
+    return TaxiRewardTransform
 
 
 def taxi_lock_starting_position_transform(env):
     """
     set the rewards in the environment
     """
-    new_env = TaxiLockTaxiStartPositionTransform()
-    return new_env, TaxiLockTaxiStartPositionTransform
+    return TaxiLockTaxiStartPositionTransform
 
 
 def taxi_deterministic_position_transform(env):
     """
     set the rewards in the environment
     """
-    new_env = TaxiDeterministicPositionTransform()
-    return new_env, TaxiDeterministicPositionTransform
+    return TaxiDeterministicPositionTransform
