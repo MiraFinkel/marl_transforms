@@ -11,8 +11,7 @@ def get_env(env_name, number_of_agents=1):
     """
     if env_name == TAXI:
         from Transforms.taxi_transforms import TaxiSimpleEnv
-        env = TaxiSimpleEnv()
-        return env, TaxiSimpleEnv
+        return TaxiSimpleEnv
     if env_name == SPEAKER_LISTENER:
         from supersuit import pad_observations_v0, pad_action_space_v0
         from pettingzoo.mpe import simple_speaker_listener_v3

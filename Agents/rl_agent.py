@@ -172,7 +172,8 @@ def evaluate(num_episodes, env, agent, number_of_agents, save_rate=100, display=
         episode_step += 1
 
 
-def create_agent_and_train(env, env_to_agent, env_name, number_of_agents, agent_name, iteration_num, display=False):
+def create_agent_and_train(env, env_name, number_of_agents, agent_name, iteration_num, display=False):
+    env_to_agent, env = env, env()
     env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
     config = get_config(env_name, env, number_of_agents)
     agent = get_rl_agent(agent_name, config, env_to_agent)

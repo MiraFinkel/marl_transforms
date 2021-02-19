@@ -14,14 +14,14 @@ if __name__ == '__main__':
     iteration_num = 5
 
     # get the environment
-    env, env_to_agent = get_env(env_name, number_of_agents)
+    env = get_env(env_name, number_of_agents)
 
     # define the agents that are operating in the environment
     ray.init(num_gpus=NUM_GPUS, local_mode=True)
 
     # create agent and train it in env
-    agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_to_agent, env_name, number_of_agents,
-                                                                 agent_name, iteration_num, display=False)
+    agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_name, number_of_agents, agent_name,
+                                                                 iteration_num, display=False)
 
     # evaluate the performance of the agent
     # rl_agent.run_episode(env, agent, number_of_agents, display=True)  # TODO Mira: add evaluation function?
@@ -50,14 +50,15 @@ if __name__ == '__main__':
     transformed_env = env
     for transform in transforms:
         # create transformed environment
-        transformed_env, env_to_agent = transform(transformed_env)
+        transformed_env = transform(transformed_env)
 
         # create and train agents in env
-        agent, transform_episode_reward_mean = rl_agent.create_agent_and_train(transformed_env, env_to_agent,
-                                                                               env_name, number_of_agents, agent_name,
+        agent, transform_episode_reward_mean = rl_agent.create_agent_and_train(transformed_env, env_name,
+                                                                               number_of_agents, agent_name,
                                                                                iteration_num, display=False)
         transform_rewards.append(transform_episode_reward_mean)
-        rl_agent.run_episode(transformed_env, agent, number_of_agents, display=True)
+        transformed_env = transformed_env()
+        # rl_agent.run_episode(transformed_env, agent, number_of_agents, display=True)
         # check if the target policy is achieved in trans_env
         if target_policy_achieved(transformed_env, agent, target_policy):
             explanation = transform
