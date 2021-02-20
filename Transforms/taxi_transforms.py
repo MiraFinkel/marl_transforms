@@ -16,30 +16,50 @@ NEW_MAP = [
     "+-------+",
 ]
 
-NEW_REWARD = dict(
+temp_reward = dict(
     step=-1,
     no_fuel=-20,
-    bad_pickup=-15,
-    bad_dropoff=-15,
+    bad_pickup=-30,
+    bad_dropoff=-30,
     bad_refuel=-10,
     bad_fuel=-50,
-    pickup=400,
-    standby_engine_off=-1,
-    turn_engine_on=-10e6,
-    turn_engine_off=-10e6,
-    standby_engine_on=-1,
-    intermediate_dropoff=50,
-    final_dropoff=10000,
+    pickup=50,
+    intermediate_dropoff=-30,
+    final_dropoff=1000,
     hit_wall=-2,
-    collision=-35,
-    collided=-20,
     unrelated_action=-15,
 )
+
+
+# NEW_REWARD = dict(
+#     step=-1,
+#     no_fuel=-20,
+#     bad_pickup=-30,
+#     bad_dropoff=-30,
+#     bad_refuel=-10,
+#     bad_fuel=-50,
+#     pickup=100,
+#     standby_engine_off=-1,
+#     turn_engine_on=-10e6,
+#     turn_engine_off=-10e6,
+#     standby_engine_on=-1,
+#     intermediate_dropoff=50,
+#     final_dropoff=1000,
+#     hit_wall=-2,
+#     collision=-35,
+#     collided=-20,
+#     unrelated_action=-15,
+# )
 
 
 def set_number_of_agents(val):
     global number_of_agents
     number_of_agents = val
+
+
+def set_temp_reward_dict(reward_dict):
+    global temp_reward
+    temp_reward = reward_dict
 
 
 class TaxiSimpleEnv(TaxiEnv):
@@ -156,7 +176,7 @@ class TaxiInfiniteFuelTransform(TaxiTransformedEnv):
 class TaxiRewardTransform(TaxiTransformedEnv):
     def __init__(self, x=None, **kwargs):
         super().__init__(**kwargs)
-        self.reward_dict = NEW_REWARD
+        self.reward_dict = temp_reward
         self.display = False
 
     def set_reward_dict(self, new_rewards):
@@ -386,7 +406,7 @@ class TaxiLockTaxiStartPositionTransform(TaxiTransformedEnv):
 
 class TaxiDeterministicPositionTransform(TaxiTransformedEnv):
     def __init__(self, x=None, **kwargs):
-        self.reward_dict = NEW_REWARD
+        self.reward_dict = temp_reward
         self.display = False
         super().__init__(domain_map=NEW_MAP)
 
@@ -606,6 +626,24 @@ class TaxiDeterministicPositionTransform(TaxiTransformedEnv):
 
         return 15 * (self.passenger_destination_l1_distance(passenger_index, passenger_start_row, passenger_start_col) -
                      self.passenger_destination_l1_distance(passenger_index, taxi_current_row, taxi_currrent_col))
+
+    def _update_movement_wrt_fuel(self, taxi: int, taxis_locations: list, wanted_row: int, wanted_col: int,
+                                  reward: int, fuel: int) -> (int, int, list):
+        """
+        Given that a taxi would like to move - check the fuel accordingly and update reward and location.
+        Args:
+            taxi: index of the taxi
+            taxis_locations: list of current locations (prior to movement)
+            wanted_row: row after movement
+            wanted_col: col after movement
+            reward: current reward
+            fuel: current fuel
+
+        Returns: updated_reward, updated fuel, updated_taxis_locations
+
+        """
+        taxis_locations[taxi] = [wanted_row, wanted_col]
+        return reward, fuel, taxis_locations
 
 
 def taxi_small_map_transform(env):

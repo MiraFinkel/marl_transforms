@@ -37,9 +37,22 @@ if __name__ == '__main__':
         (0, 3, None, None, None, 0, 3, 3): 5,  # dropoff
         (3, 3, None, None, None, 3, 3, 3): 5}  # dropoff
 
+    new_reward = dict(
+        step=-1,
+        no_fuel=-20,
+        bad_pickup=-15,
+        bad_dropoff=-15,
+        bad_refuel=-10,
+        bad_fuel=-50,
+        pickup=50,
+        intermediate_dropoff=50,
+        final_dropoff=100,
+        hit_wall=-2,
+        unrelated_action=-15
+    )
     # compare policy with target policy
     # get the policy of the agents for all the states defined in the target policy e.g. [3,3,0,2,3,4,5] [3,3,0,2,3,4,8]
-    # TODO Mira: I think we don't need the mapping function here, because the data structure will bw too big (?)
+    # TODO Mira: I think we don't need the mapping function here, because the data structure will be too big (?)
     # compare the target policy with the agent's policy
 
     # create a transformed environment
@@ -51,6 +64,9 @@ if __name__ == '__main__':
     for transform in transforms:
         # create transformed environment
         transformed_env = transform(transformed_env)
+        set_reward_dict = getattr(transformed_env, "set_reward_dict", None)
+        if callable(set_reward_dict):
+            set_temp_reward_dict(new_reward)
 
         # create and train agents in env
         agent, transform_episode_reward_mean = rl_agent.create_agent_and_train(transformed_env, env_name,
@@ -58,7 +74,7 @@ if __name__ == '__main__':
                                                                                iteration_num, display=False)
         transform_rewards.append(transform_episode_reward_mean)
         transformed_env = transformed_env()
-        # rl_agent.run_episode(transformed_env, agent, number_of_agents, display=True)
+        rl_agent.run_episode(transformed_env, agent, number_of_agents, display=True)
         # check if the target policy is achieved in trans_env
         if target_policy_achieved(transformed_env, agent, target_policy):
             explanation = transform
