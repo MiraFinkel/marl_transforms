@@ -15,7 +15,7 @@ TAXI_ENVIROMENT_REWARDS = dict(
     hit_wall=-2,
     collision=-35,
     collided=-20,
-    unrelated_action=-15,
+    unrelated_action=-15
 )
 
 NEW_TAXI_ENVIRONMENT_REWARDS = dict(

@@ -661,6 +661,7 @@ class TaxiEnv(MultiAgentEnv):
                 taxis_locations, fuels, passengers_start_locations, destinations, passengers_status = self.state
 
                 if all(list(self.dones.values())):
+                    rewards[taxi_name] = reward
                     continue
 
                 # If taxi is collided, it can't perform a step

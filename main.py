@@ -1,4 +1,5 @@
 from Environments.MultiTaxiEnv.multitaxienv.config import NEW_TAXI_ENVIRONMENT_REWARDS
+from Observer.anticipated_policy_generator import OptimalAgent
 from Transforms.taxi_transforms import *
 from utils import *
 from visualize import *
@@ -11,10 +12,16 @@ if __name__ == '__main__':
     env_name = TAXI
     number_of_agents = 1
     agent_name = IMPALA
-    iteration_num = 5
+    iteration_num = 2
+    theta = 5
+    discount_factor = 0.9
 
     # get the environment
     env = get_env(env_name, number_of_agents)
+
+    # get the optimal policy
+    optimal_agent = OptimalAgent(env())
+    policy, V = optimal_agent.value_iteration()
 
     # define the agents that are operating in the environment
     ray.init(num_gpus=NUM_GPUS, local_mode=True)
@@ -27,15 +34,15 @@ if __name__ == '__main__':
     # rl_agent.run_episode(env, agent, number_of_agents, display=True)  # TODO Mira: add evaluation function?
 
     # the target policy (which is part of our input and defined by the user)
-    target_policy = {
-        (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
-        (3, 0, None, 3, 0, None, None, 2): 4,  # pickup
-        (0, 3, None, 0, 3, None, None, 2): 4,  # pickup
-        (3, 3, None, 3, 3, None, None, 2): 4,  # pickup <==
-        (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
-        (3, 0, None, None, None, 3, 0, 3): 5,  # dropoff
-        (0, 3, None, None, None, 0, 3, 3): 5,  # dropoff
-        (3, 3, None, None, None, 3, 3, 3): 5}  # dropoff
+    target_policy = {}
+        # (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
+        # (3, 0, None, 3, 0, None, None, 2): 4,  # pickup
+        # (0, 3, None, 0, 3, None, None, 2): 4,  # pickup
+        # (3, 3, None, 3, 3, None, None, 2): 4,  # pickup <==
+        # (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
+        # (3, 0, None, None, None, 3, 0, 3): 5,  # dropoff
+        # (0, 3, None, None, None, 0, 3, 3): 5,  # dropoff
+        # (3, 3, None, None, None, 3, 3, 3): 5}  # dropoff
 
     new_reward = dict(
         step=-1,
@@ -74,7 +81,7 @@ if __name__ == '__main__':
                                                                                iteration_num, display=False)
         transform_rewards.append(transform_episode_reward_mean)
         transformed_env = transformed_env()
-        rl_agent.run_episode(transformed_env, agent, number_of_agents, display=True)
+        # rl_agent.run_episode(transformed_env, agent, number_of_agents, max_episode_len, display=True)
         # check if the target policy is achieved in trans_env
         if target_policy_achieved(transformed_env, agent, target_policy):
             explanation = transform
