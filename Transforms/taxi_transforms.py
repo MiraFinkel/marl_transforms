@@ -67,6 +67,75 @@ class TaxiSimpleEnv(TaxiEnv):
         super().__init__(num_taxis=1, num_passengers=1, max_fuel=None, domain_map=NEW_MAP,
                          collision_sensitive_domain=False)
 
+    def encode(self, taxi_row, taxi_col, fuel, pass_loc_x, pass_loc_y, dest_idx_x, dest_idx_y, pass_status):
+        # (self.num_rows), self.num_columns, max_fuel[0] + 1, self.num_rows, self.num_columns, self.passengers_locations, 4
+        dest_idx = self._get_pass_dest_idx(dest_idx_x, dest_idx_y)
+
+        i = taxi_row
+
+        i *= self.num_columns
+        i += taxi_col
+
+        i *= self.max_fuel[0] + 1
+        i += fuel
+
+        i *= self.num_rows
+        i += pass_loc_x
+
+        i *= self.num_columns
+        i += pass_loc_y
+
+        i *= len(self.passengers_locations)
+        i += dest_idx
+
+        i *= 3
+        i += pass_status
+        return i
+
+    def decode(self, i):
+        # 4, self.passengers_locations, self.num_columns, self.num_rows, max_fuel[0] + 1, self.num_columns, self.num_rows
+        j = i
+        out = []
+
+        passenger_status = [i % 3]
+        out.append(passenger_status)
+        i = i // 3
+
+        passenger_dest_idx = [self.passengers_locations[i % len(self.passengers_locations)]]
+        out.append(passenger_dest_idx)
+        i = i // len(self.passengers_locations)
+
+        passenger_loc_y = i % self.num_columns
+        i = i // self.num_columns
+        passenger_loc_x = i % self.num_rows
+        i = i // self.num_rows
+        passenger_location = [[passenger_loc_x, passenger_loc_y]]
+        out.append(passenger_location)
+
+        fuel = [i % (self.max_fuel[0] + 1)]
+        out.append(fuel)
+        i = i // (self.max_fuel[0] + 1)
+
+        taxi_y = i % self.num_columns
+        i = i // self.num_columns
+        taxi_x = i
+        taxi_loc = [[taxi_x, taxi_y]]
+        out.append(taxi_loc)
+
+        assert 0 <= i < self.num_rows
+
+        return reversed(out)
+
+    def _get_pass_dest_idx(self, dest_idx_x, dest_idx_y):
+        dest_idx = -1
+        for i, loc in enumerate(self.passengers_locations):
+            if dest_idx_x == loc[0] and dest_idx_y == loc[1]:
+                dest_idx = i
+                break
+        if dest_idx == -1:
+            raise Exception("no such destination!")
+        return dest_idx
+
 
 class TaxiTransformedEnv(TaxiSimpleEnv):
 
