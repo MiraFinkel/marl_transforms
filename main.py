@@ -12,7 +12,7 @@ if __name__ == '__main__':
     env_name = TAXI
     number_of_agents = 1
     agent_name = IMPALA
-    iteration_num = 3
+    iteration_num = 6
     theta = 48
     discount_factor = 0.9
 
