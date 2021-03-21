@@ -34,15 +34,15 @@ if __name__ == '__main__':
     # rl_agent.run_episode(env, agent, number_of_agents, display=True)  # TODO Mira: add evaluation function?
 
     # the target policy (which is part of our input and defined by the user)
-    target_policy = {}
-        # (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
-        # (3, 0, None, 3, 0, None, None, 2): 4,  # pickup
-        # (0, 3, None, 0, 3, None, None, 2): 4,  # pickup
-        # (3, 3, None, 3, 3, None, None, 2): 4,  # pickup <==
-        # (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
-        # (3, 0, None, None, None, 3, 0, 3): 5,  # dropoff
-        # (0, 3, None, None, None, 0, 3, 3): 5,  # dropoff
-        # (3, 3, None, None, None, 3, 3, 3): 5}  # dropoff
+    target_policy = {
+        (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
+        (2, 0, None, 2, 0, None, None, 2): 4,  # pickup
+        (0, 2, None, 0, 2, None, None, 2): 4,  # pickup
+        (2, 2, None, 2, 2, None, None, 2): 4,  # pickup <==
+        (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
+        (2, 0, None, None, None, 2, 0, 3): 5,  # dropoff
+        (0, 2, None, None, None, 0, 2, 3): 5,  # dropoff
+        (2, 2, None, None, None, 2, 2, 3): 5}  # dropoff
 
     new_reward = dict(
         step=-1,
@@ -52,9 +52,15 @@ if __name__ == '__main__':
         bad_refuel=-10,
         bad_fuel=-50,
         pickup=50,
+        standby_engine_off=-1,
+        turn_engine_on=-10e6,
+        turn_engine_off=-10e6,
+        standby_engine_on=-1,
         intermediate_dropoff=50,
         final_dropoff=100,
         hit_wall=-2,
+        collision=-35,
+        collided=-20,
         unrelated_action=-15
     )
     # compare policy with target policy
