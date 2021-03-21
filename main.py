@@ -13,7 +13,7 @@ if __name__ == '__main__':
     number_of_agents = 1
     agent_name = IMPALA
     iteration_num = 2
-    theta = 5
+    theta = 48
     discount_factor = 0.9
 
     # get the environment
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # get the optimal policy
     optimal_agent = OptimalAgent(env())
-    policy, V = optimal_agent.value_iteration()
+    policy_dict, policy, V = optimal_agent.value_iteration(theta=theta, discount_factor=discount_factor, display=True)
 
     # define the agents that are operating in the environment
     ray.init(num_gpus=NUM_GPUS, local_mode=True)
