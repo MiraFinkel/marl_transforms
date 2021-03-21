@@ -491,7 +491,7 @@ class TaxiDeterministicPositionTransform(TaxiTransformedEnv):
         self.display = val
 
     def reset(self):
-        taxis_locations = [[2, 2]]
+        taxis_locations = [[1, 1]]
         self.collided = np.zeros(self.num_taxis)
         self.bounded = False
         self.window_size = 5
@@ -501,8 +501,8 @@ class TaxiDeterministicPositionTransform(TaxiTransformedEnv):
         fuels = [self.max_fuel[i] for i in range(self.num_taxis)]
 
         # reset passengers
-        passengers_start_location = [[0, 0]]
-        passengers_destinations = [[3, 0]]
+        passengers_start_location = [self.passengers_locations[0]]
+        passengers_destinations = [self.passengers_locations[1]]
 
         # Status of each passenger: delivered (1), in_taxi (positive number>2), waiting (2)
         passengers_status = [2 for _ in range(self.num_passengers)]
