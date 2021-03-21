@@ -71,7 +71,7 @@ class TaxiEnv(MultiAgentEnv):
     A list (taxis, fuels, pass_start, destinations, pass_locs):
         taxis:                  a list of coordinates of each taxi
         fuels:                  a list of fuels for each taxi
-        pass_start:             a list of starting coordinates for each passenger (current position or last available)
+        pass_start:             a list of starting coordinates for taeach passenger (current position or last available)
         destinations:           a list of destination coordinates for each passenger
         passengers_locations:   a list of locations of each passenger.
                                 -1 means delivered

@@ -39,27 +39,6 @@ temp_reward = dict(
 )
 
 
-# NEW_REWARD = dict(
-#     step=-1,
-#     no_fuel=-20,
-#     bad_pickup=-30,
-#     bad_dropoff=-30,
-#     bad_refuel=-10,
-#     bad_fuel=-50,
-#     pickup=100,
-#     standby_engine_off=-1,
-#     turn_engine_on=-10e6,
-#     turn_engine_off=-10e6,
-#     standby_engine_on=-1,
-#     intermediate_dropoff=50,
-#     final_dropoff=1000,
-#     hit_wall=-2,
-#     collision=-35,
-#     collided=-20,
-#     unrelated_action=-15,
-# )
-
-
 def set_number_of_agents(val):
     global number_of_agents
     number_of_agents = val
