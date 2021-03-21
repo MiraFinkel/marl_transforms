@@ -8,13 +8,21 @@ from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv, dis
 number_of_agents = 1
 
 NEW_MAP = [
-    "+-------+",
-    "|X: : :X|",
-    "| : : : |",
-    "| : : : |",
-    "|X: :F:X|",
-    "+-------+",
+    "+-----+",
+    "|X: :X|",
+    "| : : |",
+    "|X:F:X|",
+    "+-----+",
 ]
+
+# NEW_MAP = [
+#     "+-------+",
+#     "|X: : :X|",
+#     "| : : : |",
+#     "| : : : |",
+#     "|X: :F:X|",
+#     "+-------+",
+# ]
 
 temp_reward = dict(
     step=-1,
