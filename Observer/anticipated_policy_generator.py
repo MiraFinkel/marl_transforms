@@ -7,6 +7,7 @@ class OptimalAgent:
         self.nA = len(self.env.get_available_actions_dictionary()[0])
         # self.nS = env.num_states * 4  # TODO - fix the num of states in the taxi domain?
         self.nS = self._get_state_number()
+        self.policy_dict = {}
 
     def value_iteration(self, theta=1, discount_factor=0.99, display=True):
         """
@@ -85,6 +86,7 @@ class OptimalAgent:
             # Always take the best action
             policy[s, best_action] = 1.0
             policy_dict[tuple(flatten_state)] = best_action
+        self.policy_dict = policy_dict
         return policy_dict, policy, V
 
     def _get_state_number(self):
@@ -94,6 +96,9 @@ class OptimalAgent:
         passenger_possible_destinations = len(self.env.passengers_locations)
         passengers_status = 3
         return taxi_possible_locations * fuel * passenger_possible_locations * passenger_possible_destinations * passengers_status
+
+    def compute_action(self, state):
+        return self.policy_dict[tuple(state[0])]
 
 
 # helper function for flattening irregular nested tuples
@@ -116,20 +121,20 @@ def get_nearby_coords(env, loc, dist):  # option for later: add an option to cha
     result = []
     for i in range(x - dist, x + dist + 1):
         for j in range(y - dist, y + dist + 1):
-            if i >= 0 and i <= max_rows and j >= 0 and j <= max_cols:
+            if 0 <= i <= max_rows and 0 <= j <= max_cols:
                 result.append((i, j))
     return result
 
 
 def sample_anticipated_policy(optimal_agent, env, num_states_in_partial_policy):
-    initial_state = env.reset()
-    passenger_origin = initial_state['taxi_1'][0, 3:5]
-    passenger_destination = initial_state['taxi_1'][0, 5:7]
-    taxi_start = initial_state['taxi_1'][0, 0:2]
+    passenger_origin = get_possible_passenger_origins(env)
+    passenger_destination = get_possible_passenger_destinations(env)
 
-    taxi_locations_of_interest = list(set(get_nearby_coords(env, taxi_start, 1) +
-                                          get_nearby_coords(env, passenger_origin, 1) +
-                                          get_nearby_coords(env, passenger_destination, 1)))
+    passenger_origin_nearby_coords = [get_nearby_coords(env, passenger_origin[i], 0)[0] for i in range(len(passenger_origin))]
+    passenger_destination_nearby_coords = [tuple(get_nearby_coords(env, passenger_destination[i], 0))[0] for i in range(len(passenger_destination))]
+
+    taxi_locations_of_interest = list(set(passenger_origin_nearby_coords + passenger_destination_nearby_coords))
+    taxi_locations_of_interest = [list(loc) for loc in taxi_locations_of_interest]
 
     # condensing passenger locations
     state_shape_fixed_fuel = [len(taxi_locations_of_interest), 1, len(env.passengers_locations),
@@ -143,21 +148,29 @@ def sample_anticipated_policy(optimal_agent, env, num_states_in_partial_policy):
                                            replace=False)  # get flat indices of sampled states
     sampled_states_unraveled = np.array(
         np.unravel_index(sampled_states_flat, state_shape_fixed_fuel)).T  # convert flat indices into state tuples
-    sampled_states_unraveled[:, fuel_index] = 10  # set fuel for all sampled states to full
+    sampled_states_unraveled[:, fuel_index] = 100  # set fuel for all sampled states to full
 
     partial_sampled_policy = {}
     # convert destination number into coordinates and make dictionary
     for s_raw in sampled_states_unraveled:
         s = list(s_raw)
         # convert destination and location number into coordinates
+        s[2] = env.passengers_locations[s[2]]
         s[3] = env.passengers_locations[s[3]]
-        s[4] = env.passengers_locations[s[4]]
         s[0] = taxi_locations_of_interest[s[0]]
         s = mixed_flatten(s)
         # get optimal action
         action = optimal_agent.compute_action([s])
         # set fuel to None
-        s[fuel_index] = None
+        s[2] = None
         partial_sampled_policy[tuple(s)] = action
 
     return partial_sampled_policy
+
+
+def get_possible_passenger_origins(env):
+    return env.passengers_locations
+
+
+def get_possible_passenger_destinations(env):
+    return env.passengers_locations

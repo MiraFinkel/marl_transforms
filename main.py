@@ -1,5 +1,5 @@
 from Environments.MultiTaxiEnv.multitaxienv.config import NEW_TAXI_ENVIRONMENT_REWARDS
-from Observer.anticipated_policy_generator import OptimalAgent
+from Observer.anticipated_policy_generator import *
 from Transforms.taxi_transforms import *
 from utils import *
 from visualize import *
@@ -12,7 +12,7 @@ if __name__ == '__main__':
     env_name = TAXI
     number_of_agents = 1
     agent_name = IMPALA
-    iteration_num = 6
+    iteration_num = 2
     theta = 48
     discount_factor = 0.9
 
@@ -20,8 +20,10 @@ if __name__ == '__main__':
     env = get_env(env_name, number_of_agents)
 
     # get the optimal policy
-    # optimal_agent = OptimalAgent(env())
-    # policy_dict, policy, V = optimal_agent.value_iteration(theta=theta, discount_factor=discount_factor, display=True)
+    optimal_agent = OptimalAgent(env())
+    policy_dict, policy, V = optimal_agent.value_iteration(theta=theta, discount_factor=discount_factor, display=True)
+
+    anticipated_policy = sample_anticipated_policy(optimal_agent, env(), 10)
 
     # define the agents that are operating in the environment
     ray.init(num_gpus=NUM_GPUS, local_mode=True)
