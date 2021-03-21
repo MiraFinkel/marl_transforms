@@ -94,3 +94,70 @@ class OptimalAgent:
         passenger_possible_destinations = len(self.env.passengers_locations)
         passengers_status = 3
         return taxi_possible_locations * fuel * passenger_possible_locations * passenger_possible_destinations * passengers_status
+
+
+# helper function for flattening irregular nested tuples
+def mixed_flatten(x):
+    result = []
+    for el in x:
+        if hasattr(el, "__iter__"):
+            result.extend(mixed_flatten(el))
+        else:
+            result.append(el)
+    return result
+
+
+# helper function for making a list of coordinates of interest
+# make list of valid coords in environment within dist of the given loc
+def get_nearby_coords(env, loc, dist):  # option for later: add an option to change definition of distance
+    max_rows = env.num_rows - 1
+    max_cols = env.num_columns - 1
+    (x, y) = loc
+    result = []
+    for i in range(x - dist, x + dist + 1):
+        for j in range(y - dist, y + dist + 1):
+            if i >= 0 and i <= max_rows and j >= 0 and j <= max_cols:
+                result.append((i, j))
+    return result
+
+
+def sample_anticipated_policy(optimal_agent, env, num_states_in_partial_policy):
+    initial_state = env.reset()
+    passenger_origin = initial_state['taxi_1'][0, 3:5]
+    passenger_destination = initial_state['taxi_1'][0, 5:7]
+    taxi_start = initial_state['taxi_1'][0, 0:2]
+
+    taxi_locations_of_interest = list(set(get_nearby_coords(env, taxi_start, 1) +
+                                          get_nearby_coords(env, passenger_origin, 1) +
+                                          get_nearby_coords(env, passenger_destination, 1)))
+
+    # condensing passenger locations
+    state_shape_fixed_fuel = [len(taxi_locations_of_interest), 1, len(env.passengers_locations),
+                              len(env.passengers_locations), 3]
+    fuel_index = 1  # we fixed the fuel index, which is index 2 (third item) in the state
+    num_states_fixed_fuel = np.prod(state_shape_fixed_fuel)
+
+    # num_states_in_partial_policy = 10  # sample ten states for now as an example
+
+    sampled_states_flat = np.random.choice(num_states_fixed_fuel, size=num_states_in_partial_policy,
+                                           replace=False)  # get flat indices of sampled states
+    sampled_states_unraveled = np.array(
+        np.unravel_index(sampled_states_flat, state_shape_fixed_fuel)).T  # convert flat indices into state tuples
+    sampled_states_unraveled[:, fuel_index] = 10  # set fuel for all sampled states to full
+
+    partial_sampled_policy = {}
+    # convert destination number into coordinates and make dictionary
+    for s_raw in sampled_states_unraveled:
+        s = list(s_raw)
+        # convert destination and location number into coordinates
+        s[3] = env.passengers_locations[s[3]]
+        s[4] = env.passengers_locations[s[4]]
+        s[0] = taxi_locations_of_interest[s[0]]
+        s = mixed_flatten(s)
+        # get optimal action
+        action = optimal_agent.compute_action([s])
+        # set fuel to None
+        s[fuel_index] = None
+        partial_sampled_policy[tuple(s)] = action
+
+    return partial_sampled_policy
