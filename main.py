@@ -13,7 +13,7 @@ if __name__ == '__main__':
     number_of_agents = 1
     agent_name = IMPALA
     iteration_num = 2
-    theta = 48
+    theta = 50
     discount_factor = 0.9
 
     # get the environment
