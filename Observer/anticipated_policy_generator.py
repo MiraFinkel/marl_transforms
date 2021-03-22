@@ -5,7 +5,6 @@ class OptimalAgent:
     def __init__(self, env):
         self.env = env
         self.nA = len(self.env.get_available_actions_dictionary()[0])
-        # self.nS = env.num_states * 4  # TODO - fix the num of states in the taxi domain?
         self.nS = self._get_state_number()
         self.policy_dict = {}
 
@@ -49,7 +48,7 @@ class OptimalAgent:
                 cur_next_state = self.env.encode(next_state[0], next_state[1], next_state[2], next_state[3],
                                                  next_state[4], next_state[5], next_state[6], next_state[7])
                 #  taxi_row, taxi_col, fuel, pass_loc_x, pass_loc_y, dest_idx_x, dest_idx_y, pass_status
-                A[a] += prob * (reward + discount_factor * V[cur_next_state])
+                A[a] += prob * (reward + discount_factor * V[cur_next_state - 1])
             return A
 
         V = np.zeros(self.nS)
@@ -130,42 +129,44 @@ def sample_anticipated_policy(optimal_agent, env, num_states_in_partial_policy):
     passenger_origin = get_possible_passenger_origins(env)
     passenger_destination = get_possible_passenger_destinations(env)
 
-    passenger_origin_nearby_coords = [get_nearby_coords(env, passenger_origin[i], 0)[0] for i in range(len(passenger_origin))]
-    passenger_destination_nearby_coords = [tuple(get_nearby_coords(env, passenger_destination[i], 0))[0] for i in range(len(passenger_destination))]
+    policy_dict = optimal_agent.policy_dict
+    optimal_policy = {}
+    for k in policy_dict.keys():
+        if is_interesting_state(k, passenger_origin, passenger_destination):
+            optimal_policy[k] = policy_dict[k]
 
-    taxi_locations_of_interest = list(set(passenger_origin_nearby_coords + passenger_destination_nearby_coords))
-    taxi_locations_of_interest = [list(loc) for loc in taxi_locations_of_interest]
-
-    # condensing passenger locations
-    state_shape_fixed_fuel = [len(taxi_locations_of_interest), 1, len(env.passengers_locations),
-                              len(env.passengers_locations), 3]
-    fuel_index = 1  # we fixed the fuel index, which is index 2 (third item) in the state
-    num_states_fixed_fuel = np.prod(state_shape_fixed_fuel)
-
-    # num_states_in_partial_policy = 10  # sample ten states for now as an example
-
-    sampled_states_flat = np.random.choice(num_states_fixed_fuel, size=num_states_in_partial_policy,
+    sampled_states_flat = np.random.choice(len(optimal_policy), size=num_states_in_partial_policy,
                                            replace=False)  # get flat indices of sampled states
-    sampled_states_unraveled = np.array(
-        np.unravel_index(sampled_states_flat, state_shape_fixed_fuel)).T  # convert flat indices into state tuples
-    sampled_states_unraveled[:, fuel_index] = 100  # set fuel for all sampled states to full
 
     partial_sampled_policy = {}
-    # convert destination number into coordinates and make dictionary
-    for s_raw in sampled_states_unraveled:
-        s = list(s_raw)
-        # convert destination and location number into coordinates
-        s[2] = env.passengers_locations[s[2]]
-        s[3] = env.passengers_locations[s[3]]
-        s[0] = taxi_locations_of_interest[s[0]]
-        s = mixed_flatten(s)
-        # get optimal action
-        action = optimal_agent.compute_action([s])
-        # set fuel to None
-        s[2] = None
-        partial_sampled_policy[tuple(s)] = action
+    for i, item in enumerate(optimal_policy.items()):
+        if i in sampled_states_flat:
+            list(item[0])[2] = None
+            partial_sampled_policy[tuple(item[0])] = item[1]
 
     return partial_sampled_policy
+
+
+def is_interesting_state(state, passenger_origins, passenger_destinations):
+    taxi_location = [state[0], state[1]]
+    fuel_level = state[2]
+    passenger_location = [state[3], state[4]]
+    passenger_destination = [state[5], state[6]]
+    passenger_status = state[6]
+
+    fuel_is_full = (fuel_level == 100)
+    taxi_in_interesting_location = (
+                (taxi_location[0] == passenger_location[0] and taxi_location[1] == passenger_location[1]) or (
+                    taxi_location[0] == passenger_destination[0] and taxi_location[1] == passenger_destination[1]))
+    passenger_in_interesting_location = passenger_location in passenger_origins
+    valid_passenger_destination = ((passenger_destination[0] == passenger_location[0]) and (
+            passenger_destination[1] == passenger_location[1]) and passenger_status > 2) or (
+                                          passenger_destination[0] != passenger_location[0]) or (
+                                          passenger_destination[1] != passenger_location[1])
+
+    if fuel_is_full and taxi_in_interesting_location and passenger_in_interesting_location and valid_passenger_destination:
+        return True
+    return False
 
 
 def get_possible_passenger_origins(env):

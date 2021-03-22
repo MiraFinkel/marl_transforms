@@ -84,7 +84,7 @@ class TaxiSimpleEnv(TaxiEnv):
         j = i
         out = []
 
-        passenger_status = [i % 3]
+        passenger_status = [(i % 3) + 1]
         out.append(passenger_status)
         i = i // 3
 
