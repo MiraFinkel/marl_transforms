@@ -6,6 +6,7 @@ PASS_DEST_IDX = 3
 PASS_STATUS_IDX = 4
 
 TAXI = "taxi"
+TAXI_EXAMPLE = "taxi_example"
 DIM_REDUCTION_IDX = PASS_STATUS_IDX
 ENV_NAME = "taxi"
 

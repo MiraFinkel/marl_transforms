@@ -10,9 +10,12 @@ def get_env(env_name, number_of_agents=1):
     :return:
     """
     if env_name == TAXI:
-        from Transforms.taxi_transforms import TaxiSimpleEnv
+        from Environments.taxi_environment_wrapper import TaxiSimpleEnv
         return TaxiSimpleEnv
-    if env_name == SPEAKER_LISTENER:
+    elif env_name == TAXI_EXAMPLE:
+        from Environments.taxi_environment_wrapper import TaxiSimpleExampleEnv
+        return TaxiSimpleExampleEnv
+    elif env_name == SPEAKER_LISTENER:
         from supersuit import pad_observations_v0, pad_action_space_v0
         from pettingzoo.mpe import simple_speaker_listener_v3
         from ray.tune.registry import register_env
@@ -47,7 +50,7 @@ def target_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the
     for partial_obs in target_policy.keys():
         original_partial_obs = partial_obs
         partial_obs = list(partial_obs)
-        states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
+        states_from_partial_obs = env().get_states_from_partial_obs(partial_obs)
         for i, state in enumerate(states_from_partial_obs):
             state = np.reshape(np.array(state), (1, len(state)))
             action = agent.compute_action(state)

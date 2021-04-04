@@ -164,6 +164,3 @@ class TransformEnvironment(MultiAgentEnv):
             abstract_obs = self._mapping_class.mapping_step(cur_s, action)
             new_obs = abstract_obs
         return new_obs, reward, done, info
-
-
-
