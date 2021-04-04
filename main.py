@@ -9,42 +9,46 @@ import ray
 
 if __name__ == '__main__':
     # define the environment
-    env_name = TAXI
+    env_name = TAXI_EXAMPLE
     number_of_agents = 1
     agent_name = IMPALA
-    iteration_num = 2
+    iteration_num = 3
     theta = 50
     discount_factor = 0.9
+    num_states_in_partial_policy = 10
 
     # get the environment
     env = get_env(env_name, number_of_agents)
 
     # get the optimal policy
     optimal_agent = OptimalAgent(env())
-    policy_dict, policy, V = optimal_agent.value_iteration(theta=theta, discount_factor=discount_factor, display=True)
+    # policy_dict, policy, V = optimal_agent.value_iteration(theta=theta, discount_factor=discount_factor, display=True)
 
-    anticipated_policy = sample_anticipated_policy(optimal_agent, env(), 10)
+    # automatic_anticipated_policy = sample_anticipated_policy(optimal_agent, env(), num_states_in_partial_policy)
 
     # define the agents that are operating in the environment
     ray.init(num_gpus=NUM_GPUS, local_mode=True)
 
     # create agent and train it in env
-    agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_name, number_of_agents, agent_name,
-                                                                 iteration_num, display=False)
+    # agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_name, number_of_agents, agent_name,
+    #                                                              iteration_num, display=False)
 
     # evaluate the performance of the agent
     # rl_agent.run_episode(env, agent, number_of_agents, display=True)  # TODO Mira: add evaluation function?
 
     # the target policy (which is part of our input and defined by the user)
-    target_policy = {
-        (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
-        (2, 0, None, 2, 0, None, None, 2): 4,  # pickup
-        (0, 2, None, 0, 2, None, None, 2): 4,  # pickup
-        (2, 2, None, 2, 2, None, None, 2): 4,  # pickup <==
-        (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
-        (2, 0, None, None, None, 2, 0, 3): 5,  # dropoff
-        (0, 2, None, None, None, 0, 2, 3): 5,  # dropoff
-        (2, 2, None, None, None, 2, 2, 3): 5}  # dropoff
+    # anticipated_policy = {
+    #     (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
+    #     (2, 0, None, 2, 0, None, None, 2): 4,  # pickup
+    #     (0, 2, None, 0, 2, None, None, 2): 4,  # pickup
+    #     (2, 2, None, 2, 2, None, None, 2): 4,  # pickup <==
+    #     (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
+    #     (2, 0, None, None, None, 2, 0, 3): 5,  # dropoff
+    #     (0, 2, None, None, None, 0, 2, 3): 5,  # dropoff
+    #     (2, 2, None, None, None, 2, 2, 3): 5}  # dropoff
+    anticipated_policy = {
+        (0, 0, None, None, None, None, None, 2): 0
+    }
 
     new_reward = dict(
         step=-1,
@@ -71,7 +75,7 @@ if __name__ == '__main__':
     # compare the target policy with the agent's policy
 
     # create a transformed environment
-    transforms = [taxi_deterministic_position_transform]
+    transforms = [taxi_infinite_fuel_transform]
     explanation = None
 
     transform_rewards = []
@@ -88,10 +92,10 @@ if __name__ == '__main__':
                                                                                number_of_agents, agent_name,
                                                                                iteration_num, display=False)
         transform_rewards.append(transform_episode_reward_mean)
-        transformed_env = transformed_env()
+        # transformed_env = transformed_env()
         # rl_agent.run_episode(transformed_env, agent, number_of_agents, max_episode_len, display=True)
         # check if the target policy is achieved in trans_env
-        if target_policy_achieved(transformed_env, agent, target_policy):
+        if target_policy_achieved(transformed_env, agent, anticipated_policy):
             explanation = transform
             break
 
@@ -102,9 +106,9 @@ if __name__ == '__main__':
 
     # rl_agent.run_episode(transformed_env, agent, number_of_agents, display=True)
     # visualize rewards
-    results = [episode_reward_mean] + transform_rewards
+    # results = [episode_reward_mean] + transform_rewards
     names = [WITHOUT_TRANSFORM, "no fuel", "rewards"]
-    plot_result_graph(agent_name, results, names, "episode_reward_mean")
+    # plot_result_graph(agent_name, results, names, "episode_reward_mean")
 
     # shut_down
     ray.shutdown()

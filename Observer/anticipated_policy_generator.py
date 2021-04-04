@@ -73,7 +73,7 @@ class OptimalAgent:
                 break
 
         # Create a deterministic policy using the optimal value function
-        policy = np.zeros([self.nS, self.nA])
+        policy = np.zeros([self.nS, self.nA])  # TODO - policies = set of policies
         policy_dict = {}
         for s in range(self.nS):
             decoded_state = list(self.env.decode(s))
@@ -81,7 +81,7 @@ class OptimalAgent:
                             decoded_state[4]
             # One step lookahead to find the best action for this state
             A = one_step_lookahead(s, V)
-            best_action = np.argmax(A)
+            best_action = np.argmax(A)  # TODO - take all the actions that maximize the value / threshold
             # Always take the best action
             policy[s, best_action] = 1.0
             policy_dict[tuple(flatten_state)] = best_action
