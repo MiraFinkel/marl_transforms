@@ -11,8 +11,8 @@ if __name__ == '__main__':
     # define the environment
     env_name = TAXI_EXAMPLE
     number_of_agents = 1
-    agent_name = IMPALA
-    iteration_num = 3
+    agent_name = HANDS_ON_DQN
+    iteration_num = 10
     theta = 50
     discount_factor = 0.9
     num_states_in_partial_policy = 10
@@ -27,11 +27,11 @@ if __name__ == '__main__':
     # automatic_anticipated_policy = sample_anticipated_policy(optimal_agent, env(), num_states_in_partial_policy)
 
     # define the agents that are operating in the environment
-    ray.init(num_gpus=NUM_GPUS, local_mode=True)
+    # ray.init(num_gpus=NUM_GPUS, local_mode=True)
 
     # create agent and train it in env
-    # agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_name, number_of_agents, agent_name,
-    #                                                              iteration_num, display=False)
+    agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_name, number_of_agents, agent_name,
+                                                                 iteration_num, display=False)
 
     # evaluate the performance of the agent
     # rl_agent.run_episode(env, agent, number_of_agents, display=True)  # TODO Mira: add evaluation function?
@@ -111,4 +111,4 @@ if __name__ == '__main__':
     # plot_result_graph(agent_name, results, names, "episode_reward_mean")
 
     # shut_down
-    ray.shutdown()
+    # ray.shutdown()

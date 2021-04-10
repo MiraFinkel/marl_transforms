@@ -2,6 +2,11 @@ import Agents.agent
 import time
 import numpy as np
 import random
+from collections import deque
+from tensorflow.keras import Model, Sequential
+from tensorflow.keras.layers import Dense, Embedding, Reshape
+from tensorflow.keras.optimizers import Adam
+import progressbar
 # ===================== Agents ===================== #
 from constants import NUM_GPUS
 
@@ -23,6 +28,7 @@ APPO = "appo"
 SAC = "sac"
 LIN_UCB = "lin_usb"
 LIN_TS = "lin_ts"
+HANDS_ON_DQN = "hands_on_dqn"
 # ===================== Agents ===================== #
 NUM_WORKERS = 1
 WITH_DEBUG = True
@@ -79,6 +85,8 @@ def get_rl_agent(agent_name, config, env_to_agent):
     elif agent_name == LIN_TS:
         import ray.rllib.contrib.bandits.agents.lin_ts as lin_ts
         agent = lin_ts.LinTSTrainer(config=config, env=env_to_agent)
+    elif agent_name == HANDS_ON_DQN:
+        agent = DQNAgent(env=env_to_agent())
     else:
         raise Exception("Not valid agent name")
     return agent
@@ -201,7 +209,7 @@ class QLearningAgent:
     def set_terminal_states(self, terminal_states):
         self.terminal_states = terminal_states
 
-    def train(self):
+    def train(self, num_episodes, max_episode_len, save_rate):
         episode_rewards = [0.0]
         agent_rewards = [[0.0] for _ in range(1)]
         final_ep_rewards = []
@@ -244,6 +252,117 @@ class QLearningAgent:
         print("Finished a total of {} episodes.".format(len(episode_rewards)))
 
 
+class DQNAgent:
+    def __init__(self, env, timesteps_per_episode=1000, batch_size=32):
+        self.env = env
+        self.timesteps_per_episode = timesteps_per_episode
+        self.batch_size = batch_size
+        # Initialize attributes
+        self._state_size = env.num_states
+        self._action_size = env.action_space.n
+        self._optimizer = Adam(learning_rate=0.01)
+
+        self.experience_replay = deque(maxlen=2000)
+
+        # Initialize discount and exploration rate
+        self.gamma = 0.6
+        self.epsilon = 0.1
+
+        # Build networks
+        self.q_network = self._build_compile_model()
+        self.target_network = self._build_compile_model()
+        self.align_target_model()
+
+    def store(self, state, action, reward, next_state, terminated):
+        self.experience_replay.append((state, action, reward, next_state, terminated))
+
+    def _build_compile_model(self):
+        model = Sequential()
+        model.add(Embedding(self._state_size, 10, input_length=1))
+        model.add(Reshape((10,)))
+        model.add(Dense(50, activation='relu'))
+        model.add(Dense(50, activation='relu'))
+        model.add(Dense(self._action_size, activation='linear'))
+
+        model.compile(loss='mse', optimizer=self._optimizer)
+        return model
+
+    def align_target_model(self):
+        self.target_network.set_weights(self.q_network.get_weights())
+
+    def compute_action(self, state):
+        state = state[0] if len(state) == 1 else state
+        if np.random.rand() <= self.epsilon:
+            return self.env.action_space.sample()
+
+        q_values = self.q_network.predict(state)
+        return np.argmax(q_values[0])
+
+    def train(self):
+        taxi_name = "taxi_1"
+        state = self.env.reset()
+        state = np.reshape(state, [1, 1])
+
+        # Initialize variables
+        reward = 0
+        result = {"episode_reward_mean": 0.0, "episode_reward_min": np.inf, "episode_reward_max": -np.inf,
+                  "episode_len_mean": 0}
+        total_reward = 0.0
+        terminated = False
+
+        bar = progressbar.ProgressBar(maxval=self.timesteps_per_episode / 10,
+                                      widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+        bar.start()
+
+        for timestep in range(self.timesteps_per_episode):
+            # Run Action
+            action = self.compute_action(state[0][0][taxi_name][0])
+
+            # Take action
+            next_state, reward, dones, info = self.env.step({taxi_name: action})
+
+            total_reward += reward[taxi_name]
+            result["episode_reward_max"] = reward[taxi_name] if reward[taxi_name] > result["episode_reward_max"] else \
+            result["episode_reward_max"]
+            result["episode_reward_min"] = reward[taxi_name] if reward[taxi_name] < result["episode_reward_min"] else \
+            result["episode_reward_min"]
+
+            next_state = np.reshape(next_state, [1, 1])
+            self.store(state, action, reward, next_state, terminated)
+
+            state = next_state
+            terminated = all(list(dones.values()))
+            if terminated:
+                self.align_target_model()
+                break
+
+            if len(self.experience_replay) > self.batch_size:
+                self.retrain(self.batch_size)
+
+            if timestep % 10 == 0:
+                bar.update(timestep / 10 + 1)
+
+        bar.finish()
+        result["episode_reward_mean"] = total_reward / self.timesteps_per_episode
+        return result
+
+    def retrain(self, batch_size):
+        taxi_name = 'taxi_1'
+        minibatch = random.sample(self.experience_replay, batch_size)
+
+        for state, action, reward, next_state, terminated in minibatch:
+
+            target = self.q_network.predict(state[0][0][taxi_name][0])
+
+            if terminated:
+                target[0][action] = reward
+            else:
+                t = self.target_network.predict(next_state[0][0]['taxi_1'][0])
+                target[0][action] = reward[taxi_name] + self.gamma * np.amax(t)
+
+            self.q_network.fit(state[0][0][taxi_name][0], target, epochs=1, verbose=0)
+
+
 g_config = {}
 
 
@@ -265,7 +384,7 @@ def train(agent, iteration_num):
 
 
 def run_episode(env, agent_rep, number_of_agents, max_episode_len, display=False):
-    env.set_display(display)  # TODO Guy: to add "set_display" to particle environment
+    env.set_display(display)
     global g_config
     obs = env.reset()
     done = False
@@ -340,7 +459,6 @@ def create_agent_and_train(env, env_name, number_of_agents, agent_name, iteratio
 
 def get_config(env_name, env, number_of_agents):
     """
-    TODO Guy: to expand the function to work with particle environment
     :param env_name
     :param env:
     :param number_of_agents:
