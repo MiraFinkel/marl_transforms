@@ -118,7 +118,7 @@ class TaxiSimpleExampleEnv(TaxiSimpleEnv):
         self.counter = 0
 
         # refuel everybody
-        fuels = [1 for i in range(self.num_taxis)]
+        fuels = [2 for i in range(self.num_taxis)]
 
         # reset passengers
         passengers_start_location = [[0, 0]]

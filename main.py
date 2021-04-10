@@ -12,7 +12,7 @@ if __name__ == '__main__':
     env_name = TAXI_EXAMPLE
     number_of_agents = 1
     agent_name = HANDS_ON_DQN
-    iteration_num = 1
+    iteration_num = 100
     theta = 50
     discount_factor = 0.9
     num_states_in_partial_policy = 10
@@ -34,7 +34,7 @@ if __name__ == '__main__':
                                                                  iteration_num, display=False)
 
     # evaluate the performance of the agent
-    # rl_agent.run_episode(env, agent, number_of_agents, display=True)  # TODO Mira: add evaluation function?
+    rl_agent.run_episode(env, agent, number_of_agents, 1000, display=True)  # TODO Mira: add evaluation function?
 
     # the target policy (which is part of our input and defined by the user)
     # anticipated_policy = {
