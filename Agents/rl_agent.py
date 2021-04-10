@@ -384,6 +384,7 @@ def train(agent, iteration_num):
 
 
 def run_episode(env, agent_rep, number_of_agents, max_episode_len, display=False):
+    env = env()
     env.set_display(display)
     global g_config
     obs = env.reset()

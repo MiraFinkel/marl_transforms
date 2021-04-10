@@ -62,4 +62,7 @@ def target_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the
     print(" ============================================================== ")
     print("=========> num_of_success_policies: ", num_of_success_policies)
     print("=========> num_of_failed_policies: ", num_of_failed_policies)
-    return result
+    success_rate = num_of_success_policies / (num_of_success_policies + num_of_failed_policies)
+    print("=========> Success rate:", success_rate)
+    print(" ============================================================== ")
+    return success_rate > 0.8

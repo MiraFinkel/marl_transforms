@@ -118,7 +118,7 @@ class TaxiSimpleExampleEnv(TaxiSimpleEnv):
         self.counter = 0
 
         # refuel everybody
-        fuels = [1 for i in range(self.num_taxis)]
+        fuels = [2 for i in range(self.num_taxis)]
 
         # reset passengers
         passengers_start_location = [[0, 0]]
@@ -154,8 +154,8 @@ class TaxiTransformedEnv(TaxiSimpleExampleEnv):
                 partial_obs_aligned_with_env = True
             iter_num -= 1
 
-        taxi_x = [partial_obs[0]] if partial_obs[0] else list(range(self.num_columns))
-        taxi_y = [partial_obs[1]] if partial_obs[1] else list(range(self.num_rows))
+        taxi_x = [partial_obs[0]] if (partial_obs[0] is not None) else list(range(self.num_columns))
+        taxi_y = [partial_obs[1]] if (partial_obs[1] is not None) else list(range(self.num_rows))
         fuel = [partial_obs[2]] if partial_obs[2] else list(range(self.max_fuel[0]))
         passenger_start_x, passenger_start_y = [obs[3]], [obs[4]]
         passenger_dest_x, passenger_dest_y = [obs[5]], [obs[6]]
@@ -167,11 +167,14 @@ class TaxiTransformedEnv(TaxiSimpleExampleEnv):
         return states
 
     def _is_aligned(self, obs, partial_obs):
+        taxi_x, taxi_y = partial_obs[0], partial_obs[1]
         passenger_start_x, passenger_start_y, passenger_dest_x, passenger_dest_y = self._get_passenger_info(partial_obs)
-        return (passenger_start_x is None or passenger_start_x == obs[3]) and (
+        return (taxi_x is None or passenger_start_x == obs[0]) and (
+                taxi_y is None or passenger_start_x == obs[1]) and (
+                passenger_start_x is None or passenger_start_x == obs[3]) and (
                 passenger_start_y is None or passenger_start_y == obs[4]) and (
-                       passenger_dest_x is None or passenger_dest_x == obs[5]) and (
-                       passenger_dest_y is None or passenger_dest_y == obs[6])
+                passenger_dest_x is None or passenger_dest_x == obs[5]) and (
+                passenger_dest_y is None or passenger_dest_y == obs[6])
 
     def _get_passenger_info(self, partial_obs):
         passenger_start_x, passenger_start_y = partial_obs[3], partial_obs[4]
