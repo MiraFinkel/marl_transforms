@@ -12,7 +12,7 @@ if __name__ == '__main__':
     env_name = TAXI_EXAMPLE
     number_of_agents = 1
     agent_name = HANDS_ON_DQN
-    iteration_num = 10
+    iteration_num = 1
     theta = 50
     discount_factor = 0.9
     num_states_in_partial_policy = 10
