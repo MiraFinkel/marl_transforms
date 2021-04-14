@@ -7,7 +7,7 @@ class AbstractAgent(ABC):
         self.timesteps_per_episode = timesteps_per_episode
 
     @abstractmethod
-    def train(self) -> {str: float}:
+    def run(self) -> {str: float}:
         """
         The agent's training method.
         Returns: a dictionary - {"episode_reward_mean": __, "episode_reward_min": __, "episode_reward_max": __,
@@ -27,5 +27,6 @@ class AbstractAgent(ABC):
     def stop_episode(self):
         pass
 
+    @abstractmethod
     def episode_callback(self, state, action, reward, next_state, terminated):
         pass

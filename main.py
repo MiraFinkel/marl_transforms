@@ -1,4 +1,4 @@
-from Observer.anticipated_policy_generator import *
+import Observer.anticipated_policy_generator as anticipated_policy_generator
 from Transforms.taxi_transforms import *
 from utils import *
 from visualize import *
@@ -9,67 +9,29 @@ import Agents.RL_agents.rl_agent as rl_agent
 if __name__ == '__main__':
     # define the environment
     env_name = TAXI_EXAMPLE
-    number_of_agents = 1
+    agent_for_policy_generator = VALUE_ITERATION
     agent_name = Q_LEARNING
-    iteration_num = 50
+    num_of_episodes = 1000
     num_states_in_partial_policy = 10
 
     # get the environment
-    env = get_env(env_name, number_of_agents)
+    env = get_env(env_name)
 
-    # get the optimal policy
-    optimal_agent = OptimalAgent(env())
-    # policy_dict, policy, V = optimal_agent.value_iteration(theta=50, discount_factor=0.9, display=True)
+    # the anticipated policy (which is part of our input and defined by the user)
+    # automatic_anticipated_policy = anticipated_policy_generator.get_automatic_anticipated_policy(env, env_name,
+    #                                                                                              agent_for_policy_generator,
+    #                                                                                              num_of_episodes,
+    #                                                                                              num_states_in_partial_policy)
 
-    # automatic_anticipated_policy = sample_anticipated_policy(optimal_agent, env(), num_states_in_partial_policy)
+    anticipated_policy = {(2, 0, None, None, None, None, None, 2): 0}
 
-    # define the agents that are operating in the environment
-    # ray.init(num_gpus=NUM_GPUS, local_mode=True)
-
-    # create agent and train it in env
-    agent, episode_reward_mean = rl_agent.create_agent_and_run(env, env_name, agent_name, iteration_num,
-                                                               display=False)
+    # create agent
+    agent = rl_agent.create_agent(env, env_name, agent_name)
+    # train the agent in the environment
+    train_episode_reward_mean = rl_agent.run(agent, num_of_episodes, method=TRAIN)
 
     # evaluate the performance of the agent
-    rl_agent.run(env, agent, )  # TODO Mira: add evaluation function?
-
-    # the target policy (which is part of our input and defined by the user)
-    # anticipated_policy = {
-    #     (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
-    #     (2, 0, None, 2, 0, None, None, 2): 4,  # pickup
-    #     (0, 2, None, 0, 2, None, None, 2): 4,  # pickup
-    #     (2, 2, None, 2, 2, None, None, 2): 4,  # pickup <==
-    #     (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
-    #     (2, 0, None, None, None, 2, 0, 3): 5,  # dropoff
-    #     (0, 2, None, None, None, 0, 2, 3): 5,  # dropoff
-    #     (2, 2, None, None, None, 2, 2, 3): 5}  # dropoff
-    anticipated_policy = {
-        (2, 0, None, None, None, None, None, 2): 0
-    }
-
-    new_reward = dict(
-        step=-1,
-        no_fuel=-20,
-        bad_pickup=-15,
-        bad_dropoff=-15,
-        bad_refuel=-10,
-        bad_fuel=-50,
-        pickup=50,
-        standby_engine_off=-1,
-        turn_engine_on=-10e6,
-        turn_engine_off=-10e6,
-        standby_engine_on=-1,
-        intermediate_dropoff=50,
-        final_dropoff=100,
-        hit_wall=-2,
-        collision=-35,
-        collided=-20,
-        unrelated_action=-15
-    )
-    # compare policy with target policy
-    # get the policy of the agents for all the states defined in the target policy e.g. [3,3,0,2,3,4,5] [3,3,0,2,3,4,8]
-    # TODO Mira: I think we don't need the mapping function here, because the data structure will be too big (?)
-    # compare the target policy with the agent's policy
+    evaluate_episode_reward_mean = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
 
     # create a transformed environment
     transforms = [taxi_infinite_fuel_transform]
@@ -80,19 +42,16 @@ if __name__ == '__main__':
     for transform in transforms:
         # create transformed environment
         transformed_env = transform(transformed_env)
-        set_reward_dict = getattr(transformed_env, "set_reward_dict", None)
-        if callable(set_reward_dict):
-            set_temp_reward_dict(new_reward)
 
-        # create and train agents in env
-        agent, transform_episode_reward_mean = rl_agent.create_agent_and_run(transformed_env, env_name,
-                                                                             number_of_agents, agent_name,
-                                                                             iteration_num, display=False)
+        # create agent
+        agent = rl_agent.create_agent(transformed_env, env_name, agent_name)
+        # evaluate the performance of the agent
+        transform_episode_reward_mean = rl_agent.run(agent, num_of_episodes, method=TRAIN)
+
         transform_rewards.append(transform_episode_reward_mean)
-        # transformed_env = transformed_env()
-        # rl_agent.run_episode(transformed_env, agent, number_of_agents, max_episode_len, display=True)
+
         # check if the target policy is achieved in trans_env
-        if target_policy_achieved(transformed_env, agent, anticipated_policy):
+        if anticipated_policy_achieved(transformed_env, agent, anticipated_policy):
             explanation = transform
             break
 
@@ -106,6 +65,3 @@ if __name__ == '__main__':
     # results = [episode_reward_mean] + transform_rewards
     names = [WITHOUT_TRANSFORM, "no fuel", "rewards"]
     # plot_result_graph(agent_name, results, names, "episode_reward_mean")
-
-    # shut_down
-    # ray.shutdown()

@@ -1,6 +1,7 @@
 from Agents.RL_agents.rllib_agents import *
 from Agents.RL_agents.q_learning_agents import *
-import numpy as np
+
+from Agents.value_iteration_agent import ValueIterationAgent
 
 FORMAT_STRING = "{:3d} mean reward: {:6.2f}, variance: {:6.2f}, running time: {:6.2f}"
 from constants import *
@@ -51,12 +52,15 @@ def get_rl_agent(agent_name, env_name, env, env_to_agent):
         agent = DQNAgent(env=env_to_agent())
     elif agent_name == Q_LEARNING:
         agent = QLearningAgent(env=env_to_agent())
+    elif agent_name == VALUE_ITERATION:
+        agent = ValueIterationAgent(env=env_to_agent())
     else:
         raise Exception("Not valid agent name")
     return agent
 
 
 def run(agent, num_of_episodes, method=TRAIN):
+    agent.env.set_display(False)
     episode_reward_mean = []
     for it in range(num_of_episodes):
         result = agent.run()
@@ -77,12 +81,11 @@ def run_episode(env, agent, method=TRAIN):
     result = {"episode_reward_mean": 0.0, "episode_reward_min": np.inf, "episode_reward_max": -np.inf,
               "episode_len_mean": 0}
     total_reward = 0.0
-
-    bar = progressbar.ProgressBar(maxval=agent.timesteps_per_episode / 10,
-                                  widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
-    bar.start()
     episode_len = 0
     for timestep in range(agent.timesteps_per_episode):
+        if method == EVALUATE:
+            env.render()
+
         # Run Action
         action = agent.compute_action(state[TAXI_NAME][0])
 
@@ -103,22 +106,15 @@ def run_episode(env, agent, method=TRAIN):
 
         state = agent.episode_callback(state, action, reward, next_state, terminated)
 
-        if timestep % 10 == 0:
-            bar.update(timestep / 10 + 1)
-
-    bar.finish()
     result["episode_reward_mean"] = total_reward / agent.timesteps_per_episode
     result["episode_len_mean"] = episode_len
     return result
 
 
-def create_agent_and_run(env, env_name, agent_name, iteration_num, method=TRAIN, display=False):
-    env().set_display(display)
+def create_agent(env, env_name, agent_name):
+    env().set_display(False)
     agent = get_rl_agent(agent_name, env_name, env(), env)
-
-    # train the agent in the environment
-    episode_reward_mean = run(agent, iteration_num, method=method)
-    return agent, episode_reward_mean
+    return agent
 
 
 # get the action performed by the agents in each observation

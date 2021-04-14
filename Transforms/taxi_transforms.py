@@ -1,13 +1,12 @@
 import numpy as np
-# from ray.rllib.env import MultiAgentEnv
+from itertools import product
 import random
-from Environments.MultiTaxiEnv.multitaxienv.config import TAXI_ENVIROMENT_REWARDS
-from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv, display
-from Environments.taxi_environment_wrapper import TaxiTransformedEnv
+
+from Environments.taxi_environment_wrapper import TaxiSimpleExampleEnv
 
 number_of_agents = 1
 
-NEW_MAP = [
+SMALL_MAP = [
     "+-----+",
     "|X: :X|",
     "| : : |",
@@ -39,14 +38,47 @@ temp_reward = dict(
 )
 
 
-def set_number_of_agents(val):
-    global number_of_agents
-    number_of_agents = val
+class TaxiTransformedEnv(TaxiSimpleExampleEnv):
 
+    def get_states_from_partial_obs(self, partial_obs):
+        partial_obs_aligned_with_env = False
+        iter_num = 200
+        while not partial_obs_aligned_with_env and iter_num != 0:
+            obs = self.reset()
+            obs = obs[list(obs.keys())[0]].tolist()[0]  # get the observation as a list
+            if self._is_aligned(obs, partial_obs):
+                partial_obs_aligned_with_env = True
+            iter_num -= 1
 
-def set_temp_reward_dict(reward_dict):
-    global temp_reward
-    temp_reward = reward_dict
+        if partial_obs_aligned_with_env:
+            taxi_x = [partial_obs[0]] if (partial_obs[0] is not None) else list(range(self.num_columns))
+            taxi_y = [partial_obs[1]] if (partial_obs[1] is not None) else list(range(self.num_rows))
+            fuel = [partial_obs[2]] if partial_obs[2] else list(range(self.max_fuel[0]))
+            passenger_start_x, passenger_start_y = [obs[3]], [obs[4]]
+            passenger_dest_x, passenger_dest_y = [obs[5]], [obs[6]]
+            passenger_status = [partial_obs[7]] if partial_obs[7] else list(range(1, 4))
+            states = list(
+                product(taxi_x, taxi_y, fuel, passenger_start_x, passenger_start_y, passenger_dest_x, passenger_dest_y,
+                        passenger_status, repeat=1))
+            states = [list(state) for state in states]
+        else:
+            states = []
+        return states
+
+    def _is_aligned(self, obs, partial_obs):
+        taxi_x, taxi_y = partial_obs[0], partial_obs[1]
+        passenger_start_x, passenger_start_y, passenger_dest_x, passenger_dest_y = self._get_passenger_info(partial_obs)
+        return (taxi_x is None or taxi_x == obs[0]) and (
+                taxi_y is None or taxi_y == obs[1]) and (
+                       passenger_start_x is None or passenger_start_x == obs[3]) and (
+                       passenger_start_y is None or passenger_start_y == obs[4]) and (
+                       passenger_dest_x is None or passenger_dest_x == obs[5]) and (
+                       passenger_dest_y is None or passenger_dest_y == obs[6])
+
+    def _get_passenger_info(self, partial_obs):
+        passenger_start_x, passenger_start_y = partial_obs[3], partial_obs[4]
+        passenger_dest_x, passenger_dest_y = partial_obs[5], partial_obs[6]
+        return passenger_start_x, passenger_start_y, passenger_dest_x, passenger_dest_y
 
 
 class TaxiChangeMapTransform(TaxiTransformedEnv):
@@ -350,9 +382,8 @@ class TaxiRewardTransform(TaxiTransformedEnv):
 
 class TaxiDeterministicPositionTransform(TaxiTransformedEnv):
     def __init__(self, x=None, **kwargs):
-        self.reward_dict = temp_reward
         self.display = False
-        super().__init__(domain_map=NEW_MAP)
+        super().__init__(domain_map=SMALL_MAP)
 
     def set_display(self, val):
         self.display = val

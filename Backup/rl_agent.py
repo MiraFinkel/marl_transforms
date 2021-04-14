@@ -31,3 +31,37 @@ def run_episode(env, agent, number_of_agents, max_episode_len, display=False):
 #
 #     def get_agent(self):
 #         return self.decision_maker
+
+    # anticipated_policy = {
+    #     (0, 0, None, 0, 0, None, None, 2): 4,  # pickup
+    #     (2, 0, None, 2, 0, None, None, 2): 4,  # pickup
+    #     (0, 2, None, 0, 2, None, None, 2): 4,  # pickup
+    #     (2, 2, None, 2, 2, None, None, 2): 4,  # pickup <==
+    #     (0, 0, None, None, None, 0, 0, 3): 5,  # dropoff
+    #     (2, 0, None, None, None, 2, 0, 3): 5,  # dropoff
+    #     (0, 2, None, None, None, 0, 2, 3): 5,  # dropoff
+    #     (2, 2, None, None, None, 2, 2, 3): 5}  # dropoff
+
+new_reward = dict(
+    step=-1,
+    no_fuel=-20,
+    bad_pickup=-15,
+    bad_dropoff=-15,
+    bad_refuel=-10,
+    bad_fuel=-50,
+    pickup=50,
+    standby_engine_off=-1,
+    turn_engine_on=-10e6,
+    turn_engine_off=-10e6,
+    standby_engine_on=-1,
+    intermediate_dropoff=50,
+    final_dropoff=100,
+    hit_wall=-2,
+    collision=-35,
+    collided=-20,
+    unrelated_action=-15
+)
+
+set_reward_dict = getattr(transformed_env, "set_reward_dict", None)
+if callable(set_reward_dict):
+    set_temp_reward_dict(new_reward)

@@ -9,9 +9,11 @@ from Agents.RL_agents.rl_agent import *
 import Agents.RL_agents.rl_agent as rl_agent
 from Agents.abstract_agent import AbstractAgent
 import numpy as np
+from constants import *
 
 HANDS_ON_DQN = "hands_on_dqn"
 Q_LEARNING = "q_learning"
+VALUE_ITERATION = "value_iteration"
 
 MAX_EXPLORATION_RATE = 1
 MIN_EXPLORATION_RATE = 0.01
@@ -34,6 +36,7 @@ class QLearningAgent(AbstractAgent):
         gamma    - discount factor
         num_actions - number of actions in the current environment
         """
+        super().__init__(env, timesteps_per_episode)
         self.episodesSoFar = 0
         self.accumTrainRewards = 0.0
         self.accumTestRewards = 0.0
@@ -42,15 +45,13 @@ class QLearningAgent(AbstractAgent):
         self.alpha = alpha
         self.gamma = gamma
 
-        self.timesteps_per_episode = timesteps_per_episode
         self.num_actions = env.action_space.n
         self.epsilon = epsilon
         self.discount = discount
         self.q_values = {}
         self.terminal_states = None
         self.episodeRewards = 0
-
-        self.env = env
+        self.policy_dict = {}
 
     def get_q_value(self, state, action):
         """
@@ -76,6 +77,7 @@ class QLearningAgent(AbstractAgent):
           take the best policy action otherwise.
           Should use transform_fn if it exist.
         """
+        state = state[0] if len(state) == 1 else state
         actions = [i for i in range(self.env.action_space.n)]
         encoded_state = self.env.encode(state)
         if flip_coin(self.epsilon):
@@ -135,79 +137,20 @@ class QLearningAgent(AbstractAgent):
     def set_terminal_states(self, terminal_states):
         self.terminal_states = terminal_states
 
-    def train(self):
+    def run(self):
+        self.env.set_display(False)
         result = rl_agent.run_episode(self.env, self)
         return result
 
-
-# class QLearningAgent1(AbstractAgent):
-#     def __init__(self, env, epsilon=0.1, alpha=0.1, gamma=0.6, timesteps_per_episode=100001):
-#         self.env = env
-#         self.q_table = {}
-#         self.timesteps_per_episode = timesteps_per_episode
-#
-#         # Hyper-parameters
-#         self.alpha = alpha  # the learning rate
-#         self.gamma = gamma  # discount factor
-#         self.epsilon = epsilon  # taking random actions
-#
-#         # For plotting metrics
-#         self.all_epochs = []
-#         self.all_penalties = []
-#
-#     def compute_action(self, state):
-#         state = state[TAXI_NAME] if len(state) == 1 else state
-#         if random.uniform(0, 1) < self.epsilon:
-#             action = random.randrange(self.env.action_space.n)  # Explore action space
-#         else:
-#             q_table_for_cur_state = {k[1]: v for k, v in self.q_table.items() if k[0] == state}
-#             action = np.argmax(
-#                 q_table_for_cur_state.values() if len(q_table_for_cur_state) > 1 else 0.0)  # Exploit learned values
-#         return action
-#
-#     def get_q_value(self, state, action):
-#         state = state[TAXI_NAME]
-#         if (state, action) in self.q_table:
-#             return self.q_table[(state, action)]
-#         else:
-#             return 0.0
-#
-#     def train(self):
-#         for i in range(1, self.timesteps_per_episode):
-#             state = self.env.reset()
-#
-#             epochs, penalties, reward, = 0, 0, 0
-#             done = False
-#
-#             while not done:
-#                 action = self.compute_action(state)
-#
-#                 next_state, reward, done, info = self.env.step({TAXI_NAME: action})
-#                 next_state, reward, done = next_state[TAXI_NAME], reward[TAXI_NAME], done[TAXI_NAME]
-#
-#                 old_value = self.get_q_value(state, action)
-#                 next_max = np.max(self.q_table[next_state])
-#
-#                 new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * next_max)
-#                 self.q_table[state[TAXI_NAME][0], action] = new_value
-#
-#                 if reward == -10:
-#                     penalties += 1
-#
-#                 state = {TAXI_NAME: next_state}
-#                 epochs += 1
-#
-#             if i % 100 == 0:
-#                 # clear_output(wait=True)
-#                 print(f"Episode: {i}")
-#
-#     print("Training finished.\n")
+    def evaluate(self):
+        self.env.set_display(True)
+        result = rl_agent.run_episode(self.env, self, method=EVALUATE)
+        return result
 
 
 class DQNAgent(AbstractAgent):
     def __init__(self, env, timesteps_per_episode=1000, batch_size=32):
-        self.env = env
-        self.timesteps_per_episode = timesteps_per_episode
+        super().__init__(env, timesteps_per_episode)
         self.batch_size = batch_size
         # Initialize attributes
         self._state_size = env.num_states
@@ -262,7 +205,7 @@ class DQNAgent(AbstractAgent):
     def stop_episode(self):
         self.align_target_model()
 
-    def train(self):
+    def run(self):
         result = rl_agent.run_episode(self.env, self)
         return result
 
