@@ -21,4 +21,5 @@ ENV = TransformEnvironment
 ENV_NAME = TAXI
 # ----------------- Env variables ------------------ #
 
-NUM_GPUS = 0
+TRAIN = "train"
+EVALUATE = "evaluate"
