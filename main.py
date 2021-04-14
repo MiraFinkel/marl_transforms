@@ -1,20 +1,17 @@
-from Environments.MultiTaxiEnv.multitaxienv.config import NEW_TAXI_ENVIRONMENT_REWARDS
 from Observer.anticipated_policy_generator import *
 from Transforms.taxi_transforms import *
 from utils import *
 from visualize import *
-from Agents.rl_agent import *
-import Agents.rl_agent as rl_agent
-import ray
+from Agents.RL_agents.rl_agent import *
+from Agents.RL_agents.q_learning_agents import *
+import Agents.RL_agents.rl_agent as rl_agent
 
 if __name__ == '__main__':
     # define the environment
     env_name = TAXI_EXAMPLE
     number_of_agents = 1
-    agent_name = HANDS_ON_DQN
-    iteration_num = 100
-    theta = 50
-    discount_factor = 0.9
+    agent_name = Q_LEARNING
+    iteration_num = 50
     num_states_in_partial_policy = 10
 
     # get the environment
@@ -22,7 +19,7 @@ if __name__ == '__main__':
 
     # get the optimal policy
     optimal_agent = OptimalAgent(env())
-    # policy_dict, policy, V = optimal_agent.value_iteration(theta=theta, discount_factor=discount_factor, display=True)
+    # policy_dict, policy, V = optimal_agent.value_iteration(theta=50, discount_factor=0.9, display=True)
 
     # automatic_anticipated_policy = sample_anticipated_policy(optimal_agent, env(), num_states_in_partial_policy)
 
@@ -30,11 +27,11 @@ if __name__ == '__main__':
     # ray.init(num_gpus=NUM_GPUS, local_mode=True)
 
     # create agent and train it in env
-    agent, episode_reward_mean = rl_agent.create_agent_and_train(env, env_name, number_of_agents, agent_name,
-                                                                 iteration_num, display=False)
+    agent, episode_reward_mean = rl_agent.create_agent_and_run(env, env_name, agent_name, iteration_num,
+                                                               display=False)
 
     # evaluate the performance of the agent
-    rl_agent.run_episode(env, agent, number_of_agents, 1000, display=True)  # TODO Mira: add evaluation function?
+    rl_agent.run(env, agent, )  # TODO Mira: add evaluation function?
 
     # the target policy (which is part of our input and defined by the user)
     # anticipated_policy = {
@@ -47,7 +44,7 @@ if __name__ == '__main__':
     #     (0, 2, None, None, None, 0, 2, 3): 5,  # dropoff
     #     (2, 2, None, None, None, 2, 2, 3): 5}  # dropoff
     anticipated_policy = {
-        (0, 0, None, None, None, None, None, 2): 0
+        (2, 0, None, None, None, None, None, 2): 0
     }
 
     new_reward = dict(
@@ -88,9 +85,9 @@ if __name__ == '__main__':
             set_temp_reward_dict(new_reward)
 
         # create and train agents in env
-        agent, transform_episode_reward_mean = rl_agent.create_agent_and_train(transformed_env, env_name,
-                                                                               number_of_agents, agent_name,
-                                                                               iteration_num, display=False)
+        agent, transform_episode_reward_mean = rl_agent.create_agent_and_run(transformed_env, env_name,
+                                                                             number_of_agents, agent_name,
+                                                                             iteration_num, display=False)
         transform_rewards.append(transform_episode_reward_mean)
         # transformed_env = transformed_env()
         # rl_agent.run_episode(transformed_env, agent, number_of_agents, max_episode_len, display=True)
