@@ -62,6 +62,20 @@ new_reward = dict(
     unrelated_action=-15
 )
 
+temp_reward = dict(
+    step=-1,
+    no_fuel=-20,
+    bad_pickup=-30,
+    bad_dropoff=-30,
+    bad_refuel=-10,
+    bad_fuel=-50,
+    pickup=50,
+    intermediate_dropoff=-30,
+    final_dropoff=1000,
+    hit_wall=-2,
+    unrelated_action=-15,
+)
+
 set_reward_dict = getattr(transformed_env, "set_reward_dict", None)
 if callable(set_reward_dict):
     set_temp_reward_dict(new_reward)

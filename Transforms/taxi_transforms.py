@@ -26,15 +26,21 @@ SMALL_MAP = [
 temp_reward = dict(
     step=-1,
     no_fuel=-20,
-    bad_pickup=-30,
-    bad_dropoff=-30,
+    bad_pickup=-15,
+    bad_dropoff=-15,
     bad_refuel=-10,
     bad_fuel=-50,
     pickup=50,
-    intermediate_dropoff=-30,
-    final_dropoff=1000,
+    standby_engine_off=-1,
+    turn_engine_on=-10e6,
+    turn_engine_off=-10e6,
+    standby_engine_on=-1,
+    intermediate_dropoff=50,
+    final_dropoff=100,
     hit_wall=-2,
-    unrelated_action=-15,
+    collision=-35,
+    collided=-20,
+    unrelated_action=-15
 )
 
 
