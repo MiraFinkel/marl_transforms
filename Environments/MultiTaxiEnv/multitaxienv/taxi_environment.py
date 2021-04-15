@@ -15,11 +15,8 @@ from gym.utils import seeding
 import numpy as np
 import random
 
-from .config import TAXI_ENVIROMENT_REWARDS, BASE_AVAILABLE_ACTIONS, ALL_ACTIONS_NAMES
+from .config import TAXI_ENVIRONMENT_REWARDS, BASE_AVAILABLE_ACTIONS, ALL_ACTIONS_NAMES
 from ray.rllib.env import MultiAgentEnv
-
-display = False
-number_of_agents = 1
 
 orig_MAP = [
     "+---------+",
@@ -127,7 +124,7 @@ class TaxiEnv(MultiAgentEnv):
 
     metadata = {'render.modes': ['human', 'ansi']}
 
-    def __init__(self, _=0, num_taxis: int = number_of_agents, num_passengers: int = 1, max_fuel: list = None,
+    def __init__(self, _=0, num_taxis: int = 1, num_passengers: int = 1, max_fuel: list = None,
                  domain_map: list = None, taxis_capacity: list = None, collision_sensitive_domain: bool = True,
                  fuel_type_list: list = None, option_to_stand_by: bool = False):
         """
@@ -142,8 +139,8 @@ class TaxiEnv(MultiAgentEnv):
             fuel_type_list: list of fuel types of each taxi
             option_to_stand_by: can taxis simply stand in place
         """
-        self.set_number_of_taxis()
         # Initializing default values
+        self.num_taxis = num_taxis
         if max_fuel is None:
             self.max_fuel = [100] * num_taxis  # TODO - needs to figure out how to insert np.inf into discrete obs.space
         else:
@@ -222,10 +219,6 @@ class TaxiEnv(MultiAgentEnv):
 
         self.np_random = None
         self.reset()
-
-    def set_number_of_taxis(self):
-        global number_of_agents
-        self.num_taxis = number_of_agents
 
     def _get_num_states(self):
         map_dim = (self.num_rows * self.num_columns)
@@ -628,7 +621,7 @@ class TaxiEnv(MultiAgentEnv):
         """
         fuel = current_fuel
         reward = current_reward
-        if self.at_valid_fuel_station(taxi, taxis_locations):
+        if self.at_valid_fuel_station(taxi, taxis_locations) and fuel != self.max_fuel[taxi]:
             fuel = self.max_fuel[taxi]
         else:
             reward = self.partial_closest_path_reward('bad_refuel')
@@ -744,7 +737,7 @@ class TaxiEnv(MultiAgentEnv):
 
                 if (not moved) and action in [self.action_index_dictionary[direction] for
                                               direction in ['north', 'south', 'west', 'east']]:
-                    reward = TAXI_ENVIROMENT_REWARDS['hit_wall']
+                    reward = TAXI_ENVIRONMENT_REWARDS['hit_wall']
 
                 # taxi refuel
                 if index_action_dictionary[action] == 'refuel':
@@ -768,9 +761,6 @@ class TaxiEnv(MultiAgentEnv):
 
         self.dones['__all__'] = True
         self.dones['__all__'] = all(list(self.dones.values()))
-
-        if display:
-            self.render()
 
         if self.bounded:
             total_reward = 0
@@ -963,7 +953,7 @@ class TaxiEnv(MultiAgentEnv):
 
         """
         if basic_reward_str not in ['intermediate_dropoff', 'final_dropoff'] or taxi_index is None:
-            return TAXI_ENVIROMENT_REWARDS[basic_reward_str]
+            return TAXI_ENVIRONMENT_REWARDS[basic_reward_str]
 
         # [taxis_locations, fuels, passengers_start_locations, destinations, passengers_status]
         current_state = self.state
@@ -978,9 +968,4 @@ class TaxiEnv(MultiAgentEnv):
 
         return 15 * (self.passenger_destination_l1_distance(passenger_index, passenger_start_row, passenger_start_col) -
                      self.passenger_destination_l1_distance(passenger_index, taxi_current_row, taxi_currrent_col))
-
-    def set_display(self, val):
-        global display
-        display = val
-
 

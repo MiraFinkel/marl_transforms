@@ -2,17 +2,18 @@ import Observer.anticipated_policy_generator as anticipated_policy_generator
 from Transforms.taxi_transforms import *
 from utils import *
 from visualize import *
-from Agents.RL_agents.rl_agent import *
 from Agents.RL_agents.q_learning_agents import *
 import Agents.RL_agents.rl_agent as rl_agent
+import sys
 
 if __name__ == '__main__':
     # define the environment
     env_name = TAXI_EXAMPLE
     agent_for_policy_generator = VALUE_ITERATION
     agent_name = Q_LEARNING
-    num_of_episodes = 1000
+    num_of_episodes = 150
     num_states_in_partial_policy = 10
+    result = {}
 
     # get the environment
     env = get_env(env_name)
@@ -23,45 +24,55 @@ if __name__ == '__main__':
     #                                                                                              num_of_episodes,
     #                                                                                              num_states_in_partial_policy)
 
-    anticipated_policy = {(2, 0, None, None, None, None, None, 2): 0}
+    anticipated_policy = {(4, 0, None, None, None, None, None, 2): 0}
 
     # create agent
-    agent = rl_agent.create_agent(env, env_name, agent_name)
+    agent = rl_agent.create_agent(env, agent_name)
     # train the agent in the environment
     train_episode_reward_mean = rl_agent.run(agent, num_of_episodes, method=TRAIN)
 
     # evaluate the performance of the agent
     evaluate_episode_reward_mean = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
 
-    # create a transformed environment
-    transforms = [taxi_infinite_fuel_transform]
-    explanation = None
+    # check if the anticipated policy is achieved in orig_env
+    anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(env, agent, anticipated_policy)
+    if anticipated_policy_achieved:
+        print("The algorithm achieved the policy. We finished our work.")
+        sys.exit()
 
-    transform_rewards = []
+    result["original"] = {"evaluate_episode_reward_mean": evaluate_episode_reward_mean,
+                          "train_episode_reward_mean": train_episode_reward_mean,
+                          "success_rate": success_rate}
+
+    # create a transformed environment
+    transforms = set_all_possible_transforms([FUELS_TRANSFORM, REWARD_TRANSFORM, NO_WALLS_TRANSFORM])
+    explanation = []
+
     transformed_env = env
-    for transform in transforms:
+    for params, (transform_name, transform) in transforms.items():
         # create transformed environment
-        transformed_env = transform(transformed_env)
+        transformed_env = transform(params)
 
         # create agent
-        agent = rl_agent.create_agent(transformed_env, env_name, agent_name)
+        agent = rl_agent.create_agent(transformed_env, agent_name)
         # evaluate the performance of the agent
         transform_episode_reward_mean = rl_agent.run(agent, num_of_episodes, method=TRAIN)
+        # evaluate the performance of the agent
+        transform_evaluate_episode_reward_mean = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
 
-        transform_rewards.append(transform_episode_reward_mean)
+        # check if the anticipated policy is achieved in trans_env
+        anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(env, agent, anticipated_policy)
+        if anticipated_policy_achieved:
+            explanation.append(transform_name)
 
-        # check if the target policy is achieved in trans_env
-        if anticipated_policy_achieved(transformed_env, agent, anticipated_policy):
-            explanation = transform
-            break
+        result[transform_name] = {"evaluate_episode_reward_mean": transform_evaluate_episode_reward_mean,
+                                  "train_episode_reward_mean": transform_episode_reward_mean,
+                                  "success_rate": success_rate}
 
     if explanation is None:
         print("no explanation found - you are too dumb for our system")
     else:
         print("explanation found %s:" % explanation)
 
-    # rl_agent.run_episode(transformed_env, agent, number_of_agents, display=True)
-    # visualize rewards
-    # results = [episode_reward_mean] + transform_rewards
-    names = [WITHOUT_TRANSFORM, "no fuel", "rewards"]
-    # plot_result_graph(agent_name, results, names, "episode_reward_mean")
+    # visualize rewards and success_rate
+    plot_result_graphs(agent_name, result)
