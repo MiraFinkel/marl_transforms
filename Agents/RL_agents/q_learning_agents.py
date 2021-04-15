@@ -29,7 +29,7 @@ def flip_coin(p):
 
 
 class QLearningAgent(AbstractAgent):
-    def __init__(self, env, epsilon=0.1, discount=0.9, alpha=0.1, gamma=0.6, timesteps_per_episode=1000):
+    def __init__(self, env, epsilon=1, alpha=0.7, gamma=1, timesteps_per_episode=1000):
         """
         alpha    - learning rate
         epsilon  - exploration rate
@@ -40,14 +40,14 @@ class QLearningAgent(AbstractAgent):
         self.episodesSoFar = 0
         self.accumTrainRewards = 0.0
         self.accumTestRewards = 0.0
-        self.num_training = 1000
+        self.num_training = 500
+        self.evaluating = False
         """ Parameters """
         self.alpha = alpha
         self.gamma = gamma
 
         self.num_actions = env.action_space.n
         self.epsilon = epsilon
-        self.discount = discount
         self.q_values = {}
         self.terminal_states = None
         self.episodeRewards = 0
@@ -86,7 +86,7 @@ class QLearningAgent(AbstractAgent):
         return max_action
 
     def episode_callback(self, state, action, reward, next_state, terminated):
-        # self.update_alpha()
+        self.update_alpha()
         state = self.env.encode(state[TAXI_NAME][0])
         encoded_next_state = self.env.encode(next_state[TAXI_NAME][0])
         reward = reward[TAXI_NAME]
@@ -104,7 +104,7 @@ class QLearningAgent(AbstractAgent):
         """
         Updates the exploration rate in the end of each episode.
         """
-        self.alpha = MIN_EXPLORATION_RATE + (MAX_EXPLORATION_RATE - MIN_EXPLORATION_RATE) * np.exp(
+        self.epsilon = MIN_EXPLORATION_RATE + (MAX_EXPLORATION_RATE - MIN_EXPLORATION_RATE) * np.exp(
             -EXPLORATION_DECAY_RATE * self.episodesSoFar)  # Exploration rate decay
 
     def start_episode(self):
@@ -114,12 +114,12 @@ class QLearningAgent(AbstractAgent):
         """
           Called by environment when episode is done
         """
-        if self.episodesSoFar < self.num_training:
+        if not self.evaluating:
             self.accumTrainRewards += self.episodeRewards
         else:
             self.accumTestRewards += self.episodeRewards
         self.episodesSoFar += 1
-        if self.episodesSoFar >= self.num_training:
+        if self.evaluating:
             # Take off the training wheels
             self.epsilon = 0.0  # no exploration
             self.alpha = 0.0  # no learning
@@ -138,12 +138,13 @@ class QLearningAgent(AbstractAgent):
         self.terminal_states = terminal_states
 
     def run(self):
-        self.env.set_display(False)
         result = rl_agent.run_episode(self.env, self)
+        self.episodeRewards = result["total_episode_reward"]
         return result
 
     def evaluate(self):
-        self.env.set_display(True)
+        print("================ DISPLAY ====================")
+        self.evaluating = True
         result = rl_agent.run_episode(self.env, self, method=EVALUATE)
         return result
 

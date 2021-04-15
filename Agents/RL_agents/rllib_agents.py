@@ -17,7 +17,6 @@ WITH_DEBUG = True
 NUM_GPUS = 0
 g_config = {}
 
-
 TAXI = "taxi"
 SPEAKER_LISTENER = "simple_speaker_listener"
 
@@ -38,6 +37,50 @@ def is_rllib_agent(agent_name):
            agent_name == RLLIB_SAC or \
            agent_name == RLLIB_LIN_UCB or \
            agent_name == RLLIB_LIN_TS
+
+
+def get_rllib_agent(agent_name, env_name, env, env_to_agent):
+    config = get_config(env_name, env, 1) if is_rllib_agent(agent_name) else {}
+    if agent_name == RLLIB_A2C:
+        import ray.rllib.agents.a3c as a2c
+        agent = a2c.A2CTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_A3C:
+        import ray.rllib.agents.a3c as a3c
+        agent = a3c.A3CTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_BC:
+        import ray.rllib.agents.marwil as bc
+        agent = bc.BCTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_DQN:
+        import ray.rllib.agents.dqn as dqn
+        agent = dqn.DQNTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_APEX_DQN:
+        import ray.rllib.agents.dqn as dqn
+        agent = dqn.ApexTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_IMPALA:
+        import ray.rllib.agents.impala as impala
+        agent = impala.ImpalaTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_MARWIL:
+        import ray.rllib.agents.marwil as marwil
+        agent = marwil.MARWILTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_PG:
+        import ray.rllib.agents.pg as pg
+        agent = pg.PGTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_PPO:
+        import ray.rllib.agents.ppo as ppo
+        agent = ppo.PPOTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_APPO:
+        import ray.rllib.agents.ppo as ppo
+        agent = ppo.APPOTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_SAC:
+        import ray.rllib.agents.sac as sac
+        agent = sac.SACTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_LIN_UCB:
+        import ray.rllib.contrib.bandits.agents.lin_ucb as lin_ucb
+        agent = lin_ucb.LinUCBTrainer(config=config, env=env_to_agent)
+    elif agent_name == RLLIB_LIN_TS:
+        import ray.rllib.contrib.bandits.agents.lin_ts as lin_ts
+        agent = lin_ts.LinTSTrainer(config=config, env=env_to_agent)
+    return agent
 
 
 def get_config(env_name, env, number_of_agents):

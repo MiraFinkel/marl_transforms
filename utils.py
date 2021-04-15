@@ -11,10 +11,10 @@ def get_env(env_name, number_of_agents=1):
     """
     if env_name == TAXI:
         from Environments.taxi_environment_wrapper import TaxiSimpleEnv
-        return TaxiSimpleEnv
+        return TaxiSimpleEnv()
     elif env_name == TAXI_EXAMPLE:
         from Environments.taxi_environment_wrapper import TaxiSimpleExampleEnv
-        return TaxiSimpleExampleEnv
+        return TaxiSimpleExampleEnv()
     elif env_name == SPEAKER_LISTENER:
         from supersuit import pad_observations_v0, pad_action_space_v0
         from pettingzoo.mpe import simple_speaker_listener_v3
@@ -43,20 +43,19 @@ def is_partial_obs_equal_to_state(partial_obs, state):
     return True
 
 
-def anticipated_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the multi agent case
+def is_anticipated_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the multi agent case
     num_of_success_policies = 0
     num_of_failed_policies = 0
     result = True
     for partial_obs in target_policy.keys():
         original_partial_obs = partial_obs
         partial_obs = list(partial_obs)
-        states_from_partial_obs = env().get_states_from_partial_obs(partial_obs)
+        states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
         for i, state in enumerate(states_from_partial_obs):
             state = np.reshape(np.array(state), (1, len(state)))
             action = agent.compute_action(state)
             if action != target_policy[original_partial_obs]:
                 num_of_failed_policies += 1
-                print(state)
             else:
                 num_of_success_policies += 1
     print(" ============================================================== ")
@@ -66,4 +65,4 @@ def anticipated_policy_achieved(env, agent, target_policy):  # TODO Mira - to ad
     success_rate = num_of_success_policies / all_policies if all_policies != 0 else 1
     print("=========> Success rate:", success_rate)
     print(" ============================================================== ")
-    return success_rate > 0.8
+    return success_rate > 0.8, success_rate
