@@ -11,7 +11,7 @@ if __name__ == '__main__':
     env_name = TAXI_EXAMPLE
     agent_for_policy_generator = VALUE_ITERATION
     agent_name = Q_LEARNING
-    num_of_episodes = 150
+    num_of_episodes = 500
     num_states_in_partial_policy = 10
     result = {}
 

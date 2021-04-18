@@ -20,7 +20,7 @@ SMALL_MAP = [
 #     "|X: :G:X: |",
 #     "+---------+",
 # ]
-
+TAXI_NAME = "taxi_1"
 my_reward = dict(
     step=-1,
     no_fuel=-20,
@@ -84,7 +84,7 @@ class TaxiTransformedEnv(TaxiSimpleExampleEnv):
     def set_reward_dict(self, new_rewards):
         self.reward_dict = new_rewards
 
-    def step(self, action_dict: dict) -> (dict, dict, dict, dict):
+    def step(self, action):
         """
         Executing a list of actions (action for each taxi) at the domain current state.
         Supports not-joined actions, just pass 1 element instead of list.
@@ -95,7 +95,7 @@ class TaxiTransformedEnv(TaxiSimpleExampleEnv):
 
         Returns: - dict{taxi_id: observation}, dict{taxi_id: reward}, dict{taxi_id: done}, _
         """
-
+        action_dict = {TAXI_NAME: action}
         rewards = {}
         self.counter += 1
         if self.counter >= 90:
@@ -228,8 +228,10 @@ class TaxiTransformedEnv(TaxiSimpleExampleEnv):
         obs = {}
         for taxi_id in action_dict.keys():
             obs[taxi_id] = self.get_observation(self.state, taxi_id)
-
-        return obs, {taxi_id: rewards[taxi_id] for taxi_id in action_dict.keys()}, self.dones, {}
+        obs, reward, done = obs[TAXI_NAME][0], {taxi_id: rewards[taxi_id] for taxi_id in action_dict.keys()}[
+            TAXI_NAME], self.dones[TAXI_NAME]
+        obs = self.encode(obs)
+        return obs, reward, done, {}
 
     def partial_closest_path_reward(self, basic_reward_str: str, taxi_index: int = None) -> int:
         """

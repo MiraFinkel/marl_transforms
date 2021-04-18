@@ -38,7 +38,6 @@ def plot_success_rate_charts(names, success_rate):
     ax.bar(names, success_rate, width=0.35)
     ax.set_ylabel('success_rate')
     ax.set_title('success_rate by transforms')
-    ax.legend()
     fig.align_xlabels()
     plt.show()
 

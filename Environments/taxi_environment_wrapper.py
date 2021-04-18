@@ -11,12 +11,25 @@ NEW_MAP = [
     "|X: :F| :X|",
     "+---------+",
 ]
+TAXI_NAME = "taxi_1"
 
 
 class TaxiSimpleEnv(TaxiEnv):
     def __init__(self, max_fuel=None, domain_map=None):
         super().__init__(num_taxis=1, num_passengers=1, max_fuel=max_fuel, domain_map=NEW_MAP,
                          collision_sensitive_domain=False)
+
+    def reset(self):
+        obs = super(TaxiSimpleEnv, self).reset()[TAXI_NAME]
+        encoded_state = self.encode(obs)
+        return encoded_state
+
+    def step(self, action):
+        action_dict = {TAXI_NAME: action}
+        next_state, reward, dones, info = super(TaxiSimpleEnv, self).step(action_dict)
+        next_state, reward, dones = next_state[TAXI_NAME][0], reward[TAXI_NAME], dones[TAXI_NAME]
+        encoded_next_state = self.encode(next_state)
+        return encoded_next_state, reward, dones, info
 
     def encode(self, state):
         # (self.num_rows), self.num_columns, max_fuel[0] + 1, self.num_rows, self.num_columns, self.passengers_locations, 4
@@ -79,7 +92,7 @@ class TaxiSimpleEnv(TaxiEnv):
 
         assert 0 <= i < self.num_rows
 
-        return reversed(out)
+        return list(reversed(out))
 
     def _get_pass_dest_idx(self, dest_idx_x, dest_idx_y):
         dest_idx = -1
@@ -91,12 +104,16 @@ class TaxiSimpleEnv(TaxiEnv):
             raise Exception("no such destination!")
         return dest_idx
 
+    def flatten_state(self, state):
+        taxi_loc, fuel, pas_loc, pas_des, status = state[0][0], state[1], state[2][0], state[3][0], state[4]
+        return state[0][0]+ state[1]+ state[2][0]+ state[3][0]+ state[4]
+
     def get_states_from_partial_obs(self, partial_obs):
         partial_obs_aligned_with_env = False
         iter_num = 200
         while not partial_obs_aligned_with_env and iter_num != 0:
             obs = self.reset()
-            obs = obs[list(obs.keys())[0]].tolist()[0]  # get the observation as a list
+            obs = self.flatten_state(self.decode(obs))
             if self._is_aligned(obs, partial_obs):
                 partial_obs_aligned_with_env = True
             iter_num -= 1
@@ -111,7 +128,7 @@ class TaxiSimpleEnv(TaxiEnv):
             states = list(
                 product(taxi_x, taxi_y, fuel, passenger_start_x, passenger_start_y, passenger_dest_x, passenger_dest_y,
                         passenger_status, repeat=1))
-            states = [list(state) for state in states]
+            states = [self.encode(state) for state in states]
         else:
             states = []
         return states
@@ -183,5 +200,6 @@ class TaxiSimpleExampleEnv(TaxiSimpleEnv):
         obs = {}
         for taxi_id in self.taxis_names:
             obs[taxi_id] = self.get_observation(self.state, taxi_id)
-
-        return obs
+        obs = obs[TAXI_NAME][0]
+        encoded_state = self.encode(obs)
+        return encoded_state

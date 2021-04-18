@@ -52,17 +52,16 @@ def is_anticipated_policy_achieved(env, agent, target_policy):  # TODO Mira - to
         partial_obs = list(partial_obs)
         states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
         for i, state in enumerate(states_from_partial_obs):
-            state = np.reshape(np.array(state), (1, len(state)))
             action = agent.compute_action(state)
             if action != target_policy[original_partial_obs]:
                 num_of_failed_policies += 1
             else:
                 num_of_success_policies += 1
-    print(" ============================================================== ")
+    print("============================================================== ")
     print("=========> num_of_success_policies: ", num_of_success_policies)
     print("=========> num_of_failed_policies: ", num_of_failed_policies)
     all_policies = num_of_success_policies + num_of_failed_policies
     success_rate = num_of_success_policies / all_policies if all_policies != 0 else 1
     print("=========> Success rate:", success_rate)
-    print(" ============================================================== ")
+    print("============================================================== ")
     return success_rate > 0.8, success_rate

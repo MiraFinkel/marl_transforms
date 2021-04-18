@@ -60,19 +60,19 @@ def run_episode(env, agent, method=TRAIN):
             env.render()
 
         # Run Action
-        action = agent.compute_action(state[TAXI_NAME][0])
+        action = agent.compute_action(state)
 
         # Take action
-        next_state, reward, dones, info = agent.env.step({TAXI_NAME: action})
+        next_state, reward, done, info = agent.env.step(action)
         episode_len += 1
 
-        total_reward += reward[TAXI_NAME]
-        result["episode_reward_max"] = reward[TAXI_NAME] if reward[TAXI_NAME] > result["episode_reward_max"] else \
+        total_reward += reward
+        result["episode_reward_max"] = reward if reward > result["episode_reward_max"] else \
             result["episode_reward_max"]
-        result["episode_reward_min"] = reward[TAXI_NAME] if reward[TAXI_NAME] < result["episode_reward_min"] else \
+        result["episode_reward_min"] = reward if reward < result["episode_reward_min"] else \
             result["episode_reward_min"]
 
-        terminated = all(list(dones.values()))
+        terminated = done
         if terminated:
             agent.stop_episode()
             break

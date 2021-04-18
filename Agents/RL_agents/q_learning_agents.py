@@ -19,7 +19,6 @@ MAX_EXPLORATION_RATE = 1
 MIN_EXPLORATION_RATE = 0.01
 EXPLORATION_DECAY_RATE = 0.001
 
-TAXI_NAME = "taxi_1"
 TERMINAL_STATE = 'TERMINAL_STATE'
 
 
@@ -29,7 +28,7 @@ def flip_coin(p):
 
 
 class QLearningAgent(AbstractAgent):
-    def __init__(self, env, epsilon=1, alpha=0.7, gamma=1, timesteps_per_episode=1000):
+    def __init__(self, env, epsilon=1, alpha=0.7, gamma=1, timesteps_per_episode=200):
         """
         alpha    - learning rate
         epsilon  - exploration rate
@@ -77,20 +76,15 @@ class QLearningAgent(AbstractAgent):
           take the best policy action otherwise.
           Should use transform_fn if it exist.
         """
-        state = state[0] if len(state) == 1 else state
         actions = [i for i in range(self.env.action_space.n)]
-        encoded_state = self.env.encode(state)
         if flip_coin(self.epsilon):
             return random.choice(actions)
-        max_action = self.get_policy(encoded_state)
+        max_action = self.get_policy(state)
         return max_action
 
     def episode_callback(self, state, action, reward, next_state, terminated):
         self.update_alpha()
-        state = self.env.encode(state[TAXI_NAME][0])
-        encoded_next_state = self.env.encode(next_state[TAXI_NAME][0])
-        reward = reward[TAXI_NAME]
-        self.update_q_values(state, action, reward, encoded_next_state)
+        self.update_q_values(state, action, reward, next_state)
         return next_state
 
     def update_q_values(self, state, action, reward, next_state):
@@ -150,8 +144,9 @@ class QLearningAgent(AbstractAgent):
 
 
 class DQNAgent(AbstractAgent):
-    def __init__(self, env, timesteps_per_episode=1000, batch_size=32):
+    def __init__(self, env, timesteps_per_episode=200, batch_size=32):
         super().__init__(env, timesteps_per_episode)
+        self.evaluating = False
         self.batch_size = batch_size
         # Initialize attributes
         self._state_size = env.num_states
@@ -186,9 +181,9 @@ class DQNAgent(AbstractAgent):
     def align_target_model(self):
         self.target_network.set_weights(self.q_network.get_weights())
 
-    def compute_action(self, state, predict=False):
+    def compute_action(self, state):
         state = state[0] if len(state) == 1 else state
-        if np.random.rand() <= self.epsilon and not predict:
+        if np.random.rand() <= self.epsilon:
             return self.env.action_space.sample()
 
         q_values = self.q_network.predict(state)
@@ -201,9 +196,12 @@ class DQNAgent(AbstractAgent):
         if len(self.experience_replay) > self.batch_size:
             self.retrain(self.batch_size)
 
-        return next_state
+        return next_state[0][0]
 
     def stop_episode(self):
+        if self.evaluating:
+            # Take off the training wheels
+            self.epsilon = 0.0  # no exploration
         self.align_target_model()
 
     def run(self):
@@ -216,7 +214,7 @@ class DQNAgent(AbstractAgent):
 
         for state, action, reward, next_state, terminated in minibatch:
 
-            target = self.q_network.predict(state[0][0][taxi_name][0])
+            target = self.q_network.predict(state[taxi_name][0])
 
             if terminated:
                 target[0][action] = reward
@@ -224,4 +222,10 @@ class DQNAgent(AbstractAgent):
                 t = self.target_network.predict(next_state[0][0]['taxi_1'][0])
                 target[0][action] = reward[taxi_name] + self.gamma * np.amax(t)
 
-            self.q_network.fit(state[0][0][taxi_name][0], target, epochs=1, verbose=0)
+            self.q_network.fit(state[taxi_name][0], target, epochs=1, verbose=0)
+
+    def evaluate(self):
+        print("================ DISPLAY ====================")
+        self.evaluating = True
+        result = rl_agent.run_episode(self.env, self, method=EVALUATE)
+        return result

@@ -22,6 +22,7 @@ MAPS = {
     ],
 }
 
+
 def generate_random_map(size=8, p=0.8):
     """Generates a random valid map (one that has a path from start to goal)
     :param size: size of each side of the grid
@@ -51,12 +52,11 @@ def generate_random_map(size=8, p=0.8):
 
     while not valid:
         p = min(1, p)
-        res = np.random.choice(['F', 'H'], (size, size), p=[p, 1-p])
+        res = np.random.choice(['F', 'H'], (size, size), p=[p, 1 - p])
         res[0][0] = 'S'
         res[-1][-1] = 'G'
         valid = is_valid(res)
     return ["".join(x) for x in res]
-
 
 
 class FrozenLakeEnv(discrete.DiscreteEnv):
@@ -90,7 +90,8 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
 
     metadata = {'render.modes': ['human', 'ansi']}
 
-    def __init__(self, desc=None, map_name="4x4", is_slippery=True, path_length_penalty = True, wind = DOWN, ignore_holes = False):
+    def __init__(self, desc=None, map_name="4x4", is_slippery=True, path_length_penalty=True, wind=DOWN,
+                 ignore_holes=False):
         if desc is None and map_name is None:
             desc = generate_random_map()
         elif desc is None:
@@ -108,9 +109,9 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
         P = {s: {a: [] for a in range(nA)} for s in range(nS)}
 
         def to_s(row, col):
-            return row*ncol + col
+            return row * ncol + col
 
-        def inc(row, col, a, recursion_on = True):
+        def inc(row, col, a, recursion_on=True):
             if a == LEFT:
                 col = max(col - 1, 0)
             elif a == DOWN:
@@ -119,10 +120,10 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
                 col = min(col + 1, ncol - 1)
             elif a == UP:
                 row = max(row - 1, 0)
-            
+
             if wind in [LEFT, DOWN, RIGHT, UP] and recursion_on:
-                row, col = inc(row, col, wind, recursion_on = False)
-                
+                row, col = inc(row, col, wind, recursion_on=False)
+
             return (row, col)
 
         def update_probability_matrix(row, col, action):
@@ -173,7 +174,7 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
                 ["Left", "Down", "Right", "Up"][self.lastaction]))
         else:
             outfile.write("\n")
-        outfile.write("\n".join(''.join(line) for line in desc)+"\n")
+        outfile.write("\n".join(''.join(line) for line in desc) + "\n")
 
         if mode != 'human':
             with closing(outfile):
