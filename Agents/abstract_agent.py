@@ -30,3 +30,7 @@ class AbstractAgent(ABC):
     @abstractmethod
     def episode_callback(self, state, action, reward, next_state, terminated):
         pass
+
+    @abstractmethod
+    def evaluate(self):
+        pass
