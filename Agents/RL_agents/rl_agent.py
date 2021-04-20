@@ -12,7 +12,7 @@ def get_rl_agent(agent_name, env, env_name=None, env_to_agent=None):  # TODO - f
         agent = get_rllib_agent(agent_name, env_name, env, env_to_agent)
 
     elif agent_name == HANDS_ON_DQN:
-        agent = DQNAgent(env=env)
+        agent = HandsOnDQNAgent(env=env)
     elif agent_name == Q_LEARNING:
         agent = QLearningAgent(env=env)
     elif agent_name == VALUE_ITERATION:

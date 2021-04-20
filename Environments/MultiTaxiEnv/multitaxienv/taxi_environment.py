@@ -16,7 +16,6 @@ import numpy as np
 import random
 
 from .config import TAXI_ENVIRONMENT_REWARDS, BASE_AVAILABLE_ACTIONS, ALL_ACTIONS_NAMES
-from ray.rllib.env import MultiAgentEnv
 
 orig_MAP = [
     "+---------+",
@@ -45,14 +44,9 @@ MAP = [
 ]
 
 
-def set_number_of_agents(val):
-    global number_of_agents
-    number_of_agents = val
-
-
 # TODO change documentation to refer to rllib
 
-class TaxiEnv(MultiAgentEnv):
+class TaxiEnv:
     """
     The Taxi Problem
     from "Hierarchical Reinforcement Learning with the MAXQ Value Function Decomposition"

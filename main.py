@@ -6,7 +6,8 @@ from Agents.RL_agents.q_learning_agents import *
 import Agents.RL_agents.rl_agent as rl_agent
 import sys
 
-if __name__ == '__main__':
+
+def main():
     # define the environment
     env_name = TAXI_EXAMPLE
     agent_for_policy_generator = VALUE_ITERATION
@@ -76,3 +77,7 @@ if __name__ == '__main__':
 
     # visualize rewards and success_rate
     plot_result_graphs(agent_name, result)
+
+
+if __name__ == '__main__':
+    main()
