@@ -9,6 +9,13 @@ from Agents.RL_agents.rl_agent import *
 import Agents.RL_agents.rl_agent as rl_agent
 from Agents.abstract_agent import AbstractAgent
 import numpy as np
+import gym
+from keras.models import Sequential
+from keras.layers import Dense, Activation, Flatten, Embedding, Reshape
+from keras.optimizers import Adam
+from rl.agents.dqn import DQNAgent
+from rl.policy import EpsGreedyQPolicy
+from rl.memory import SequentialMemory
 from constants import *
 
 HANDS_ON_DQN = "hands_on_dqn"
@@ -143,7 +150,7 @@ class QLearningAgent(AbstractAgent):
         return result
 
 
-class DQNAgent(AbstractAgent):
+class HandsOnDQNAgent(AbstractAgent):
     def __init__(self, env, timesteps_per_episode=200, batch_size=32):
         super().__init__(env, timesteps_per_episode)
         self.evaluating = False
@@ -229,3 +236,60 @@ class DQNAgent(AbstractAgent):
         self.evaluating = True
         result = rl_agent.run_episode(self.env, self, method=EVALUATE)
         return result
+
+
+class DQN_keras(AbstractAgent):
+    def __init__(self, env, timesteps_per_episode=200, batch_size=32):
+        super().__init__(env, timesteps_per_episode)
+        self.action_size = env.action_space.n
+        self.state_size = env.num_states
+        np.random.seed(123)
+        env._seed(123)
+        # Build networks
+        self.q_network = self._build_compile_model()
+        memory = SequentialMemory(limit=50000, window_length=1)
+        policy = EpsGreedyQPolicy()
+        self.dqn_only_embedding = DQNAgent(model=self.q_network, nb_actions=self.action_size, memory=memory,
+                                           nb_steps_warmup=500,
+                                           target_model_update=1e-2, policy=policy)
+
+    def _build_compile_model(self):
+        model = Sequential()
+        model.add(Embedding(600000, 10, input_length=1))
+        model.add(Reshape((10,)))
+        model.add(Dense(50, activation='relu'))
+        model.add(Dense(50, activation='relu'))
+        model.add(Dense(50, activation='relu'))
+        model.add(Dense(self.action_size, activation='linear'))
+        return model
+
+    @abstractmethod
+    def run(self) -> {str: float}:
+        """
+        The agent's training method.
+        Returns: a dictionary - {"episode_reward_mean": __, "episode_reward_min": __, "episode_reward_max": __,
+        "episode_len_mean": __}
+        """
+        self.dqn_only_embedding.compile(Adam(lr=1e-3), metrics=['mae'])
+        self.dqn_only_embedding.fit(self.env, nb_steps=10000, visualize=False, verbose=1, nb_max_episode_steps=150,
+                                    log_interval=10000)
+
+    @abstractmethod
+    def compute_action(self, state) -> int:
+        """
+        Computes the best action from a given state.
+        Returns: a int that represents the best action.
+        """
+        pass
+
+    @abstractmethod
+    def stop_episode(self):
+        pass
+
+    @abstractmethod
+    def episode_callback(self, state, action, reward, next_state, terminated):
+        pass
+
+    @abstractmethod
+    def evaluate(self):
+        self.dqn_only_embedding.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=150)

@@ -1,7 +1,6 @@
 from copy import deepcopy
 from abc import ABC, abstractmethod
 from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
-from ray.rllib.env import MultiAgentEnv
 import numpy as np
 from Transforms.transform_constans import *
 
@@ -130,7 +129,7 @@ class DimReductionMultiAgents(MappingFunction):
 MAPPING_CLASS = DimReductionMultiAgents
 
 
-class TransformEnvironment(MultiAgentEnv):
+class TransformEnvironment:
     def __init__(self, mapping_class=MAPPING_CLASS, **kwargs):
         self._mapping_class = None
         if mapping_class:
