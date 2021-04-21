@@ -76,13 +76,13 @@ def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_
     return result
 
 
-def different_anticipated_policy_size_experiment():
-    env_name = TAXI_EXAMPLE
-    agent_name = Q_LEARNING
-    num_of_episodes = 5000
-    result = {}
-    for i in range(1, ):
-        num_states_in_partial_policy = i
+# def different_anticipated_policy_size_experiment():
+#     env_name = TAXI_EXAMPLE
+#     agent_name = Q_LEARNING
+#     num_of_episodes = 5000
+#     result = {}
+#     for i in range(1, ):
+#         num_states_in_partial_policy = i
 
 
 def different_envs_experiment():
