@@ -43,20 +43,28 @@ def is_partial_obs_equal_to_state(partial_obs, state):
     return True
 
 
-def is_anticipated_policy_achieved(env, agent, target_policy):  # TODO Mira - to add the multi agent case
+def is_actions_align(action, target_policy_actions):
+    for act in target_policy_actions:
+        if act == action:
+            return True
+    return False
+
+
+def is_anticipated_policy_achieved(env, agent, anticipated_policy):
     num_of_success_policies = 0
     num_of_failed_policies = 0
     result = True
-    for partial_obs in target_policy.keys():
+    for partial_obs in anticipated_policy.keys():
         original_partial_obs = partial_obs
         partial_obs = list(partial_obs)
         states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
         for i, state in enumerate(states_from_partial_obs):
             action = agent.compute_action(state)
-            if action != target_policy[original_partial_obs]:
-                num_of_failed_policies += 1
-            else:
+            if is_actions_align(action, anticipated_policy[original_partial_obs]):
                 num_of_success_policies += 1
+            else:
+                num_of_failed_policies += 1
+
     print("============================================================== ")
     print("=========> num_of_success_policies: ", num_of_success_policies)
     print("=========> num_of_failed_policies: ", num_of_failed_policies)

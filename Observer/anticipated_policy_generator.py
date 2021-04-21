@@ -27,15 +27,15 @@ def get_nearby_coords(env, loc, dist):  # option for later: add an option to cha
     return result
 
 
-def sample_anticipated_policy(optimal_agent, env, num_states_in_partial_policy):
+def sample_anticipated_policy(policy_dict, env, num_states_in_partial_policy):
     passenger_origin = get_possible_passenger_origins(env)
     passenger_destination = get_possible_passenger_destinations(env)
 
-    policy_dict = optimal_agent.policy_dict
     optimal_policy = {}
     for k in policy_dict.keys():
-        if is_interesting_state(k, passenger_origin, passenger_destination):
-            optimal_policy[k] = policy_dict[k]
+        optimal_policy[k] = policy_dict[k]
+        # if is_interesting_state(k, passenger_origin, passenger_destination):
+        #     optimal_policy[k] = policy_dict[k]
 
     sampled_states_flat = np.random.choice(len(optimal_policy), size=num_states_in_partial_policy,
                                            replace=False)  # get flat indices of sampled states
@@ -43,7 +43,6 @@ def sample_anticipated_policy(optimal_agent, env, num_states_in_partial_policy):
     partial_sampled_policy = {}
     for i, item in enumerate(optimal_policy.items()):
         if i in sampled_states_flat:
-            list(item[0])[2] = None
             partial_sampled_policy[tuple(item[0])] = item[1]
 
     return partial_sampled_policy
@@ -56,17 +55,17 @@ def is_interesting_state(state, passenger_origins, passenger_destinations):
     passenger_destination = [state[5], state[6]]
     passenger_status = state[6]
 
-    fuel_is_full = (fuel_level == 100)
+    fuel_is_full = (fuel_level == 100) or (not fuel_level)
     taxi_in_interesting_location = (
             (taxi_location[0] == passenger_location[0] and taxi_location[1] == passenger_location[1]) or (
             taxi_location[0] == passenger_destination[0] and taxi_location[1] == passenger_destination[1]))
     passenger_in_interesting_location = passenger_location in passenger_origins
-    valid_passenger_destination = ((passenger_destination[0] == passenger_location[0]) and (
-            passenger_destination[1] == passenger_location[1]) and passenger_status > 2) or (
-                                          passenger_destination[0] != passenger_location[0]) or (
-                                          passenger_destination[1] != passenger_location[1])
+    # valid_passenger_destination = ((passenger_destination[0] == passenger_location[0]) and (
+    #         passenger_destination[1] == passenger_location[1]) and passenger_status > 2) or (
+    #                                       passenger_destination[0] != passenger_location[0]) or (
+    #                                       passenger_destination[1] != passenger_location[1])
 
-    if fuel_is_full and taxi_in_interesting_location and passenger_in_interesting_location and valid_passenger_destination:
+    if fuel_is_full and taxi_in_interesting_location and passenger_in_interesting_location: #and valid_passenger_destination:
         return True
     return False
 
@@ -78,14 +77,18 @@ def get_possible_passenger_origins(env):
 def get_possible_passenger_destinations(env):
     return env.passengers_locations
 
-
-def get_automatic_anticipated_policy(env, env_name, agent_for_policy_generator, num_of_episodes,
-                                     num_states_in_partial_policy):
+def get_automatic_anticipated_policy_from_agent(env, agent_for_policy_generator, num_of_episodes,
+                                                num_states_in_partial_policy):
+    """
+    get automatic anticipated policy from given agent
+    """
 
     # create agent
-    agent = rl_agent.create_agent(env, env_name, agent_for_policy_generator)
+    agent = rl_agent.create_agent(env, agent_for_policy_generator)
     # train the agent in the environment
     train_episode_reward_mean = rl_agent.run(agent, num_of_episodes, method=TRAIN)
 
-    automatic_anticipated_policy = sample_anticipated_policy(agent, env(), num_states_in_partial_policy)
+    policy_dict = agent.policy_dict
+
+    automatic_anticipated_policy = sample_anticipated_policy(policy_dict, env, num_states_in_partial_policy)
     return automatic_anticipated_policy
