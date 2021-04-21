@@ -32,10 +32,10 @@ def run(agent, num_of_episodes, method=TRAIN):
     for it in range(num_of_episodes):
         result = agent.run()
         if (it + 1) % print_rate == 0:
-            print(FORMAT_STRING.format(it + 1, accum_reward / print_rate,
-                                       (accum_max_reward / print_rate) - (accum_min_reward / print_rate),
-                                       accum_episode_len / print_rate
-                                       ))
+            # print(FORMAT_STRING.format(it + 1, accum_reward / print_rate,
+            #                            (accum_max_reward / print_rate) - (accum_min_reward / print_rate),
+            #                            accum_episode_len / print_rate
+            #                            ))
             episode_reward_mean.append(accum_reward / print_rate)
             accum_reward, accum_max_reward, accum_min_reward, accum_episode_len = 0, 0, 0, 0
         accum_reward += result["episode_reward_mean"]
@@ -57,7 +57,8 @@ def run_episode(env, agent, method=TRAIN):
     episode_len = 0
     for timestep in range(agent.timesteps_per_episode):
         if method == EVALUATE:
-            env.render()
+            # env.render()
+            pass
 
         # Run Action
         action = agent.compute_action(state)
