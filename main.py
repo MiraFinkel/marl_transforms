@@ -89,7 +89,7 @@ def different_envs_experiment():
     # define the environment
     env_name = TAXI_EXAMPLE
     agent_name = Q_LEARNING
-    num_of_episodes = 5000
+    num_of_episodes = 200
     num_states_in_partial_policy = 10
     all_env_results = {}
     all_env_test_results = {"original": [], "walls": [], "reward": [], "reward_walls": [], "fuel": [],
@@ -99,7 +99,7 @@ def different_envs_experiment():
     all_env_success_results = {"original": [], "walls": [], "reward": [], "reward_walls": [], "fuel": [],
                                "fuel_walls": [], "fuel_reward": [], "fuel_reward_walls": []}
 
-    for i in range(300):
+    for i in range(1):
         set_up_env_idx()
         result = run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_policy)
         all_env_results[i] = result
