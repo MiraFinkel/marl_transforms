@@ -1,10 +1,10 @@
+from Observer.observer_utils import Taxi_Expert
 from constants import *
 import numpy as np
 
 
 def get_env(env_name, number_of_agents=1):
     """
-    TODO Guy: to expand the function to work with particle environment
     :param env_name:
     :param number_of_agents:
     :return:
@@ -32,6 +32,11 @@ def get_env(env_name, number_of_agents=1):
         return get_env_lambda({}), SPEAKER_LISTENER
 
 
+def get_expert(env_name, env):
+    if env_name == TAXI_EXAMPLE:
+        return Taxi_Expert(env)
+
+
 def is_partial_obs_equal_to_state(partial_obs, state):
     if len(partial_obs) != len(state):
         raise Exception("The length of the partial observation differs from the state")
@@ -50,10 +55,13 @@ def is_actions_align(action, target_policy_actions):
     return False
 
 
+def print_num_of_success_failed_policies(num_of_success_policies, num_of_failed_policies):
+    print("num_of_success_policies: ", num_of_success_policies)
+    print("num_of_failed_policies: ", num_of_failed_policies)
+
+
 def is_anticipated_policy_achieved(env, agent, anticipated_policy):
-    num_of_success_policies = 0
-    num_of_failed_policies = 0
-    result = True
+    num_of_success_policies, num_of_failed_policies = 0, 0
     for partial_obs in anticipated_policy.keys():
         original_partial_obs = partial_obs
         partial_obs = list(partial_obs)
@@ -65,11 +73,7 @@ def is_anticipated_policy_achieved(env, agent, anticipated_policy):
             else:
                 num_of_failed_policies += 1
 
-    # print("============================================================== ")
-    # print("=========> num_of_success_policies: ", num_of_success_policies)
-    # print("=========> num_of_failed_policies: ", num_of_failed_policies)
     all_policies = num_of_success_policies + num_of_failed_policies
-    success_rate = (num_of_success_policies + (5000 - num_of_failed_policies)) / ((5000 + all_policies) if ((5000 + all_policies) != 0) else 5000)
-    print("=========> Success rate:", success_rate)
-    # print("============================================================== ")
+    success_rate = num_of_success_policies / (all_policies if all_policies != 0 else 1)
+    print("\nSuccess rate:", success_rate)
     return success_rate > 0.8, success_rate
