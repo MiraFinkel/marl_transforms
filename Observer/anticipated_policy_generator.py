@@ -27,21 +27,12 @@ def get_nearby_coords(env, loc, dist):  # option for later: add an option to cha
     return result
 
 
-def sample_anticipated_policy(policy_dict, env, num_states_in_partial_policy):
-    passenger_origin = get_possible_passenger_origins(env)
-    passenger_destination = get_possible_passenger_destinations(env)
-
-    optimal_policy = {}
-    for k in policy_dict.keys():
-        optimal_policy[k] = policy_dict[k]
-        # if is_interesting_state(k, passenger_origin, passenger_destination):
-        #     optimal_policy[k] = policy_dict[k]
-
-    sampled_states_flat = np.random.choice(len(optimal_policy), size=num_states_in_partial_policy,
-                                           replace=False)  # get flat indices of sampled states
+def sample_anticipated_policy(policy_dict, num_states_in_partial_policy):
+    # get flat indices of sampled states
+    sampled_states_flat = np.random.choice(len(policy_dict), size=num_states_in_partial_policy, replace=False)
 
     partial_sampled_policy = {}
-    for i, item in enumerate(optimal_policy.items()):
+    for i, item in enumerate(policy_dict.items()):
         if i in sampled_states_flat:
             partial_sampled_policy[tuple(item[0])] = item[1]
 

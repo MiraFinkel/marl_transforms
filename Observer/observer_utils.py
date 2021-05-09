@@ -86,6 +86,7 @@ class Taxi_Expert:
         self.shortest_path_trees = {}
         for loc in env.passengers_locations:
             self.shortest_path_trees[tuple(loc)] = shortest_path_tree(self.desc, loc)
+        self.ignored_taxi_locations = [(0, 1), (1, 1), (0, 2), (1, 2), (0, 3), (1, 3), (0, 4), (1, 4)]
 
     # get expert action, given a tuple of the form:
     # (taxi_loc_x, taxi_loc_y, fuel_level, pass_start_x, pass_start_y, pass_dest_x, pass_dest_y, pass_status)
@@ -115,11 +116,13 @@ class Taxi_Expert:
         expert_policy_dict = {}
         for taxi_loc_x in range(self.num_rows):
             for taxi_loc_y in range(self.num_cols):
-                for pass_start in self.env.passengers_locations:
-                    for pass_dest in self.env.passengers_locations:
+                if (taxi_loc_x, taxi_loc_y) in self.ignored_taxi_locations:
+                    continue
+                for pass_start in self.env.passengers_start_fixed_locations:
+                    for pass_dest in self.env.passengers_fixed_destinations:
                         for pass_status in [2, 3]:
                             state_tuple = (
-                            taxi_loc_x, taxi_loc_y, fuel_level, pass_start[0], pass_start[1], pass_dest[0],
-                            pass_dest[1], pass_status)
+                                taxi_loc_x, taxi_loc_y, fuel_level, pass_start[0], pass_start[1], pass_dest[0],
+                                pass_dest[1], pass_status)
                             expert_policy_dict[state_tuple] = self.get_expert_policy_set(state_tuple)
         return expert_policy_dict

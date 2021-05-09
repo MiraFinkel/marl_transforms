@@ -14,11 +14,20 @@ NEW_MAP = [
     "+---------+",
 ]
 TAXI_NAME = "taxi_1"
-all_possible_envs = list(product([0, 1, 2, 3, 4], [0, 1, 2, 3, 4], [0, 4], [0, 4], [0, 4], [0, 4]))
-all_possible_envs = [list(s) for s in all_possible_envs if (s[2] != s[4] or (s[3] != s[5]))]
-global env_idx
-env_idx = -1
 
+
+# ========================================== DO NOT DELETE ========================================== #
+# This part is for running changing environments:
+# all_possible_envs = list(product([0, 1, 2, 3, 4], [0, 1, 2, 3, 4], [0, 4], [0, 4], [0, 4], [0, 4]))
+# all_possible_envs = [list(s) for s in all_possible_envs if (s[2] != s[4] or (s[3] != s[5]))]
+# global env_idx
+# env_idx = -1
+# in the reset function:
+# self.taxis_fixed_locations = [[all_possible_envs[env_idx][0], all_possible_envs[env_idx][1]]]
+# self.passengers_start_fixed_locations = [[all_possible_envs[env_idx][2], all_possible_envs[env_idx][3]]]
+# self.passengers_fixed_destinations = [[all_possible_envs[env_idx][4], all_possible_envs[env_idx][5]]]
+# self.passengers_locations = [self.taxis_fixed_locations[0], self.passengers_fixed_destinations[0]]
+# ========================================== DO NOT DELETE ========================================== #
 
 def set_up_env_idx():
     global env_idx
@@ -32,7 +41,7 @@ class TaxiSimpleEnv(TaxiEnv):
         # Initializing default values
         self.num_taxis = num_taxis
         if max_fuel is None:
-            self.max_fuel = [100] * num_taxis  # TODO - needs to figure out how to insert np.inf into discrete obs.space
+            self.max_fuel = [100] * num_taxis
         else:
             self.max_fuel = max_fuel
 
@@ -109,10 +118,10 @@ class TaxiSimpleEnv(TaxiEnv):
 
         self.np_random = None
 
-        self.taxis_fixed_locations = [[all_possible_envs[env_idx][0], all_possible_envs[env_idx][1]]]
-        self.passengers_start_fixed_locations = [[all_possible_envs[env_idx][2], all_possible_envs[env_idx][3]]]
-        self.passengers_fixed_destinations = [[all_possible_envs[env_idx][4], all_possible_envs[env_idx][5]]]
-        self.passengers_locations = [self.taxis_fixed_locations[0], self.passengers_fixed_destinations[0]]
+        self.taxis_fixed_locations = [[0, 0]]
+        self.passengers_start_fixed_locations = [[4, 0]]
+        self.passengers_fixed_destinations = [[4, 4]]
+        self.passengers_locations = [[4, 0], [4, 4]]
 
         self.reset()
 
@@ -298,3 +307,5 @@ class TaxiSimpleExampleEnv(TaxiSimpleEnv):
         obs = obs[TAXI_NAME][0]
         encoded_state = self.encode(obs)
         return encoded_state
+
+    # def sample_anticipated_policy(self, policy_dict, num_states_in_partial_policy):

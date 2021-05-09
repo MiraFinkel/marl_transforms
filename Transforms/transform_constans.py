@@ -1,4 +1,3 @@
-
 TAXIS_LOC_IDX = 0
 FUELS_IDX = 1
 PASS_START_LOC_IDX = 2
@@ -10,5 +9,13 @@ TAXI_EXAMPLE = "taxi_example"
 DIM_REDUCTION_IDX = PASS_STATUS_IDX
 ENV_NAME = "taxi"
 
-
-
+TAXI_LOC_X = "TX_"
+TAXI_LOC_Y = "TY_"
+FUEL = "F_"
+PASS_LOC_X = "PX_"
+PASS_LOC_Y = "PY_"
+PASS_DEST_X = "DX_"
+PASS_DEST_Y = "DY_"
+PASS_STATUS = "S_"
+WALLS = "W_"
+REWARD = "R_"

@@ -47,10 +47,24 @@ my_reward = dict(
 class TaxiTransformedEnv(TaxiSimpleExampleEnv):
     def __init__(self, transforms):
         super().__init__(max_fuel=[3])
-        fuel_transform, reward_transform, no_walls_transform = transforms[0], transforms[1], transforms[2]
+        taxi_loc_x_transform, taxi_loc_y_transform = transforms[0], transforms[1]
+        fuel_transform = transforms[2]
+        pass_loc_x_transform, pass_loc_y_transform = transforms[3], transforms[4]
+        pass_dest_x_transform, pass_dest_y_transform = transforms[5], transforms[6]
+        pass_status_transform = transforms[7]
+        no_walls_transform = transforms[8]
+        reward_transform = transforms[9]
+
+        self.taxi_loc_x_transform = taxi_loc_x_transform
+        self.taxi_loc_y_transform = taxi_loc_y_transform
         self.fuel_transform = fuel_transform
-        self.reward_transform = reward_transform
+        self.pass_loc_x_transform = pass_loc_x_transform
+        self.pass_loc_y_transform = pass_loc_y_transform
+        self.pass_dest_x_transform = pass_dest_x_transform
+        self.pass_dest_y_transform = pass_dest_y_transform
+        self.pass_status_transform = pass_status_transform
         self.no_walls_transform = no_walls_transform
+        self.reward_transform = reward_transform
         self.reward_dict = my_reward if self.reward_transform else TAXI_ENVIRONMENT_REWARDS
 
     def _update_movement_wrt_fuel(self, taxi: int, taxis_locations: list, wanted_row: int, wanted_col: int,
@@ -230,6 +244,20 @@ class TaxiTransformedEnv(TaxiSimpleExampleEnv):
             obs[taxi_id] = self.get_observation(self.state, taxi_id)
         obs, reward, done = obs[TAXI_NAME][0], {taxi_id: rewards[taxi_id] for taxi_id in action_dict.keys()}[
             TAXI_NAME], self.dones[TAXI_NAME]
+        if self.taxi_loc_x_transform:
+            obs[0] = 0
+        if self.taxi_loc_y_transform:
+            obs[1] = 0
+        if self.pass_loc_x_transform:
+            obs[3] = 4
+        if self.pass_loc_y_transform:
+            obs[4] = 0
+        if self.pass_dest_x_transform:
+            obs[5] = 4
+        if self.pass_dest_y_transform:
+            obs[6] = 4
+        if self.pass_status_transform:
+            obs[7] = 3
         obs = self.encode(obs)
         return obs, reward, done, {}
 
@@ -309,8 +337,8 @@ class TaxiTransformedEnv(TaxiSimpleExampleEnv):
         return moved, new_row, new_col
 
 
-def set_all_possible_transforms(transform_names: list) -> dict:
-    binary_permutations = ["".join(seq) for seq in itertools.product("01", repeat=len(transform_names))]
+def set_all_possible_transforms(env) -> dict:
+    binary_permutations = ["".join(seq) for seq in itertools.product("01", repeat=10)]
     transforms = {}
     for per in binary_permutations:
         bool_params = tuple(True if int(dig) == 1 else False for dig in per)
@@ -320,21 +348,27 @@ def set_all_possible_transforms(transform_names: list) -> dict:
     return transforms
 
 
-def get_transform_name(bool_params):
-    fuel_transform, reward_transform, no_walls_transform = bool_params[0], bool_params[1], bool_params[2]
+TRANSFORM_LIST = [TAXI_LOC_X, TAXI_LOC_Y, FUEL, PASS_LOC_X, PASS_LOC_Y, PASS_DEST_X, PASS_DEST_Y, PASS_STATUS, WALLS,
+                  REWARD]
+
+
+def get_transform_name(transforms):
+    taxi_loc_x_transform, taxi_loc_y_transform = transforms[0], transforms[1]
+    fuel_transform = transforms[2]
+    pass_loc_x_transform, pass_loc_y_transform = transforms[3], transforms[4]
+    pass_dest_x_transform, pass_dest_y_transform = transforms[5], transforms[6]
+    pass_status_transform = transforms[7]
+    no_walls_transform = transforms[8]
+    reward_transform = transforms[9]
     name = ""
-    if fuel_transform and reward_transform and no_walls_transform:
-        name = "fuel_reward_walls"
-    elif fuel_transform and reward_transform:
-        name = "fuel_reward"
-    elif fuel_transform and no_walls_transform:
-        name = "fuel_walls"
-    elif reward_transform and no_walls_transform:
-        name = "reward_walls"
-    elif fuel_transform:
-        name = "fuel"
-    elif reward_transform:
-        name = "reward"
-    elif no_walls_transform:
-        name = "walls"
+    name += TAXI_LOC_X if taxi_loc_x_transform else ""
+    name += TAXI_LOC_Y if taxi_loc_y_transform else ""
+    name += FUEL if fuel_transform else ""
+    name += PASS_LOC_X if pass_loc_x_transform else ""
+    name += PASS_LOC_Y if pass_loc_y_transform else ""
+    name += PASS_DEST_X if pass_dest_x_transform else ""
+    name += PASS_DEST_Y if pass_dest_y_transform else ""
+    name += PASS_STATUS if pass_status_transform else ""
+    name += WALLS if no_walls_transform else ""
+    name += REWARD if reward_transform else ""
     return name

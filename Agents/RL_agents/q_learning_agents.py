@@ -19,6 +19,7 @@ from rl.memory import SequentialMemory
 from constants import *
 
 HANDS_ON_DQN = "hands_on_dqn"
+KERAS_DQN = "keras_dqn"
 Q_LEARNING = "q_learning"
 VALUE_ITERATION = "value_iteration"
 
@@ -140,11 +141,11 @@ class QLearningAgent(AbstractAgent):
 
     def run(self):
         result = rl_agent.run_episode(self.env, self)
-        self.episodeRewards = result["total_episode_reward"]
+        self.episodeRewards = result[TOTAL_EPISODE_REWARD]
         return result
 
     def evaluate(self):
-        print("================ DISPLAY ====================")
+        # print("================ DISPLAY ====================")
         self.evaluating = True
         result = rl_agent.run_episode(self.env, self, method=EVALUATE)
         return result
@@ -178,7 +179,7 @@ class HandsOnDQNAgent(AbstractAgent):
         model = Sequential()
         model.add(Embedding(self._state_size, 10, input_length=1))
         model.add(Reshape((10,)))
-        model.add(Dense(50, activation='relu'))
+        model.add(Dense(50, activation='relu', input_shape=(1,)))
         model.add(Dense(50, activation='relu'))
         model.add(Dense(self._action_size, activation='linear'))
 
@@ -189,7 +190,7 @@ class HandsOnDQNAgent(AbstractAgent):
         self.target_network.set_weights(self.q_network.get_weights())
 
     def compute_action(self, state):
-        state = state[0] if len(state) == 1 else state
+        # state = state[0] if len(state) == 1 else state
         if np.random.rand() <= self.epsilon:
             return self.env.action_space.sample()
 
@@ -197,13 +198,13 @@ class HandsOnDQNAgent(AbstractAgent):
         return np.argmax(q_values[0])
 
     def episode_callback(self, state, action, reward, next_state, terminated):
-        next_state = np.reshape(next_state, [1, 1])
+        # next_state = np.reshape(next_state, [1, 1])
         self.store(state, action, reward, next_state, terminated)
 
         if len(self.experience_replay) > self.batch_size:
             self.retrain(self.batch_size)
 
-        return next_state[0][0]
+        return next_state
 
     def stop_episode(self):
         if self.evaluating:
@@ -216,23 +217,22 @@ class HandsOnDQNAgent(AbstractAgent):
         return result
 
     def retrain(self, batch_size):
-        taxi_name = 'taxi_1'
         minibatch = random.sample(self.experience_replay, batch_size)
 
         for state, action, reward, next_state, terminated in minibatch:
 
-            target = self.q_network.predict(state[taxi_name][0])
+            target = self.q_network.predict(state)
 
             if terminated:
                 target[0][action] = reward
             else:
-                t = self.target_network.predict(next_state[0][0]['taxi_1'][0])
-                target[0][action] = reward[taxi_name] + self.gamma * np.amax(t)
+                t = self.target_network.predict(next_state)
+                target[0][action] = reward + self.gamma * np.amax(t)
 
-            self.q_network.fit(state[taxi_name][0], target, epochs=1, verbose=0)
+            self.q_network.fit(state, target, epochs=1, verbose=0)
 
     def evaluate(self):
-        print("================ DISPLAY ====================")
+        # print("================ DISPLAY ====================")
         self.evaluating = True
         result = rl_agent.run_episode(self.env, self, method=EVALUATE)
         return result
@@ -263,7 +263,6 @@ class DQN_keras(AbstractAgent):
         model.add(Dense(self.action_size, activation='linear'))
         return model
 
-    @abstractmethod
     def run(self) -> {str: float}:
         """
         The agent's training method.
@@ -274,22 +273,22 @@ class DQN_keras(AbstractAgent):
         self.dqn_only_embedding.fit(self.env, nb_steps=10000, visualize=False, verbose=1, nb_max_episode_steps=150,
                                     log_interval=10000)
 
-    @abstractmethod
     def compute_action(self, state) -> int:
         """
         Computes the best action from a given state.
         Returns: a int that represents the best action.
         """
-        pass
+        # self.epsilon *= self.epsilon_decay
+        # self.epsilon = max(self.epsilon_min, self.epsilon)
+        # if np.random.random() < self.epsilon:
+        #     return self.env.action_space.sample()
+        return int(np.argmax(self.q_network.predict(state)))
 
-    @abstractmethod
     def stop_episode(self):
         pass
 
-    @abstractmethod
     def episode_callback(self, state, action, reward, next_state, terminated):
         pass
 
-    @abstractmethod
     def evaluate(self):
         self.dqn_only_embedding.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=150)
