@@ -2,10 +2,12 @@ import gym
 import numpy as np
 from queue import Queue
 
-
 # produce a shortest path tree for the shortest ways to get to the location specified
 # loc: tuple (row, col) of desired location  
 # desc: description of environment map (env.desc)
+from Observer.abstract_expert import AbstractExpert
+
+
 def shortest_path_tree(desc, loc):
     (loc_r, loc_c) = loc
     num_rows = len(desc) - 2
@@ -71,7 +73,8 @@ def shortest_path_tree(desc, loc):
 # - 4: pickup passenger
 # - 5: dropoff passenger
 
-class Taxi_Expert:
+
+class Taxi_Expert(AbstractExpert):
     def __init__(self, env):
         self.env = env
         self.desc = env.desc  # array holding map layout
@@ -126,3 +129,5 @@ class Taxi_Expert:
                                 pass_dest[1], pass_status)
                             expert_policy_dict[state_tuple] = self.get_expert_policy_set(state_tuple)
         return expert_policy_dict
+
+

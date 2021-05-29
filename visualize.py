@@ -3,8 +3,9 @@ from qbstyles import mpl_style
 from constants import *
 
 mpl_style(dark=False, minor_ticks=True)
-figure_size = (50, 20)
+figure_size = (12, 6)
 legend_alpha = 0.5
+SAVE_RATE = 500
 
 
 def prepare_result_graph(result, sub_plot_name="", x_label="", y_label=""):
@@ -45,11 +46,11 @@ def show_fig(agent_name, title):
     plot_name = agent_name + "_" + title
     plt.title(plot_name)
     plt.legend()
-    plt.show()
     plt.savefig(plot_name + '.png')
+    plt.show()
 
 
-def plot_all_success_rate_charts(result, save_folder):
+def plot_all_success_rate_charts(result, save_folder, file_name="", save_fig=False):
     all_success_rate = {}
     for res in result:
         for name, res_by_name in res.items():
@@ -64,12 +65,14 @@ def plot_all_success_rate_charts(result, save_folder):
         all_success_rate_mean[name] = success_rate_mean
     names = list(all_success_rate_mean.keys())
     success_rate_means = list(all_success_rate_mean.values())
-    for i in range(32):
-        plot_success_rate_charts(names[i * 32: (i + 1) * 32], success_rate_means[i * 32: (i + 1) * 32],
-                                 plot_name=str(i) + "_chart_graph", save_folder=save_folder)
+    plot_success_rate_charts(names, success_rate_means, plot_name="chart_graph_" + file_name, save_folder=save_folder,
+                             save_fig=save_fig)
+    # for i in range(32):
+    #     plot_success_rate_charts(names[i * 32: (i + 1) * 32], success_rate_means[i * 32: (i + 1) * 32],
+    #                              plot_name=str(i) + "_chart_graph", save_folder=save_folder)
 
 
-def plot_success_rate_charts(names, success_rate, plot_name="", save_folder=None, y_label=""):
+def plot_success_rate_charts(names, success_rate, plot_name="", save_folder=None, y_label="", save_fig=False):
     fig, ax = plt.subplots()
     ax.bar(names, success_rate)
     ax.set_ylabel(y_label)
@@ -77,8 +80,9 @@ def plot_success_rate_charts(names, success_rate, plot_name="", save_folder=None
     for tick in ax.get_xticklabels():
         tick.set_rotation(90)
     fig.align_labels()
+    if save_fig:
+        plt.savefig('output/' + plot_name + '.png')
     plt.show()
-    plt.savefig('output/' + plot_name + '.png')
 
 
 def get_plot(plt, x, stats, name, color, which_results, line="-"):
@@ -91,7 +95,7 @@ def get_plot(plt, x, stats, name, color, which_results, line="-"):
         plt.plot(x, np.cumsum(mean), line, color=color)
     else:
         plt.plot(x, mean, line, color=color)
-        plt.fill_between(x, q1, q3, color=color, alpha=0.2)
+        plt.fill_between(x, q1, q3, color=color, alpha=0.1)
 
 
 def process_stats(result, name, which_results, reward=True):
@@ -127,7 +131,7 @@ def process_stats(result, name, which_results, reward=True):
             return all_episode_lengths.mean(axis=0), all_episode_lengths.std(axis=0), q1, q3
 
 
-def plot_reward_graph(result, which_results, save_folder):
+def plot_reward_graph(result, which_results, save_folder, file_name="", save_fig=False):
     max_length = len(result[0][ORIGINAL_ENV][TRAINING_RESULTS][EPISODE_REWARD_MEAN])
     epochs_num = len(result)
     fig1, ax = plt.subplots(figsize=figure_size)
@@ -136,20 +140,41 @@ def plot_reward_graph(result, which_results, save_folder):
     for transform_name, res in result[0].items():
         get_plot(plt, x, result, transform_name, None, which_results)
         transforms.append(transform_name)
-    plt.legend(transforms, prop={'size': 8}, ncol=10, framealpha=legend_alpha)
+    plt.legend(transforms, framealpha=legend_alpha)
     ax.set_xlim(xmin=0)
     ax.set_xlim(xmax=max_length)
     plt.xlabel("Episode")
     plt.ylabel("Episode Reward")
     plt.title(which_results)
+    if save_fig:
+        plt.savefig('output/' + file_name + EPISODE_REWARD_MEAN + '.png')
     plt.show()
-    plt.savefig('output/' + which_results + EPISODE_REWARD_MEAN + '.png')
 
 
-def plot_results(result, save_folder):
-    plot_reward_graph(result, TRAINING_RESULTS, save_folder)
-    plot_reward_graph(result, EVALUATION_RESULTS, save_folder)
-    plot_all_success_rate_charts(result, save_folder)
+def plot_results(result, save_folder, file_name="", save_fig=False):
+    plot_reward_graph(result, TRAINING_RESULTS, save_folder, file_name=TRAINING_RESULTS + file_name, save_fig=save_fig)
+    plot_reward_graph(result, EVALUATION_RESULTS, save_folder, file_name=EVALUATION_RESULTS + file_name,
+                      save_fig=save_fig)
+    plot_all_success_rate_charts(result, save_folder, file_name=file_name, save_fig=save_fig)
 
-    # file_name = '_' + ("prefix" + "Episode Reward over Time" + "postfix").replace(' ', '_').replace(':', '_')
-    # fig1.savefig(save_folder + file_name)
+
+def prepare_calc_mean(val_dict):
+    for result in val_dict[EVALUATION_RESULTS].keys():
+        val_dict[EVALUATION_RESULTS][result] = calc_mean(val_dict[EVALUATION_RESULTS][result])
+    for result in val_dict[TRAINING_RESULTS].keys():
+        val_dict[TRAINING_RESULTS][result] = calc_mean(val_dict[TRAINING_RESULTS][result])
+    return val_dict
+
+
+def calc_mean(val_list):
+    mean_lst = []
+    cum_res = 0
+    i = 0
+    for val in val_list:
+        if i == SAVE_RATE:
+            mean_lst.append(cum_res / SAVE_RATE)
+            i, cum_res = 0, 0
+        else:
+            cum_res += val
+            i += 1
+    return mean_lst

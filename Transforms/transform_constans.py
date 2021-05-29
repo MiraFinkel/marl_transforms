@@ -6,6 +6,7 @@ PASS_STATUS_IDX = 4
 
 TAXI = "taxi"
 TAXI_EXAMPLE = "taxi_example"
+LUNAR_LANDER = "lunar_lander"
 DIM_REDUCTION_IDX = PASS_STATUS_IDX
 ENV_NAME = "taxi"
 

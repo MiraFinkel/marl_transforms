@@ -46,7 +46,7 @@ my_reward = dict(
 
 class TaxiTransformedEnv(TaxiSimpleExampleEnv):
     def __init__(self, transforms):
-        super().__init__(max_fuel=[3])
+        super().__init__(max_fuel=[3] if transforms[2] else [100])
         taxi_loc_x_transform, taxi_loc_y_transform = transforms[0], transforms[1]
         fuel_transform = transforms[2]
         pass_loc_x_transform, pass_loc_y_transform = transforms[3], transforms[4]
@@ -343,8 +343,9 @@ def set_all_possible_transforms(env) -> dict:
     for per in binary_permutations:
         bool_params = tuple(True if int(dig) == 1 else False for dig in per)
         if any(bool_params):
-            transform_name = get_transform_name(bool_params)
-            transforms[bool_params] = (transform_name, TaxiTransformedEnv)
+            if not bool_params[3] and not bool_params[4] and not bool_params[5] and not bool_params[6] and not bool_params[7]:
+                transform_name = get_transform_name(bool_params)
+                transforms[bool_params] = (transform_name, TaxiTransformedEnv)
     return transforms
 
 

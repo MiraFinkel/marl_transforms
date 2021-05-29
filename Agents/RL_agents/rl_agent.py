@@ -2,6 +2,7 @@ import sys
 
 from Agents.RL_agents.rllib_agents import *
 from Agents.RL_agents.q_learning_agents import *
+from Agents.RL_agents.sarsa_agents import KerasSarsaAgent
 
 from Agents.value_iteration_agent import ValueIterationAgent
 
@@ -20,9 +21,11 @@ def get_rl_agent(agent_name, env, env_name=None, env_to_agent=None):  # TODO - f
     elif agent_name == HANDS_ON_DQN:
         agent = HandsOnDQNAgent(env=env)
     elif agent_name == KERAS_DQN:
-        agent = DQN_keras(env=env)
+        agent = DQNKeras(env=env)
     elif agent_name == Q_LEARNING:
         agent = QLearningAgent(env=env)
+    elif agent_name == KERAS_SARSA:
+        agent = KerasSarsaAgent(env=env)
     elif agent_name == VALUE_ITERATION:
         agent = ValueIterationAgent(env=env)
     else:
@@ -39,20 +42,24 @@ def run(agent, num_of_episodes, method=TRAIN, print_process=True):
         print("Training:")
     else:
         print("\nEvaluating:")
+    if not isinstance(agent, DQNKeras):
+        for it in range(num_of_episodes):
+            episode_result = agent.run()
+            if print_process and (it + 1) % print_rate == 0:
+                print("\rEpisode {}/{}.".format(it + 1, num_of_episodes), end="")
+                sys.stdout.flush()
 
-    for it in range(num_of_episodes):
-        episode_result = agent.run()
-        if print_process and (it + 1) % print_rate == 0:
-            print("\rEpisode {}/{}.".format(it + 1, num_of_episodes), end="")
-            sys.stdout.flush()
-
-        result[EPISODE_REWARD_MEAN][it] = (episode_result[EPISODE_REWARD_MEAN])
-        result[EPISODE_REWARD_MAX][it] = (episode_result[EPISODE_REWARD_MAX])
-        result[EPISODE_REWARD_MIN][it] = (episode_result[EPISODE_REWARD_MIN])
-        result[EPISODE_STEP_NUM_MEAN][it] = (episode_result[EPISODE_STEP_NUM_MEAN])
-        result[EPISODE_VARIANCE][it] = (episode_result[EPISODE_VARIANCE])
-    if method == EVALUATE:
-        agent.evaluate()
+            result[EPISODE_REWARD_MEAN][it] = (episode_result[EPISODE_REWARD_MEAN])
+            result[EPISODE_REWARD_MAX][it] = (episode_result[EPISODE_REWARD_MAX])
+            result[EPISODE_REWARD_MIN][it] = (episode_result[EPISODE_REWARD_MIN])
+            result[EPISODE_STEP_NUM_MEAN][it] = (episode_result[EPISODE_STEP_NUM_MEAN])
+            result[EPISODE_VARIANCE][it] = (episode_result[EPISODE_VARIANCE])
+        if method == EVALUATE:
+            agent.evaluate()
+    else:
+        result = agent.run()
+        if method == EVALUATE:
+            agent.evaluate()
     return result
 
 
