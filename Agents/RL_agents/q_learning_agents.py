@@ -10,9 +10,9 @@ import Agents.RL_agents.rl_agent as rl_agent
 from Agents.abstract_agent import AbstractAgent
 import numpy as np
 import gym
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Flatten, Embedding, Reshape
-from keras.optimizers import Adam
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Flatten, Embedding, Reshape
+# from keras.optimizers import Adam
 from rl.agents.dqn import DQNAgent
 from rl.policy import EpsGreedyQPolicy
 from rl.memory import SequentialMemory
@@ -21,6 +21,7 @@ from constants import *
 HANDS_ON_DQN = "hands_on_dqn"
 KERAS_DQN = "keras_dqn"
 Q_LEARNING = "q_learning"
+KERAS_SARSA = "keras_sarsa"
 VALUE_ITERATION = "value_iteration"
 
 MAX_EXPLORATION_RATE = 1
@@ -85,7 +86,7 @@ class QLearningAgent(AbstractAgent):
           Should use transform_fn if it exist.
         """
         actions = [i for i in range(self.env.action_space.n)]
-        if flip_coin(self.epsilon):
+        if flip_coin(self.epsilon) and not self.evaluating:
             return random.choice(actions)
         max_action = self.get_policy(state)
         return max_action
@@ -148,6 +149,7 @@ class QLearningAgent(AbstractAgent):
         # print("================ DISPLAY ====================")
         self.evaluating = True
         result = rl_agent.run_episode(self.env, self, method=EVALUATE)
+        self.evaluating = False
         return result
 
 
@@ -238,13 +240,14 @@ class HandsOnDQNAgent(AbstractAgent):
         return result
 
 
-class DQN_keras(AbstractAgent):
+class DQNKeras(AbstractAgent):
     def __init__(self, env, timesteps_per_episode=200, batch_size=32):
         super().__init__(env, timesteps_per_episode)
         self.action_size = env.action_space.n
         self.state_size = env.num_states
         np.random.seed(123)
-        env._seed(123)
+        if hasattr(env, '_seed'):
+            env._seed(123)
         # Build networks
         self.q_network = self._build_compile_model()
         memory = SequentialMemory(limit=50000, window_length=1)
@@ -255,12 +258,14 @@ class DQN_keras(AbstractAgent):
 
     def _build_compile_model(self):
         model = Sequential()
-        model.add(Embedding(600000, 10, input_length=1))
+        model.add(Embedding(189375, 10, input_length=1))  # 600000
         model.add(Reshape((10,)))
+        # model.add(Flatten())
         model.add(Dense(50, activation='relu'))
         model.add(Dense(50, activation='relu'))
         model.add(Dense(50, activation='relu'))
         model.add(Dense(self.action_size, activation='linear'))
+        # print(model.summary())
         return model
 
     def run(self) -> {str: float}:
@@ -270,8 +275,11 @@ class DQN_keras(AbstractAgent):
         "episode_len_mean": __}
         """
         self.dqn_only_embedding.compile(Adam(lr=1e-3), metrics=['mae'])
-        self.dqn_only_embedding.fit(self.env, nb_steps=10000, visualize=False, verbose=1, nb_max_episode_steps=150,
-                                    log_interval=10000)
+        history = self.dqn_only_embedding.fit(self.env, nb_steps=1000000, visualize=False, verbose=1, nb_max_episode_steps=110, log_interval=100000)
+        result = {EPISODE_REWARD_MEAN: np.array(history.history["episode_reward"]),
+                  EPISODE_STEP_NUM_MEAN: np.array(history.history["nb_episode_steps"]), EPISODE_REWARD_MIN: np.empty([]),
+                  EPISODE_REWARD_MAX: np.empty([]), EPISODE_VARIANCE: np.empty([])}
+        return result
 
     def compute_action(self, state) -> int:
         """
@@ -282,6 +290,7 @@ class DQN_keras(AbstractAgent):
         # self.epsilon = max(self.epsilon_min, self.epsilon)
         # if np.random.random() < self.epsilon:
         #     return self.env.action_space.sample()
+        state = np.array([[state]])
         return int(np.argmax(self.q_network.predict(state)))
 
     def stop_episode(self):

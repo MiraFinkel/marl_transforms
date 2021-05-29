@@ -4,6 +4,8 @@ from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
 import numpy as np
 from itertools import product
 
+from Environments.abstract_wrapper_env import AbstractWrapperEnv
+
 NEW_MAP = [
     "+---------+",
     "|X: | : :X|",
@@ -14,7 +16,9 @@ NEW_MAP = [
     "+---------+",
 ]
 TAXI_NAME = "taxi_1"
-
+TAXI_INIT_POS = [4, 0]
+PASS_INIT_POS = [0, 0]
+PASS_DEST = [4, 4]
 
 # ========================================== DO NOT DELETE ========================================== #
 # This part is for running changing environments:
@@ -34,7 +38,7 @@ def set_up_env_idx():
     env_idx += 1
 
 
-class TaxiSimpleEnv(TaxiEnv):
+class TaxiSimpleEnv(TaxiEnv, AbstractWrapperEnv):
     def __init__(self, _=0, num_taxis: int = 1, num_passengers: int = 1, max_fuel: list = None,
                  domain_map: list = None, taxis_capacity: list = None, collision_sensitive_domain: bool = True,
                  fuel_type_list: list = None, option_to_stand_by: bool = False):
@@ -118,10 +122,10 @@ class TaxiSimpleEnv(TaxiEnv):
 
         self.np_random = None
 
-        self.taxis_fixed_locations = [[0, 0]]
-        self.passengers_start_fixed_locations = [[4, 0]]
-        self.passengers_fixed_destinations = [[4, 4]]
-        self.passengers_locations = [[4, 0], [4, 4]]
+        self.taxis_fixed_locations = [TAXI_INIT_POS]
+        self.passengers_start_fixed_locations = [PASS_INIT_POS]
+        self.passengers_fixed_destinations = [PASS_DEST]
+        self.passengers_locations = [PASS_INIT_POS, PASS_DEST]
 
         self.reset()
 
@@ -143,14 +147,14 @@ class TaxiSimpleEnv(TaxiEnv):
                                                                                                 state[2], state[3], \
                                                                                                 state[4], state[5], \
                                                                                                 state[6], state[7]
-        dest_idx = self._get_pass_dest_idx(dest_idx_x, dest_idx_y)
+        # dest_idx = self._get_pass_dest_idx(dest_idx_x, dest_idx_y)
 
         i = taxi_row
 
         i *= self.num_columns
         i += taxi_col
 
-        i *= self.max_fuel[0] + 1
+        i *= (self.max_fuel[0] + 1)
         i += fuel
 
         i *= self.num_rows
@@ -159,8 +163,8 @@ class TaxiSimpleEnv(TaxiEnv):
         i *= self.num_columns
         i += pass_loc_y
 
-        i *= len(self.passengers_locations)
-        i += dest_idx
+        # i *= len(self.passengers_fixed_destinations)
+        # i += dest_idx
 
         i *= 3
         i += pass_status
@@ -171,13 +175,13 @@ class TaxiSimpleEnv(TaxiEnv):
         j = i
         out = []
 
-        passenger_status = [(i % 3) + 1]
+        passenger_status = [(i % 3)]
         out.append(passenger_status)
         i = i // 3
 
-        passenger_dest_idx = [self.passengers_locations[i % len(self.passengers_locations)]]
-        out.append(passenger_dest_idx)
-        i = i // len(self.passengers_locations)
+        # passenger_dest_idx = [self.passengers_fixed_destinations[i % len(self.passengers_fixed_destinations)]]
+        out.append([PASS_DEST])
+        # i = i // len(self.passengers_fixed_destinations)
 
         passenger_loc_y = i % self.num_columns
         i = i // self.num_columns
@@ -227,7 +231,7 @@ class TaxiSimpleEnv(TaxiEnv):
         if partial_obs_aligned_with_env:
             taxi_x = [partial_obs[0]] if (partial_obs[0] is not None) else list(range(self.num_columns))
             taxi_y = [partial_obs[1]] if (partial_obs[1] is not None) else list(range(self.num_rows))
-            fuel = [partial_obs[2]] if partial_obs[2] else list(range(self.max_fuel[0]))
+            fuel = [partial_obs[2]] if partial_obs[2] else list(range(1, self.max_fuel[0]))
             passenger_start_x, passenger_start_y = [obs[3]], [obs[4]]
             passenger_dest_x, passenger_dest_y = [obs[5]], [obs[6]]
             passenger_status = [partial_obs[7]] if partial_obs[7] else list(range(1, 4))
@@ -244,7 +248,8 @@ class TaxiSimpleEnv(TaxiEnv):
         return (passenger_start_x is None or passenger_start_x == obs[3]) and (
                 passenger_start_y is None or passenger_start_y == obs[4]) and (
                        passenger_dest_x is None or passenger_dest_x == obs[5]) and (
-                       passenger_dest_y is None or passenger_dest_y == obs[6])
+                       passenger_dest_y is None or passenger_dest_y == obs[6]) and (
+            partial_obs[7] == obs[7])
 
     def _get_passenger_info(self, partial_obs):
         passenger_start_x, passenger_start_y = partial_obs[3], partial_obs[4]
@@ -276,7 +281,7 @@ class TaxiSimpleExampleEnv(TaxiSimpleEnv):
 
         """
         # reset taxis locations
-        taxis_locations = self.taxis_fixed_locations
+        taxis_locations = [TAXI_INIT_POS]
         self.collided = np.zeros(self.num_taxis)
         self.bounded = False
         self.window_size = 5
@@ -306,6 +311,7 @@ class TaxiSimpleExampleEnv(TaxiSimpleEnv):
             obs[taxi_id] = self.get_observation(self.state, taxi_id)
         obs = obs[TAXI_NAME][0]
         encoded_state = self.encode(obs)
+        decoded_state = self.decode(encoded_state)
         return encoded_state
 
     # def sample_anticipated_policy(self, policy_dict, num_states_in_partial_policy):
