@@ -23,3 +23,4 @@ class AbstractWrapperEnv(ABC):
     @abstractmethod
     def decode(self, i):
         pass
+

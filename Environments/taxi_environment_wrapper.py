@@ -1,9 +1,8 @@
 import random
 import gym
 from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
-import numpy as np
 from itertools import product
-
+import numpy as np
 from Environments.abstract_wrapper_env import AbstractWrapperEnv
 
 NEW_MAP = [
@@ -43,6 +42,7 @@ class TaxiSimpleEnv(TaxiEnv, AbstractWrapperEnv):
                  domain_map: list = None, taxis_capacity: list = None, collision_sensitive_domain: bool = True,
                  fuel_type_list: list = None, option_to_stand_by: bool = False):
         # Initializing default values
+        self.transform_num = 10
         self.num_taxis = num_taxis
         if max_fuel is None:
             self.max_fuel = [100] * num_taxis
@@ -314,4 +314,3 @@ class TaxiSimpleExampleEnv(TaxiSimpleEnv):
         decoded_state = self.decode(encoded_state)
         return encoded_state
 
-    # def sample_anticipated_policy(self, policy_dict, num_states_in_partial_policy):

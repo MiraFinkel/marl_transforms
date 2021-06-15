@@ -22,6 +22,7 @@ class LunarLenderWrapper(LunarLander, AbstractWrapperEnv):
         with open('results/sarsa_data/sarsa_Q_5X4Ys.json') as json_file:
             Q = json.load(json_file)
             self.num_states = len(Q)
+        self.transform_num = 6
 
     def reset(self):
         obs = super(LunarLenderWrapper, self).reset()

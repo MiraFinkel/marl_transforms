@@ -1,6 +1,10 @@
+from itertools import product
+
 from Observer.lunar_lander_expert import LunarLanderExpert
+from Observer.single_taxi_expert import SingleTaxiExpert
 from Observer.taxi_expert import Taxi_Expert
 from constants import *
+from Transforms.transform_constants import *
 
 
 def get_env(env_name, number_of_agents=1):
@@ -15,6 +19,9 @@ def get_env(env_name, number_of_agents=1):
     elif env_name == TAXI_EXAMPLE:
         from Environments.taxi_environment_wrapper import TaxiSimpleExampleEnv
         return TaxiSimpleExampleEnv()
+    elif env_name == SINGLE_TAXI_EXAMPLE:
+        from Environments.SingleTaxiEnv.single_taxi_wrapper import SingleTaxiSimpleEnv
+        return SingleTaxiSimpleEnv()
     elif env_name == LUNAR_LANDER:
         from Environments.lunar_lander_wrapper import LunarLenderWrapper
         return LunarLenderWrapper()
@@ -38,6 +45,8 @@ def get_env(env_name, number_of_agents=1):
 def get_expert(env_name, env):
     if env_name == TAXI_EXAMPLE:
         return Taxi_Expert(env)
+    elif env_name == SINGLE_TAXI_EXAMPLE:
+        return SingleTaxiExpert(env)
     elif env_name == LUNAR_LANDER:
         return LunarLanderExpert(env)
 
@@ -85,3 +94,39 @@ def is_anticipated_policy_achieved(env, agent, anticipated_policy):
     print("\nSuccess rate:", success_rate)
     agent.evaluating = False
     return success_rate > 0.8, success_rate
+
+
+def get_transformed_env(env_name):
+    if env_name == TAXI_EXAMPLE:
+        from Transforms.taxi_transforms import TaxiTransformedEnv
+        return TaxiTransformedEnv
+    elif env_name == SINGLE_TAXI_EXAMPLE:
+        from Transforms.single_taxi_transforms import SingleTaxiTransformedEnv
+        return SingleTaxiTransformedEnv
+    elif env_name == LUNAR_LANDER:
+        from Transforms.lunar_lander_transforms import LunarLanderTransformedEnv
+        return LunarLanderTransformedEnv
+
+
+def set_all_possible_transforms(original_env, env_name):
+    binary_permutations = ["".join(seq) for seq in product("01", repeat=original_env.transform_num)]
+    transforms = {}
+    for per in binary_permutations:
+        bool_params = tuple(True if int(dig) == 1 else False for dig in per)
+        if any(bool_params):
+            transformed_env = get_transformed_env(env_name)
+            transform_name = get_transform_name(env_name, bool_params)
+            transforms[bool_params] = (transform_name, transformed_env)
+    return transforms
+
+
+def get_transform_name(env_name, bool_params):
+    if env_name == TAXI_EXAMPLE:
+        from Transforms.taxi_transforms import get_taxi_transform_name
+        return get_taxi_transform_name(bool_params)
+    elif env_name == SINGLE_TAXI_EXAMPLE:
+        from Transforms.single_taxi_transforms import get_single_taxi_transform_name
+        return get_single_taxi_transform_name(bool_params)
+    elif env_name == LUNAR_LANDER:
+        from Transforms.lunar_lander_transforms import get_lunar_lander_transform_name
+        return get_lunar_lander_transform_name(bool_params)

@@ -2,6 +2,7 @@ import itertools
 from Environments.MultiTaxiEnv.multitaxienv.config import TAXI_ENVIRONMENT_REWARDS
 from Environments.taxi_environment_wrapper import TaxiSimpleExampleEnv
 from constants import *
+from Transforms.transform_constants import *
 
 SMALL_MAP = [
     "+-----+",
@@ -336,24 +337,12 @@ class TaxiTransformedEnv(TaxiSimpleExampleEnv):
 
         return moved, new_row, new_col
 
-
-def set_all_possible_transforms(env) -> dict:
-    binary_permutations = ["".join(seq) for seq in itertools.product("01", repeat=10)]
-    transforms = {}
-    for per in binary_permutations:
-        bool_params = tuple(True if int(dig) == 1 else False for dig in per)
-        if any(bool_params):
-            if not bool_params[3] and not bool_params[4] and not bool_params[5] and not bool_params[6] and not bool_params[7]:
-                transform_name = get_transform_name(bool_params)
-                transforms[bool_params] = (transform_name, TaxiTransformedEnv)
-    return transforms
+    #
+    # TAXI_TRANSFORM_LIST = [TAXI_LOC_X, TAXI_LOC_Y, FUEL, PASS_LOC_X, PASS_LOC_Y, PASS_DEST_X, PASS_DEST_Y,
+    # PASS_STATUS, WALLS, REWARD]
 
 
-TRANSFORM_LIST = [TAXI_LOC_X, TAXI_LOC_Y, FUEL, PASS_LOC_X, PASS_LOC_Y, PASS_DEST_X, PASS_DEST_Y, PASS_STATUS, WALLS,
-                  REWARD]
-
-
-def get_transform_name(transforms):
+def get_taxi_transform_name(transforms):
     taxi_loc_x_transform, taxi_loc_y_transform = transforms[0], transforms[1]
     fuel_transform = transforms[2]
     pass_loc_x_transform, pass_loc_y_transform = transforms[3], transforms[4]

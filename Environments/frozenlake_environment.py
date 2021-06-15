@@ -1,3 +1,10 @@
+import sys
+from contextlib import closing
+from io import StringIO
+from gym import utils
+from gym.envs.toy_text import discrete
+import numpy as np
+
 LEFT = 0
 DOWN = 1
 RIGHT = 2
@@ -151,14 +158,9 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
                     else:
                         if is_slippery:
                             for b in [(a - 1) % 4, a, (a + 1) % 4]:
-                                li.append((
-                                    1. / 3.,
-                                    *update_probability_matrix(row, col, b)
-                                ))
+                                li.append((1. / 3., *update_probability_matrix(row, col, b)))
                         else:
-                            li.append((
-                                1., *update_probability_matrix(row, col, a)
-                            ))
+                            li.append((1., *update_probability_matrix(row, col, a)))
 
         super(FrozenLakeEnv, self).__init__(nS, nA, P, isd)
 
@@ -170,8 +172,7 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
         desc = [[c.decode('utf-8') for c in line] for line in desc]
         desc[row][col] = utils.colorize(desc[row][col], "red", highlight=True)
         if self.lastaction is not None:
-            outfile.write("  ({})\n".format(
-                ["Left", "Down", "Right", "Up"][self.lastaction]))
+            outfile.write("  ({})\n".format(["Left", "Down", "Right", "Up"][self.lastaction]))
         else:
             outfile.write("\n")
         outfile.write("\n".join(''.join(line) for line in desc) + "\n")
@@ -179,3 +180,8 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
         if mode != 'human':
             with closing(outfile):
                 return outfile.getvalue()
+
+
+if __name__ == '__main__':
+    new_env = FrozenLakeEnv()
+    a = 7
