@@ -1,4 +1,5 @@
 from Environments.LunarLander.lunar_lander import *
+from Transforms.transform_constants import *
 
 
 class LunarLanderTransformedEnv(LunarLander):
@@ -119,6 +120,21 @@ class LunarLanderTransformedEnv(LunarLander):
             if self.angular_velocity:
                 state[5] = 0.0
         return np.array(state, dtype=np.float32), reward, done, {}
+
+
+def get_lunar_lander_transform_name(transforms):
+    x_coordinate, y_coordinate = transforms[0], transforms[1]
+    x_horizontal_velocity, y_vertical_velocity = transforms[2], transforms[3]
+    orientation_in_space = transforms[4]
+    angular_velocity = transforms[5]
+    name = ""
+    name += X_COORDINATE if x_coordinate else ""
+    name += Y_COORDINATE if y_coordinate else ""
+    name += X_VELOCITY if x_horizontal_velocity else ""
+    name += Y_VELOCITY if y_vertical_velocity else ""
+    name += ORIENTATION if orientation_in_space else ""
+    name += ANGULAR_VELOCITY if angular_velocity else ""
+    return name
 
 
 if __name__ == '__main__':

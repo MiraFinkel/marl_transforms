@@ -1,5 +1,6 @@
 from constants import *
 from Agents.RL_agents import rl_agent
+import numpy as np
 
 
 # helper function for flattening irregular nested tuples
@@ -56,7 +57,7 @@ def is_interesting_state(state, passenger_origins, passenger_destinations):
     #                                       passenger_destination[0] != passenger_location[0]) or (
     #                                       passenger_destination[1] != passenger_location[1])
 
-    if fuel_is_full and taxi_in_interesting_location and passenger_in_interesting_location: #and valid_passenger_destination:
+    if fuel_is_full and taxi_in_interesting_location and passenger_in_interesting_location:  # and valid_passenger_destination:
         return True
     return False
 
@@ -67,6 +68,7 @@ def get_possible_passenger_origins(env):
 
 def get_possible_passenger_destinations(env):
     return env.passengers_locations
+
 
 def get_automatic_anticipated_policy_from_agent(env, agent_for_policy_generator, num_of_episodes,
                                                 num_states_in_partial_policy):

@@ -2,7 +2,7 @@ from copy import deepcopy
 from abc import ABC, abstractmethod
 from Environments.MultiTaxiEnv.multitaxienv.taxi_environment import TaxiEnv
 import numpy as np
-from Transforms.transform_constans import *
+from Transforms.transform_constants import *
 
 
 def flatten(x):

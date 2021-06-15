@@ -1,6 +1,3 @@
-from Backup.transforms import *
-
-
 # ================= Train variables ================ #
 ITER_NUM = 1000
 SPEAKER_LISTENER = "simple_speaker_listener"
@@ -10,7 +7,7 @@ REWARD_TRANSFORM = "reward_transform"
 NO_WALLS_TRANSFORM = "no_walls_transform"
 WITHOUT_TRANSFORM = "Without transform"
 # ================== Environments ================== #
-ENV_NAME = TAXI
+TAXI = "taxi"
 TAXI_STATES_NUM = 5000
 # ----------------- Env variables ------------------ #
 

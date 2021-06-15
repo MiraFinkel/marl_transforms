@@ -5,7 +5,6 @@ import shutil
 import dill
 import pickle
 from Observer.anticipated_policy_generator import *
-from Transforms.taxi_transforms import *
 from utils import *
 from visualize import *
 from Agents.RL_agents.q_learning_agents import *
@@ -44,7 +43,7 @@ def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_
                             GOT_AN_EXPLANATION: None}
 
     # create a transformed environment
-    transforms = set_all_possible_transforms(original_env)
+    transforms = set_all_possible_transforms(original_env, env_name)
     explanation = []
 
     transformed_env = original_env
@@ -80,8 +79,8 @@ def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_
 
 
 def different_anticipated_policy_size_experiment(agent_name, env_name, num_of_epochs, num_of_episodes_per_epoch):
-    num_states = [1, 5, 10, 20, 30]
-    # num_states = [5]
+    # num_states = [1, 5, 10, 20, 30]
+    num_states = [5]
     for num_states_in_partial_policy in num_states:
         default_experiment(agent_name, env_name, num_of_epochs, num_of_episodes_per_epoch, num_states_in_partial_policy)
 

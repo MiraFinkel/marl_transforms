@@ -89,7 +89,8 @@ class Taxi_Expert(AbstractExpert):
         self.shortest_path_trees = {}
         for loc in env.passengers_locations:
             self.shortest_path_trees[tuple(loc)] = shortest_path_tree(self.desc, loc)
-        self.ignored_taxi_locations = [(0, 1), (1, 1), (0, 2), (1, 2), (0, 3), (1, 3), (0, 4), (1, 4)]
+        # self.ignored_taxi_locations = [(0, 1), (1, 1), (0, 2), (1, 2), (0, 3), (1, 3), (0, 4), (1, 4)]
+        self.ignored_taxi_locations = []
 
     # get expert action, given a tuple of the form:
     # (taxi_loc_x, taxi_loc_y, fuel_level, pass_start_x, pass_start_y, pass_dest_x, pass_dest_y, pass_status)
