@@ -89,6 +89,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
                 for pass_idx in range(len(self.passengers_locations) + 1):  # +1 for being inside taxi
                     for dest_idx in range(len(self.passengers_locations)):
                         for fuel in range(self.taxi_fuel):
+                            init_fuel = fuel
                             state = self.encode(row, col, pass_idx, dest_idx, fuel)
                             if self.is_possible_initial_state(pass_idx, dest_idx, row, col):
                                 self.initial_state_distrib[state] += 1
@@ -107,13 +108,13 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
                                     new_row = max(row - 1, 0)
                                     if new_row == row - 1:
                                         fuel -= 1
-                                if action == EAST and self.desc[1 + row, 2 * col + 2] == b":" and fuel != 0:
+                                elif action == EAST and self.desc[1 + row, 2 * col + 2] == b":" and fuel != 0:
                                     new_col = min(col + 1, self.max_col)
-                                    if new_row == col + 1:
+                                    if new_col == col + 1:
                                         fuel -= 1
                                 elif action == WEST and self.desc[1 + row, 2 * col] == b":" and fuel != 0:
                                     new_col = max(col - 1, 0)
-                                    if new_row == col - 1:
+                                    if new_col == col - 1:
                                         fuel -= 1
                                 elif action == PICKUP:  # pickup
                                     if pass_idx < self.passenger_in_taxi and taxi_loc == self.passengers_locations[
@@ -142,6 +143,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
                                     reward = REWARD_DICT[NO_FUEL_REWARD]
                                 new_state = self.encode(new_row, new_col, new_pass_idx, dest_idx, fuel)
                                 self.P[state][action].append((1.0, new_state, reward, done))
+                                fuel = init_fuel
         self.initial_state_distrib /= self.initial_state_distrib.sum()
         discrete.DiscreteEnv.__init__(self, self.num_states, self.num_actions, self.P, self.initial_state_distrib)
 
@@ -180,7 +182,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
         # 50, 4, 5, 5, (5)
         out = []
         out.append(i % MAX_FUEL)
-        i = i // 50
+        i = i // MAX_FUEL
         out.append(i % 4)
         i = i // 4
         out.append(i % 5)
@@ -239,8 +241,9 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
 
 if __name__ == '__main__':
     new_env = SingleTaxiEnv()
-    for _ in range(10):
-        next_s, r, done, prob = new_env.step(np.random.randint(6))
+    for _ in range(5):
+        next_s, r, done, prob = new_env.step(1)
+        print(new_env.decode(next_s))
 
     passenger_locations, fuel_station = new_env.get_info_from_map()
     a = 7
