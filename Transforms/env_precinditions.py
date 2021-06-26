@@ -3,16 +3,11 @@ import numpy as np
 
 
 def calc_action_feature_sets(P, decode, num_actions):
-    # num_actions = env.num_actions
-    # decode = env.decode
-
     # EACH INDEX IN THE LIST IS AN ACTION!
-    action_feature_sets = [set() for _ in range(num_actions)]
+    action_feature_sets = [set() for _ in range(num_actions)]  # * num_actions
     for k, v in P.items():
         current_state = k
         current_state_f = decode(current_state)
-        # print(current_state_f)
-        # break
         z = pd.DataFrame(v)
         y = z.to_numpy()[0]
         arr_2d = np.array([*y])
@@ -23,19 +18,10 @@ def calc_action_feature_sets(P, decode, num_actions):
 
             # only to calc zero feture vec
             zero_state = tuple([0] * len(state_f))
-
+            ###
             if tuple(feature_diff) != zero_state:
                 action_feature_sets[action].add(tuple(current_state_f))
 
-    # remove all no-diffs(0,0,0,0,...)
-    for i in range(len(action_feature_sets)):
-        first_elem = action_feature_sets[0].pop()
-        action_feature_sets[0].add(first_elem)
-        zero_state = tuple([0] * len(first_elem))
-        try:
-            action_feature_sets[i].remove(zero_state)
-        except:
-            pass
     return action_feature_sets
 
 
