@@ -5,8 +5,8 @@ from Environments.abstract_wrapper_env import AbstractWrapperEnv
 
 
 class SingleTaxiSimpleEnv(SingleTaxiEnv, AbstractWrapperEnv):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, deterministic=True):
+        super().__init__(deterministic)
         self.transform_num = 7
 
     def is_possible_initial_state(self, pass_idx, dest_idx, row, col):

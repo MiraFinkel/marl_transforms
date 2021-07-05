@@ -4,19 +4,15 @@ from Transforms.transform_constants import *
 
 class SingleTaxiTransformedEnv(SingleTaxiSimpleEnv):
     def __init__(self, transforms):
-        super().__init__()
+        super().__init__(False)
         self.taxi_x_transform, self.taxi_y_transform = transforms[0], transforms[1]
         self.pass_loc_transform, self.pass_dest_transform = transforms[2], transforms[3]
         self.fuel_transform = transforms[4]
         self.all_outcome_determinization = transforms[5]
         self.most_likely_outcome = transforms[6]
         if self.all_outcome_determinization:
-            for s, state_probs in self.P.items():
-                for a, action_probs in state_probs.items():
-                    if len(action_probs) > 1:
-                        prob = action_probs[0][0]
-                        if 0 < prob < 1:
-                            pass
+            self.P = p_determinization(self.P)
+
 
     def step(self, a):
         s, r, d, p = super(SingleTaxiTransformedEnv, self).step(a)
@@ -37,6 +33,16 @@ class SingleTaxiTransformedEnv(SingleTaxiSimpleEnv):
         return int(transformed_next_state), r, d, {"prob": p}
 
 
+def p_determinization(p):
+    for (s, s_probs) in p.items():
+        for (a, a_probs) in s_probs.items():
+            probs_list = [prob[0] for prob in a_probs]
+            max_prob = max(probs_list)
+            max_prob_idx = probs_list.index(max_prob)
+            p[s][a] = tuple([1.0] + list(p[s][a][max_prob_idx])[1:])
+    return p
+
+
 def get_single_taxi_transform_name(transforms):
     taxi_x_transform, taxi_y_transform = transforms[0], transforms[1]
     pass_loc_transform, pass_dest_transform = transforms[2], transforms[3]
@@ -53,3 +59,14 @@ def get_single_taxi_transform_name(transforms):
     name += ALL_OUTCOME_DETERMINIZATION if all_outcome_determinization else ""
     name += MOST_LIKELY_OUTCOME if most_likely_outcome else ""
     return name
+
+
+if __name__ == '__main__':
+    cur_transforms = [False, False, False, False, False, True, False]
+    new_env = SingleTaxiTransformedEnv(cur_transforms)
+    for _ in range(100):
+        next_s, r, d, prob = new_env.step(np.random.randint(0, 6))
+        print(new_env.decode(next_s))
+
+    passenger_locations, fuel_station = new_env.get_info_from_map()
+    a = 7
