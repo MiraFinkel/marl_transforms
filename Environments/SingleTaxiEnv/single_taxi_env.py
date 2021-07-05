@@ -243,12 +243,12 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
         for i in range(len(prob_list)):
             if i != action:
                 if fuel == 0:
-                    new_row, new_col, done = row, col, True
+                    new_row, new_col, reward, done = row, col, REWARD_DICT[NO_FUEL_REWARD], True
                 else:
                     new_row, new_col, fuel = self.try_to_move(action, fuel, row, col)
-                    done = False
+                    reward, done = REWARD_DICT[STEP_REWARD], False
                 new_state = self.encode(new_row, new_col, pass_idx, dest_idx, fuel)
-                prob_list[i] = (STOCHASTIC_PROB_OTHER_ACTIONS, new_state, REWARD_DICT[STEP_REWARD], done)
+                prob_list[i] = (STOCHASTIC_PROB_OTHER_ACTIONS, new_state, reward, done)
         return prob_list
 
     def no_wall_to_the_right(self, row, col):
