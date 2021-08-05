@@ -15,8 +15,26 @@ MAP = [
     "+---------+",
 ]
 
+# SIMPLE_MAP = [
+#     "+---------+",
+#     "|R: | : : |",
+#     "| : | : : |",
+#     "| : : : : |",
+#     "| : : | : |",
+#     "| : :F| :B|",
+#     "+---------+",
+# ]
+
+SMALL_EXAMPLE = [
+    "+-----+",
+    "|R| :G|",
+    "| : : |",
+    "|Y:F|B|",
+    "+-----+",
+]
+
 SOUTH, NORTH, EAST, WEST, PICKUP, DROPOFF, REFUEL = 0, 1, 2, 3, 4, 5, 6
-PASSENGER_IN_TAXI = -1
+# PASSENGER_IN_TAXI = -1
 STEP_REWARD, PICKUP_REWARD, BAD_PICKUP_REWARD, DROPOFF_REWARD, BAD_DROPOFF_REWARD, REFUEL_REWARD, BAD_REFUEL_REWARD, NO_FUEL_REWARD = "step", "good_pickup", "bad_pickup", "good_dropoff", "bad_dropoff", "good_refuel", "bad_refuel", "no_fuel"
 ACTIONS = [SOUTH, NORTH, EAST, WEST, PICKUP, DROPOFF, REFUEL]
 MAX_FUEL = 50
@@ -142,7 +160,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
                                     elif action == REFUEL:
                                         fuel, reward = self.try_to_refuel(taxi_loc, fuel)
                                 new_state = self.encode(new_row, new_col, new_pass_idx, dest_idx, fuel)
-                                if deterministic or action in [PICKUP, DROPOFF, REFUEL]:
+                                if deterministic:
                                     P[state][action].append((DETERMINISTIC_PROB, new_state, reward, done))
                                 else:
                                     probs = self.get_stochastic_probs(action, row, col, pass_idx, dest_idx, init_fuel,
@@ -152,13 +170,14 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
         return P
 
     def encode(self, taxi_row, taxi_col, pass_loc, dest_idx, fuel):
-        # (5) 5, 5, 4, 50
+        # (5), 5, 5, 4, 50
+        # (num_rows), num_columns, len(passengers_locations) + 1, len(passengers_locations), MAX_FUEL
         i = taxi_row
-        i *= 5
+        i *= self.num_columns
         i += taxi_col
-        i *= 5
+        i *= (len(self.passengers_locations) + 1)  # +1 for in taxi location
         i += pass_loc
-        i *= 4
+        i *= len(self.passengers_locations)
         i += dest_idx
         i *= MAX_FUEL
         i += fuel
@@ -166,25 +185,44 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
 
     def decode(self, i):
         # 50, 4, 5, 5, (5)
+        # MAX_FUEL, len(passengers_locations), len(passengers_locations) + 1, num_columns, (num_rows)
         out = []
         out.append(i % MAX_FUEL)
         i = i // MAX_FUEL
-        out.append(i % 4)
-        i = i // 4
-        out.append(i % 5)
-        i = i // 5
-        out.append(i % 5)
-        i = i // 5
+        out.append(i % len(self.passengers_locations))
+        i = i // len(self.passengers_locations)
+        out.append(i % (len(self.passengers_locations) + 1))
+        i = i // (len(self.passengers_locations) + 1)  # +1 for in taxi location
+        out.append(i % self.num_columns)
+        i = i // self.num_columns
         out.append(i)
-        assert 0 <= i < 5
+        assert 0 <= i < self.num_rows
         return list(reversed(out))
+
+    def check_if_state_is_legal(self, state, return_idxes=False):
+        taxi_row, taxi_col, pass_loc, dest_idx, fuel = state
+        not_valid_idx = []
+        if taxi_row < 0 or taxi_row >= self.num_rows:
+            not_valid_idx.append(0)
+        if taxi_col < 0 or taxi_col >= self.num_columns:
+            not_valid_idx.append(1)
+        if pass_loc < 0 or pass_loc > len(self.passengers_locations):
+            not_valid_idx.append(2)
+        if dest_idx < 0 or dest_idx >= len(self.passengers_locations):
+            not_valid_idx.append(3)
+        if fuel < 0 or fuel > MAX_FUEL:
+            not_valid_idx.append(4)
+        state_is_legal = (len(not_valid_idx) == 0)
+        if return_idxes:
+            return state_is_legal, not_valid_idx
+        return state_is_legal
 
     def render(self, mode='human'):
         outfile = StringIO() if mode == 'ansi' else sys.stdout
 
         out = self.desc.copy().tolist()
         out = [[c.decode('utf-8') for c in line] for line in out]
-        taxi_row, taxi_col, pass_idx, dest_idx = self.decode(self.s)
+        taxi_row, taxi_col, pass_idx, dest_idx, fuel = self.decode(self.s)
 
         def ul(x):
             return "_" if x == " " else x
@@ -218,7 +256,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
 
     def step(self, a):
         transitions = self.P[self.s][a]
-        i = discrete.categorical_sample([t[0] for t in transitions], self.np_random)
+        i = discrete.categorical_sample([t[0] if len(t) > 0 else 0 for t in transitions], self.np_random)
         p, s, r, d = transitions[i]
         self.s = s
         self.last_action = a
@@ -237,18 +275,27 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
         return new_row, new_col, fuel
 
     def get_stochastic_probs(self, action, row, col, pass_idx, dest_idx, fuel, new_state, reward, done):
-        prob_list = [tuple(), tuple(), tuple(), tuple()]
+        if action in [REFUEL, PICKUP, DROPOFF]:
+            return self.prob_list_for_no_move_action(action, new_state, reward, done)
+        prob_list = [tuple() for _ in range(self.num_actions)]
         action_prob = (STOCHASTIC_PROB, new_state, reward, done)
         prob_list[action] = action_prob
-        for i in range(len(prob_list)):
-            if i != action:
+        for prob_act in range(len(prob_list)):
+            init_fuel = fuel
+            if prob_act != action and prob_act < 4:
                 if fuel == 0:
                     new_row, new_col, reward, done = row, col, REWARD_DICT[NO_FUEL_REWARD], True
                 else:
-                    new_row, new_col, fuel = self.try_to_move(action, fuel, row, col)
+                    new_row, new_col, fuel = self.try_to_move(prob_act, fuel, row, col)
                     reward, done = REWARD_DICT[STEP_REWARD], False
                 new_state = self.encode(new_row, new_col, pass_idx, dest_idx, fuel)
-                prob_list[i] = (STOCHASTIC_PROB_OTHER_ACTIONS, new_state, reward, done)
+                prob_list[prob_act] = (STOCHASTIC_PROB_OTHER_ACTIONS, new_state, reward, done)
+            fuel = init_fuel
+        return prob_list
+
+    def prob_list_for_no_move_action(self, action, new_state, reward, done):
+        prob_list = [tuple() for _ in range(self.num_actions)]
+        prob_list[action] = (DETERMINISTIC_PROB, new_state, reward, done)
         return prob_list
 
     def no_wall_to_the_right(self, row, col):
@@ -278,7 +325,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
     def try_to_refuel(self, taxi_loc, fuel):
         if taxi_loc == self.fuel_station:
             reward = REWARD_DICT[REFUEL_REWARD]
-            fuel = MAX_FUEL
+            fuel = MAX_FUEL - 1
         else:
             reward = REWARD_DICT[BAD_REFUEL_REWARD]
         return fuel, reward
@@ -290,8 +337,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
         fuel_station = None
         passenger_locations = []
         h, w = self.desc.shape
-        h = (h - 2)
-        w = (w - 2)
+        h, w = (h - 2), (w - 2)
         for x in range(1, h + 1):
             for y in range(1, w + 1):
                 c = self.desc[x][y]
@@ -309,4 +355,3 @@ if __name__ == '__main__':
         print(new_env.decode(next_s))
 
     passenger_locations, fuel_station = new_env.get_info_from_map()
-    a = 7
