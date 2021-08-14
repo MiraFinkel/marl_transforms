@@ -36,7 +36,6 @@ def sample_anticipated_policy(policy_dict, num_states_in_partial_policy):
     for i, item in enumerate(policy_dict.items()):
         if i in sampled_states_flat:
             partial_sampled_policy[tuple(item[0])] = item[1]
-
     return partial_sampled_policy
 
 

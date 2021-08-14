@@ -1,3 +1,4 @@
+import pickle
 from itertools import product
 
 from Observer.lunar_lander_expert import LunarLanderExpert
@@ -108,16 +109,65 @@ def get_transformed_env(env_name):
         return LunarLanderTransformedEnv
 
 
-def set_all_possible_transforms(original_env, env_name):
-    binary_permutations = ["".join(seq) for seq in product("01", repeat=original_env.transform_num)]
-    transforms = {}
-    for per in binary_permutations:
-        bool_params = tuple(True if int(dig) == 1 else False for dig in per)
-        if any(bool_params):
-            transformed_env = get_transformed_env(env_name)
-            transform_name = get_transform_name(env_name, bool_params)
-            transforms[bool_params] = (transform_name, transformed_env)
+# def set_all_possible_transforms(original_env, env_name):
+#     binary_permutations = ["".join(seq) for seq in product("01", repeat=original_env.transform_num)]
+#     transforms = {}
+#     for per in binary_permutations:
+#         bool_params = tuple(True if int(dig) == 1 else False for dig in per)
+#         if any(bool_params):
+#             transformed_env = get_transformed_env(env_name)
+#             transform_name = get_transform_name(env_name, bool_params)
+#             transforms[bool_params] = (transform_name, transformed_env)
+#     return transforms
+
+def set_all_possible_transforms(original_env, env_name, anticipated_policy):
+    env_preconditions = load_env_preconditions(env_name)
+    basic_relevant_transforms = dict()
+    for state, actions in anticipated_policy.items():
+        for action in actions:
+            if action not in basic_relevant_transforms:
+                basic_relevant_transforms[action] = env_preconditions.not_allowed_features[action]
+    preconditions_num = 0
+    for action, precondition in basic_relevant_transforms.items():
+        preconditions_num += sum([len(precondition[idx]) for idx in precondition.keys()])
+    return basic_relevant_transforms
+
+
+def load_existing_transforms(env_name, anticipated_policy):
+    import os
+    import re
+    working_dir = "Transforms/taxi_example_data/taxi_transformed_env/"
+    possible_env_files = os.listdir(working_dir)
+    transform_names = []
+    transformed_envs = []
+    transforms = dict()
+    dict_idx = -1
+
+    for file_name in possible_env_files:
+        match = re.search(r"\d", file_name)
+        precondition_action = int(file_name[match.start()])
+        for state, actions in anticipated_policy.items():
+            for action in actions:
+                if action == precondition_action:
+                    dict_idx += 1
+                    # precondition_idx = file_name[file_name.find("(") + 1:file_name.find(")")]
+                    # precondition_val = file_name[file_name.find("[") + 1:file_name.find("]")]
+                    transform_name = file_name[:-4]
+                    transform_names.append(transform_name)
+                    file = open(working_dir + file_name, "rb")
+                    new_env = pickle.load(file)
+                    transformed_envs.append(new_env)
+                    transforms[dict_idx] = transform_name, new_env
     return transforms
+
+
+def load_env_preconditions(env_name):
+    if env_name == SINGLE_TAXI_EXAMPLE:
+        a_file = open("Transforms/taxi_example_data/taxi_example_preconditions.pkl", "rb")
+        preconditions = pickle.load(a_file)
+        return preconditions
+    else:
+        raise Exception("not valid env_name")
 
 
 def get_transform_name(env_name, bool_params):

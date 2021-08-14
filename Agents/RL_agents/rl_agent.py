@@ -42,7 +42,7 @@ def run(agent, num_of_episodes, method=TRAIN, print_process=True):
         print("Training:")
     else:
         print("\nEvaluating:")
-    if not isinstance(agent, DQNKeras):
+    if not isinstance(agent, DQNKeras) and not isinstance(agent, KerasSarsaAgent):
         for it in range(num_of_episodes):
             episode_result = agent.run()
             if print_process and (it + 1) % print_rate == 0:
@@ -73,12 +73,14 @@ def run_episode(env, agent, method=TRAIN):
     episode_len = 0
     for timestep in range(agent.timesteps_per_episode):
         if method == EVALUATE:
-            # env.render()
+            env.render()
             pass
 
         action = agent.compute_action(state)  # Run Action
 
         next_state, reward, done, info = agent.env.step(action)  # Take action
+        if method == EVALUATE:
+            print(f"reward: {reward}, done: {done}, info: {info}")
         episode_len += 1
 
         total_reward += reward

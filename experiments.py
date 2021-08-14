@@ -21,6 +21,10 @@ def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_
 
     # the anticipated policy (which is part of our input and defined by the user)
     anticipated_policy = sample_anticipated_policy(full_expert_policy_dict, num_states_in_partial_policy)
+    anticipated_policy = dict()
+    anticipated_policy[(2, 0, 0, 3, None)] = [1]
+    anticipated_policy[(1, 0, 0, 3, None)] = [1]
+    anticipated_policy[(0, 0, 0, 3, None)] = [4]
 
     # create agent
     agent = rl_agent.create_agent(original_env, agent_name)
@@ -43,13 +47,14 @@ def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_
                             GOT_AN_EXPLANATION: None}
 
     # create a transformed environment
-    transforms = set_all_possible_transforms(original_env, env_name)
+    # transforms = set_all_possible_transforms(original_env, env_name, anticipated_policy)
+    transforms = load_existing_transforms(env_name, anticipated_policy)
     explanation = []
 
     transformed_env = original_env
-    for params, (transform_name, transform) in transforms.items():
+    for params, (transform_name, transformed_env) in transforms.items():
         # create transformed environment
-        transformed_env = transform(params)
+        # transformed_env = transform(params)
 
         # create agent
         agent = rl_agent.create_agent(transformed_env, agent_name)
@@ -146,7 +151,7 @@ def default_experiment(agent_name, env_name, num_of_epochs, num_of_episodes_per_
 
     # plot
     # plot_results(result, output_folder)
-    plot_results_by_number_of_transforms(pkl_name, output_folder, num_of_episodes_per_epoch)
+    # plot_results_by_number_of_transforms(pkl_name, output_folder, num_of_episodes_per_epoch)
     return result
 
 
