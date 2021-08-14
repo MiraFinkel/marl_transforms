@@ -128,10 +128,10 @@ class KerasSarsaAgent(AbstractAgent):
         super().__init__(env, timesteps_per_episode)
         self.num_episodes = 400
         self.evaluating = False
-        self.num_actions = env.num_actions
-        self.num_actions = env.num_states
+        self.action_size = env.action_space.n
+        self.state_size = env.num_states
         self.model = self._build_compile_model()
-        self.agent = SARSAAgent(model=self.model, nb_actions=self.num_actions, policy=EpsGreedyQPolicy())
+        self.agent = SARSAAgent(model=self.model, nb_actions=self.action_size, policy=EpsGreedyQPolicy())
 
     def run(self) -> {str: float}:
         """
@@ -140,7 +140,7 @@ class KerasSarsaAgent(AbstractAgent):
         "episode_len_mean": __}
         """
         self.agent.compile(Adam(lr=0.001), metrics=["mse"])
-        history = self.agent.fit(self.env, nb_steps=50000, visualize=False, verbose=1)
+        history = self.agent.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
         result = {EPISODE_REWARD_MEAN: np.array(history.history["episode_reward"]),
                   EPISODE_STEP_NUM_MEAN: np.array(history.history["nb_episode_steps"]),
                   EPISODE_REWARD_MIN: np.empty([]),
@@ -149,11 +149,13 @@ class KerasSarsaAgent(AbstractAgent):
 
     def _build_compile_model(self):
         model = Sequential()
-        model.add(Flatten(input_shape=(1, self.num_actions)))
+        # model.add(Flatten(input_shape=(1, self.action_size)))
+        model.add(Embedding(self.state_size, 10, input_length=1))  # 600000
+        model.add(Reshape((10,)))
         model.add(Dense(24, activation='relu'))
         model.add(Dense(16, activation='relu'))
         model.add(Dense(16, activation='relu'))
-        model.add(Dense(self.num_actions, activation='linear'))
+        model.add(Dense(self.action_size, activation='linear'))
         return model
 
     def compute_action(self, state) -> int:
@@ -161,7 +163,8 @@ class KerasSarsaAgent(AbstractAgent):
         Computes the best action from a given state.
         Returns: a int that represents the best action.
         """
-        pass
+        state = np.array([[state]])
+        return int(np.argmax(self.model.predict(state)))
 
     def stop_episode(self):
         pass
@@ -170,35 +173,7 @@ class KerasSarsaAgent(AbstractAgent):
         pass
 
     def evaluate(self):
-        pass
+        self.agent.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=60)
 
     def replay_experiences(self):
-        if len(memory) >= batch_size:
-            sample_choices = np.array(memory)
-            mini_batch_index = np.random.choice(len(sample_choices), batch_size)
-            # batch = random.sample(memory, batch_size)
-            states, actions, next_states, rewards, finishes = [], [], [], [], []
-            for index in mini_batch_index:
-                states.append(memory[index][0])
-                actions.append(memory[index][1])
-                next_states.append(memory[index][2])
-                rewards.append(memory[index][3])
-                finishes.append(memory[index][4])
-            states = np.array(states)
-            actions = np.array(actions)
-            next_states = np.array(next_states)
-            rewards = np.array(rewards)
-            finishes = np.array(finishes)
-            states = np.squeeze(states)
-            next_states = np.squeeze(next_states)
-            q_vals_next_state = self.model.predict_on_batch(next_states)
-            q_vals_target = self.model.predict_on_batch(states)
-            max_q_values_next_state = np.amax(q_vals_next_state, axis=1)
-            # q_vals_target[np.arange(batch_size), actions] = rewards + gamma * (max_q_values_next_state) * (1 - finishes)
-            tmp = rewards + gamma * max_q_values_next_state * (1 - finishes)
-            tmp = np.reshape(tmp, q_vals_target[actions].shape)
-            q_vals_target[actions] = tmp
-            self.model.fit(states, q_vals_target, verbose=0)
-            global epsilon
-            if epsilon > min_eps:
-                epsilon *= 0.996
+        pass
