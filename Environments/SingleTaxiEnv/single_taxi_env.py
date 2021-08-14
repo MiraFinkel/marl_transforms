@@ -40,8 +40,8 @@ ACTIONS = [SOUTH, NORTH, EAST, WEST, PICKUP, DROPOFF, REFUEL]
 MAX_FUEL = 50
 REWARD_DICT = {STEP_REWARD: -1,
                PICKUP_REWARD: 0, BAD_PICKUP_REWARD: -10,
-               DROPOFF_REWARD: 20, BAD_DROPOFF_REWARD: -10,
-               REFUEL_REWARD: 10, BAD_REFUEL_REWARD: -10, NO_FUEL_REWARD: -100}
+               DROPOFF_REWARD: 100, BAD_DROPOFF_REWARD: -10,
+               REFUEL_REWARD: 0, BAD_REFUEL_REWARD: -10, NO_FUEL_REWARD: -100}
 
 DETERMINISTIC_PROB = 1.0
 STOCHASTIC_PROB = 0.91
@@ -90,6 +90,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
     - 3: move west
     - 4: pickup passenger
     - 5: drop off passenger
+    - 6: refuel the taxi
     Rewards:
     There is a default per-step reward of -1,
     except for delivering the passenger, which is +20,
@@ -106,20 +107,22 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
     metadata = {'render.modes': ['human', 'ansi']}
 
     def __init__(self, deterministic=True):
-        self.desc = np.asarray(MAP, dtype='c')
+        self.desc = np.asarray(SMALL_EXAMPLE, dtype='c')
+        w, h = self.desc.shape
         self.last_action = None
         self.passengers_locations, self.fuel_station = self.get_info_from_map()
         self.taxi_fuel = MAX_FUEL
-        self.num_states = 500 * MAX_FUEL
-        self.num_rows = 5
-        self.num_columns = 5
+        self.num_rows = int(w - 2)
+        self.num_columns = int((h - 1) / 2)
+        self.num_states = (self.num_rows * self.num_columns) * (len(self.passengers_locations) + 1) * (
+            len(self.passengers_locations)) * MAX_FUEL
         self.max_row = self.num_rows - 1
         self.max_col = self.num_columns - 1
         self.initial_state_distribution = np.zeros(self.num_states)
         self.num_actions = len(ACTIONS)
         self.passenger_in_taxi = len(self.passengers_locations)
         self.P = self.build_transition_matrix(deterministic=deterministic)
-        self.initial_state_distribution /= self.initial_state_distribution.sum()
+        # self.initial_state_distribution /= self.initial_state_distribution.sum()
         discrete.DiscreteEnv.__init__(self, self.num_states, self.num_actions, self.P, self.initial_state_distribution)
 
     def build_transition_matrix(self, deterministic=True):
@@ -136,8 +139,8 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
                         for fuel in range(self.taxi_fuel):
                             init_fuel = fuel
                             state = self.encode(row, col, pass_idx, dest_idx, fuel)
-                            if self.is_possible_initial_state(pass_idx, dest_idx, row, col):
-                                self.initial_state_distribution[state] += 1
+                            if self.is_possible_initial_state(pass_idx, dest_idx, row, col) and state == 6152:
+                                self.initial_state_distribution[state] += 1.0
                             for action in range(self.num_actions):
                                 new_row, new_col, new_pass_idx = row, col, pass_idx
                                 reward = REWARD_DICT[STEP_REWARD]  # default reward when there is no pickup/dropoff
@@ -243,7 +246,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
             outfile.write("  ({})\n".format(["South", "North", "East", "West", "Pickup", "Dropoff"][self.lastaction]))
         else:
             outfile.write("\n")
-
+        print("current state: ", self.decode(self.s), ", last action: ", self.last_action)
         # No need to return anything for human
         if mode != 'human':
             with closing(outfile):
@@ -323,7 +326,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
         return new_pass_idx, reward, done
 
     def try_to_refuel(self, taxi_loc, fuel):
-        if taxi_loc == self.fuel_station:
+        if taxi_loc == self.fuel_station and fuel < (MAX_FUEL - 10):
             reward = REWARD_DICT[REFUEL_REWARD]
             fuel = MAX_FUEL - 1
         else:
@@ -350,8 +353,15 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
 
 if __name__ == '__main__':
     new_env = SingleTaxiEnv()
-    for _ in range(100):
-        next_s, r, d, prob = new_env.step(np.random.randint(0, 6))
-        print(new_env.decode(next_s))
+    new_env.reset()
+    actions = [2, 6, 6, 6, 6, 6, 3, 1, 1, 1, 4, 0, 2, 2, 0, 0, 5]
+    all_reward = 0
+    for act in actions:
+        new_env.render()
+        next_s, r, d, prob = new_env.step(act)
+        all_reward += r
+        print("state:", new_env.decode(next_s))
+        print("reward:", r, "done:", d, "prob:", prob)
+        print("all_reward:", all_reward)
 
     passenger_locations, fuel_station = new_env.get_info_from_map()

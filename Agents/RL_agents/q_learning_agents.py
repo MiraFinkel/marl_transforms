@@ -37,7 +37,7 @@ def flip_coin(p):
 
 
 class QLearningAgent(AbstractAgent):
-    def __init__(self, env, epsilon=1, alpha=0.7, gamma=1, timesteps_per_episode=200):
+    def __init__(self, env, epsilon=1, alpha=0.7, gamma=0.6, timesteps_per_episode=60):
         """
         alpha    - learning rate
         epsilon  - exploration rate
@@ -241,7 +241,7 @@ class HandsOnDQNAgent(AbstractAgent):
 
 
 class DQNKeras(AbstractAgent):
-    def __init__(self, env, timesteps_per_episode=200, batch_size=32):
+    def __init__(self, env, timesteps_per_episode=60, batch_size=32):
         super().__init__(env, timesteps_per_episode)
         self.action_size = env.action_space.n
         self.state_size = env.num_states
@@ -258,7 +258,7 @@ class DQNKeras(AbstractAgent):
 
     def _build_compile_model(self):
         model = Sequential()
-        model.add(Embedding(189375, 10, input_length=1))  # 600000
+        model.add(Embedding(self.state_size, 10, input_length=1))  # 600000
         model.add(Reshape((10,)))
         # model.add(Flatten())
         model.add(Dense(50, activation='relu'))
@@ -275,7 +275,8 @@ class DQNKeras(AbstractAgent):
         "episode_len_mean": __}
         """
         self.dqn_only_embedding.compile(Adam(lr=1e-3), metrics=['mae'])
-        history = self.dqn_only_embedding.fit(self.env, nb_steps=1000000, visualize=False, verbose=1, nb_max_episode_steps=110, log_interval=100000)
+        # history = self.dqn_only_embedding.fit(self.env, nb_steps=1000000, visualize=False, verbose=1, nb_max_episode_steps=110, log_interval=100000)
+        history = self.dqn_only_embedding.fit(self.env, nb_steps=4000, visualize=False, verbose=1, nb_max_episode_steps=110, log_interval=4000)
         result = {EPISODE_REWARD_MEAN: np.array(history.history["episode_reward"]),
                   EPISODE_STEP_NUM_MEAN: np.array(history.history["nb_episode_steps"]), EPISODE_REWARD_MIN: np.empty([]),
                   EPISODE_REWARD_MAX: np.empty([]), EPISODE_VARIANCE: np.empty([])}

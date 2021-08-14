@@ -60,7 +60,7 @@ def relax_preds(pddl_data, pre_list):
 
 if __name__ == '__main__':
     curr_dir = os.path.dirname(os.path.abspath(__file__))
-    pddl_example = read_pddl(curr_dir + "/" + "example.pddl")  # reads or exmaple file
+    pddl_example = read_pddl(curr_dir + "/" + "example.pddl")  # reads or example file
     all_pres = get_pddl_pred(pddl_example)
     some_preds = all_pres[:3]
     print("to remove pre list", some_preds)

@@ -22,6 +22,7 @@ class KerasSarsaAgent(AbstractAgent):
         super().__init__(env, timesteps_per_episode)
         self.model = self._build_compile_model()
         self.num_episodes = 400
+        self.evaluating = False
 
     def run(self) -> {str: float}:
         """
@@ -38,16 +39,18 @@ class KerasSarsaAgent(AbstractAgent):
             if i != 0 and i % 50 == 0:
                 self.model.save(".\saved_models\model_" + str(i) + "_episodes.h5")
             for j in range(3000):
-                state = np.reshape(state, (1, 8))
+                # state = np.reshape(state, (1, 8))
                 if np.random.random() <= epsilon:
-                    action = np.random.choice(4)
+                    action = np.random.choice(7)
                 else:
-                    action_values = self.model.predict(state)
+                    predict_state = np.reshape(np.array(state), (1, 1))
+                    action_values = self.model.predict(predict_state)
                     action = np.argmax(action_values[0])
 
-                self.env.render()
+                if self.evaluating:
+                    self.env.render()
                 next_state, reward, finished, metadata = self.env.step(action)
-                next_state = np.reshape(next_state, (1, 8))
+                # next_state = np.reshape(next_state, (1, 8))
                 memory.append((state, action, next_state, reward, finished))
                 self.replay_experiences()
                 score += reward
@@ -59,9 +62,9 @@ class KerasSarsaAgent(AbstractAgent):
 
     def _build_compile_model(self):
         model = keras.Sequential()
-        model.add(keras.layers.Dense(64, input_dim=8, activation=relu))
+        model.add(keras.layers.Dense(64, input_dim=1, activation=relu))
         model.add(keras.layers.Dense(64, activation=relu))
-        model.add(keras.layers.Dense(4, activation=linear))
+        model.add(keras.layers.Dense(1, activation=linear))
         model.compile(loss="mse", optimizer=Adam(lr=learning_rate))
         return model
 
@@ -103,7 +106,10 @@ class KerasSarsaAgent(AbstractAgent):
             q_vals_next_state = self.model.predict_on_batch(next_states)
             q_vals_target = self.model.predict_on_batch(states)
             max_q_values_next_state = np.amax(q_vals_next_state, axis=1)
-            q_vals_target[np.arange(batch_size), actions] = rewards + gamma * (max_q_values_next_state) * (1 - finishes)
+            # q_vals_target[np.arange(batch_size), actions] = rewards + gamma * (max_q_values_next_state) * (1 - finishes)
+            tmp = rewards + gamma * max_q_values_next_state * (1 - finishes)
+            tmp = np.reshape(tmp, q_vals_target[actions].shape)
+            q_vals_target[actions] = tmp
             self.model.fit(states, q_vals_target, verbose=0)
             global epsilon
             if epsilon > min_eps:
