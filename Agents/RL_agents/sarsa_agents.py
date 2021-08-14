@@ -126,7 +126,6 @@ class HandsOnSarsaAgent(AbstractAgent):
 class KerasSarsaAgent(AbstractAgent):
     def __init__(self, env, timesteps_per_episode=10001):
         super().__init__(env, timesteps_per_episode)
-        self.model = self._build_compile_model()
         self.num_episodes = 400
         self.evaluating = False
         self.num_actions = env.num_actions
