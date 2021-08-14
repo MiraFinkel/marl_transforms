@@ -276,7 +276,7 @@ class DQNKeras(AbstractAgent):
         """
         self.dqn_only_embedding.compile(Adam(lr=1e-3), metrics=['mae'])
         # history = self.dqn_only_embedding.fit(self.env, nb_steps=1000000, visualize=False, verbose=1, nb_max_episode_steps=110, log_interval=100000)
-        history = self.dqn_only_embedding.fit(self.env, nb_steps=4000, visualize=False, verbose=1, nb_max_episode_steps=110, log_interval=4000)
+        history = self.dqn_only_embedding.fit(self.env, nb_steps=150000, visualize=False, verbose=1, nb_max_episode_steps=60, log_interval=150000)
         result = {EPISODE_REWARD_MEAN: np.array(history.history["episode_reward"]),
                   EPISODE_STEP_NUM_MEAN: np.array(history.history["nb_episode_steps"]), EPISODE_REWARD_MIN: np.empty([]),
                   EPISODE_REWARD_MAX: np.empty([]), EPISODE_VARIANCE: np.empty([])}
