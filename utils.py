@@ -1,6 +1,7 @@
 import pickle
 from itertools import product
 
+from Agents.RL_agents import rl_agent
 from Observer.lunar_lander_expert import LunarLanderExpert
 from Observer.single_taxi_expert import SingleTaxiExpert
 from Observer.taxi_expert import Taxi_Expert
@@ -159,6 +160,14 @@ def load_existing_transforms(env_name, anticipated_policy):
                     transformed_envs.append(new_env)
                     transforms[dict_idx] = transform_name, new_env
     return transforms
+
+
+def load_existing_agent(env, agent_name, transform_name):
+    model_name = agent_name + '_' + transform_name
+    dir_path = 'Agents/TrainedAgents/' + model_name + '/'
+    new_agent = rl_agent.create_agent(env, agent_name)
+    new_agent = new_agent.load_existing_agent(dir_path)
+    return new_agent
 
 
 def load_env_preconditions(env_name):

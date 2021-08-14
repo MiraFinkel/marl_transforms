@@ -136,10 +136,12 @@ def update_p_matrix_by_relax_preconditions(env, mapping_states_dict, pre_action,
         if pre_prob_action is not None:
             cur_info = list(env.P[state][pre_action][pre_prob_action])
             cur_info[1] = mapping_states_dict[state]
+            cur_info[3] = False
             env.P[state][pre_action][pre_prob_action] = cur_info
         else:  # deterministic case
             cur_info = list(env.P[state][pre_action][0])
             cur_info[1] = mapping_states_dict[state]
+            cur_info[3] = False
             env.P[state][pre_action] = [tuple(cur_info)]
 
 

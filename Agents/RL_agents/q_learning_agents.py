@@ -302,3 +302,8 @@ class DQNKeras(AbstractAgent):
 
     def evaluate(self):
         self.dqn_only_embedding.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=150)
+
+    def load_existing_agent(self, dir_path):
+        self.q_network.load_weights(dir_path)
+        self.dqn_only_embedding.compile(Adam(lr=1e-3), metrics=['mae'])
+        return self
