@@ -9,7 +9,7 @@ from keras.activations import relu, linear
 from collections import deque
 import gym
 import random
-from keras.utils import to_categorical
+# from keras.utils import to_categorical
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Embedding, Reshape
