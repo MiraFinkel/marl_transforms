@@ -75,6 +75,8 @@ def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_
             explanation.append(transform_name)
             result[transform_name][GOT_AN_EXPLANATION] = True
 
+        save_trained_model(agent, agent_name, transform_name)
+
     if explanation is None:
         print("no explanation found - you are too dumb for our system")
     else:
