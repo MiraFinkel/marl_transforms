@@ -5,7 +5,7 @@ from Transforms.single_taxi_transforms import *
 
 def run_single_taxi_env():
     env_name = SINGLE_TAXI_EXAMPLE
-    agent_name = KERAS_SARSA
+    agent_name = KERAS_DQN
     num_states_in_partial_policy = 5
     num_of_epochs = 1
     num_of_episodes_per_epoch = 10000
