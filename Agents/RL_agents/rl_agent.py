@@ -2,7 +2,7 @@ import sys
 
 from Agents.RL_agents.rllib_agents import *
 from Agents.RL_agents.q_learning_agents import *
-from Agents.RL_agents.sarsa_agents import KerasSarsaAgent
+# from Agents.RL_agents.sarsa_agents import KerasSarsaAgent
 
 from Agents.value_iteration_agent import ValueIterationAgent
 
@@ -42,7 +42,7 @@ def run(agent, num_of_episodes, method=TRAIN, print_process=True):
         print("Training:")
     else:
         print("\nEvaluating:")
-    if not isinstance(agent, DQNKeras) and not isinstance(agent, KerasSarsaAgent):
+    if not isinstance(agent, DQNKeras): # and not isinstance(agent, KerasSarsaAgent): TODO - to add this!
         for it in range(num_of_episodes):
             episode_result = agent.run()
             if print_process and (it + 1) % print_rate == 0:

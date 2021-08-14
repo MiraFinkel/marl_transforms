@@ -136,10 +136,12 @@ def update_p_matrix_by_relax_preconditions(env, mapping_states_dict, pre_action,
         if pre_prob_action is not None:
             cur_info = list(env.P[state][pre_action][pre_prob_action])
             cur_info[1] = mapping_states_dict[state]
+            cur_info[3] = False
             env.P[state][pre_action][pre_prob_action] = cur_info
         else:  # deterministic case
             cur_info = list(env.P[state][pre_action][0])
             cur_info[1] = mapping_states_dict[state]
+            cur_info[3] = False
             env.P[state][pre_action] = [tuple(cur_info)]
 
 
@@ -240,57 +242,101 @@ def get_single_taxi_transform_name(transforms):
     return name
 
 
-if __name__ == '__main__':
-    env_default_values = [0, 0, 0, 1, MAX_FUEL - 1]
-    a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
-    env_preconditions = pickle.load(a_file)
-    # precondition = {5: {(0,): [0]}}
-    # cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
-    #                   ALL_OUTCOME_DETERMINIZATION: False,
-    #                   MOST_LIKELY_OUTCOME: False,
-    #                   PRECONDITION_RELAXATION: precondition}
-    # new_env = SingleTaxiTransformedEnv(cur_transforms)
-    # a_file = open(f"taxi_example_data/action_{5}_pre_idx_{(0,)}_pre_val_{[0]}" + ".pkl", "wb")
-    # pickle.dump(new_env, a_file)
-    # a_file.close()
+def generate_triple_of_transforms(env_pre):
+    same_precondition = False
+    for act1, pre1 in env_pre.not_allowed_features.items():
+        for act2, pre2 in env_pre.not_allowed_features.items():
+            for act3, pre3 in env_pre.not_allowed_features.items():
+                for pre_idx1 in pre1.keys():
+                    for pre_idx2 in pre2.keys():
+                        for pre_idx3 in pre3.keys():
+                            for pre_val1 in pre1[pre_idx1]:
+                                for pre_val2 in pre2[pre_idx2]:
+                                    for pre_val3 in pre3[pre_idx3]:
+                                        if (act1 == act2 and (np.array(pre_idx1 == pre_idx2)).all() and np.array(
+                                                (pre_val1 == pre_val2)).all()) or (act1 > act2) or ((act2 == act3 and (
+                                                np.array(pre_idx2 == pre_idx3)).all() and np.array(
+                                            (pre_val2 == pre_val3)).all()) or (act2 > act3)) or ((act1 == act3 and (
+                                                np.array(pre_idx1 == pre_idx3)).all() and np.array(
+                                            (pre_val1 == pre_val3)).all()) or (act1 > act3)):
+                                            same_precondition = True
+                                        if not same_precondition:
+                                            print(f"act1: {act1} , pre_idx1: {pre_idx1} , pre_val1: {pre_val1}")
+                                            print(f"act2: {act2} , pre_idx2: {pre_idx2} , pre_val2: {pre_val2}")
+                                            print(f"act3: {act3} , pre_idx3: {pre_idx3} , pre_val3: {pre_val3}")
+                                            print("\n")
+                                            precondition = {act1: {pre_idx1: pre_val1},
+                                                            act2: {pre_idx2: pre_val2},
+                                                            act3: {pre_idx3: pre_val3}}
+                                            cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
+                                                              ALL_OUTCOME_DETERMINIZATION: False,
+                                                              MOST_LIKELY_OUTCOME: False,
+                                                              PRECONDITION_RELAXATION: precondition}
+                                            new_env = SingleTaxiTransformedEnv(cur_transforms)
+                                            a_file = open(
+                                                f"taxi_example_data/taxi_transformed_env/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}_{act3}_{pre_idx3}_{pre_val3}" + ".pkl",
+                                                "wb")
+                                            pickle.dump(new_env, a_file)
+                                            a_file.close()
+                                        same_precondition = False
 
+
+def generate_tuple_of_transforms(env_pre):
+    same_precondition = False
+    for act1, pre1 in env_pre.not_allowed_features.items():
+        for act2, pre2 in env_pre.not_allowed_features.items():
+            for pre_idx1 in pre1.keys():
+                for pre_idx2 in pre2.keys():
+                    for pre_val1 in pre1[pre_idx1]:
+                        for pre_val2 in pre2[pre_idx2]:
+                            if (act1 == act2 and (np.array(pre_idx1 == pre_idx2)).all() and np.array(
+                                    (pre_val1 == pre_val2)).all()) or (act1 > act2):
+                                same_precondition = True
+                            if not same_precondition:
+                                print(f"act1: {act1} , pre_idx1: {pre_idx1} , pre_val1: {pre_val1}")
+                                print(f"act2: {act2} , pre_idx2: {pre_idx2} , pre_val2: {pre_val2}")
+                                precondition = {act1: {pre_idx1: pre_val1},
+                                                act2: {pre_idx2: pre_val2}}
+                                cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
+                                                  ALL_OUTCOME_DETERMINIZATION: False,
+                                                  MOST_LIKELY_OUTCOME: False,
+                                                  PRECONDITION_RELAXATION: precondition}
+                                new_env = SingleTaxiTransformedEnv(cur_transforms)
+                                a_file = open(
+                                    f"taxi_example_data/taxi_transformed_env/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}" + ".pkl",
+                                    "wb")
+                                pickle.dump(new_env, a_file)
+                                a_file.close()
+                            same_precondition = False
+
+
+def generate_single_transforms(env_preconditions):
     for act, preconditions in env_preconditions.not_allowed_features.items():
         for precondition_idx in preconditions.keys():
             for precondition_val in preconditions[precondition_idx]:
                 print(
-                    f"calculating for action: {act} , precondition_idx: {precondition_idx} , precondition_val: {precondition_val}")
+                    f"calculating for action1: {act} , precondition_idx1: {precondition_idx} , precondition_val1: {precondition_val}")
                 precondition = {act: {precondition_idx: precondition_val}}
                 cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
                                   ALL_OUTCOME_DETERMINIZATION: False,
                                   MOST_LIKELY_OUTCOME: False,
                                   PRECONDITION_RELAXATION: precondition}
                 new_env = SingleTaxiTransformedEnv(cur_transforms)
-                a_file = open(f"taxi_example_data/taxi_transformed_env/{act}_{precondition_idx}_{precondition_val}" + ".pkl", "wb")
+                a_file = open(
+                    f"taxi_example_data/taxi_transformed_env/{act}_{precondition_idx}_{precondition_val}" + ".pkl",
+                    "wb")
                 pickle.dump(new_env, a_file)
                 a_file.close()
-    print("DONE!")
-    # cur_action, prob_action, idx_list, val_list = 2, 2, tuple([4]), [0]
-    # precondition_relaxation = {0: {idx_list: val_list},
-    #                            1: {idx_list: val_list},
-    #                            2: {idx_list: val_list},
-    #                            3: {idx_list: val_list}}
-    # # precondition_relaxation = {0: {idx_list: val_list}}  # deterministic case
-    # state_visibility_indexes = []
-    # cur_transforms = {STATE_VISIBILITY_TRANSFORM: (state_visibility_indexes, env_default_values),
-    #                   ALL_OUTCOME_DETERMINIZATION: False,
-    #                   MOST_LIKELY_OUTCOME: False,
-    #                   PRECONDITION_RELAXATION: precondition_relaxation}
-    # new_env = SingleTaxiTransformedEnv(cur_transforms)
-    # new_env.s = new_env.encode(4, 2, 2, 0, 1)
-    # cur_state = new_env.s
 
-    # for _ in range(10):
-    #     # a = np.random.randint(0, 6)
-    #     a = 6
-    #     new_env.render()
-    #     print("cur_state: ", new_env.decode(cur_state), " ,next action: ", a)
-    #     next_s, r, d, prob = new_env.step(a)
-    #     print("prob: ", prob['prob']['prob'])
-    #     cur_state = next_s
-    #
-    # passenger_locations, fuel_station = new_env.get_info_from_map()
+
+if __name__ == '__main__':
+    env_default_values = [0, 0, 0, 1, MAX_FUEL - 1]
+    a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
+    cur_env_preconditions = pickle.load(a_file)
+
+    # generate_single_transforms(cur_env_preconditions)
+    # generate_tuple_of_transforms(cur_env_preconditions)
+    generate_triple_of_transforms(cur_env_preconditions)
+
+
+    print("DONE!")

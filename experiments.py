@@ -30,10 +30,10 @@ def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_
     agent = rl_agent.create_agent(original_env, agent_name)
     # train the agent in the environment
     print("Training and evaluating the agent on the original environment...")
-    original_env_result_train = rl_agent.run(agent, num_of_episodes, method=TRAIN)
+    # original_env_result_train = rl_agent.run(agent, num_of_episodes, method=TRAIN)
 
     # evaluate the performance of the agent
-    original_env_result_evaluate = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
+    # original_env_result_evaluate = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
 
     # check if the anticipated policy is achieved
     anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(original_env, agent, anticipated_policy)
@@ -41,10 +41,10 @@ def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_
         print("The algorithm achieved the policy. We finished our work.")
         # sys.exit()
 
-    result[ORIGINAL_ENV] = {EVALUATION_RESULTS: original_env_result_evaluate,
-                            TRAINING_RESULTS: original_env_result_train,
-                            SUCCESS_RATE: success_rate,
-                            GOT_AN_EXPLANATION: None}
+    # result[ORIGINAL_ENV] = {EVALUATION_RESULTS: original_env_result_evaluate,
+    #                         TRAINING_RESULTS: original_env_result_train,
+    #                         SUCCESS_RATE: success_rate,
+    #                         GOT_AN_EXPLANATION: None}
 
     # create a transformed environment
     # transforms = set_all_possible_transforms(original_env, env_name, anticipated_policy)
@@ -74,6 +74,8 @@ def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_
         if anticipated_policy_achieved:
             explanation.append(transform_name)
             result[transform_name][GOT_AN_EXPLANATION] = True
+
+        save_trained_model(agent, agent_name, transform_name)
 
     if explanation is None:
         print("no explanation found - you are too dumb for our system")
