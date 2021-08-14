@@ -57,9 +57,11 @@ def run(agent, num_of_episodes, method=TRAIN, print_process=True):
         if method == EVALUATE:
             agent.evaluate()
     else:
-        result = agent.run()
+        # result = agent.run()
         if method == EVALUATE:
             agent.evaluate()
+        else:
+            result = agent.run()
     return result
 
 
