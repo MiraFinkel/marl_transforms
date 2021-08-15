@@ -208,9 +208,3 @@ def get_transform_name(env_name, bool_params):
         from Transforms.lunar_lander_transforms import get_lunar_lander_transform_name
         return get_lunar_lander_transform_name(bool_params)
 
-
-anticipated_policy = {(2, 0, 0, 3, None): [1],
-                      (1, 0, 0, 3, None): [1],
-                      (0, 0, 0, 3, None): [4]}
-transforms = load_existing_transforms(None, anticipated_policy)
-a = 7
