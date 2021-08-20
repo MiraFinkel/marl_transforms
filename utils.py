@@ -147,29 +147,26 @@ def set_all_possible_transforms(original_env, env_name, anticipated_policy):
 
 def load_existing_transforms_by_anticipated_policy(env_name, anticipated_policy,
                                                    working_dir="Transforms/taxi_example_data/taxi_transformed_env/"):
-    possible_env_dirs = os.listdir(working_dir)
-    possible_env_dirs = [f for f in possible_env_dirs if f[-4:] == 'envs']
+    possible_env_files = os.listdir(working_dir)
     cur_transforms = dict()
     dict_idx = -1
     anticipate_policy_actions = anticipated_policy.values()
     all_possible_anticipated_policies = list(
         itertools.combinations(anticipate_policy_actions, len(anticipate_policy_actions)))
-    for directory in possible_env_dirs:
-        possible_env_files = os.listdir(working_dir + directory + "/")
-        for i, file_name in enumerate(possible_env_files):
-            string_for_extracting_actions = copy.deepcopy(file_name)
-            string_for_extracting_actions = re.sub("([\(\[]).*?([\)\]])", "\g<1>\g<2>", string_for_extracting_actions)
-            precondition_actions = [int(s) for s in string_for_extracting_actions.split('_') if s.isdigit()]
-            for policy_action_list in all_possible_anticipated_policies:
-                policy_action_list = [p for tmp in policy_action_list for p in tmp]
-                is_precondition_actions_relevant = any(
-                    pre_action in policy_action_list for pre_action in precondition_actions)
-                if is_precondition_actions_relevant:
-                    dict_idx += 1
-                    # precondition_idx = file_name[file_name.find("(") + 1:file_name.find(")")]
-                    # precondition_val = file_name[file_name.find("[") + 1:file_name.find("]")]
-                    transform_name, new_env = load_transform_by_name(file_name, dir_name=directory)
-                    cur_transforms[dict_idx] = transform_name, new_env
+    for i, file_name in enumerate(possible_env_files):
+        string_for_extracting_actions = copy.deepcopy(file_name)
+        string_for_extracting_actions = re.sub("([\(\[]).*?([\)\]])", "\g<1>\g<2>", string_for_extracting_actions)
+        precondition_actions = [int(s) for s in string_for_extracting_actions.split('_') if s.isdigit()]
+        for policy_action_list in all_possible_anticipated_policies:
+            policy_action_list = [p for tmp in policy_action_list for p in tmp]
+            is_precondition_actions_relevant = any(
+                pre_action in policy_action_list for pre_action in precondition_actions)
+            if is_precondition_actions_relevant:
+                dict_idx += 1
+                # precondition_idx = file_name[file_name.find("(") + 1:file_name.find(")")]
+                # precondition_val = file_name[file_name.find("[") + 1:file_name.find("]")]
+                transform_name, new_env = load_transform_by_name(file_name, dir_name=directory)
+                cur_transforms[dict_idx] = transform_name, new_env
     global transforms
     transforms = cur_transforms
     return cur_transforms
