@@ -1,2 +1,0 @@
-model_checkpoint_path: "dqn_model_on_transformed_env_not_working_no_fuel"
-all_model_checkpoint_paths: "dqn_model_on_transformed_env_not_working_no_fuel"
