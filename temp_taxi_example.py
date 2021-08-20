@@ -63,4 +63,3 @@ def main():
     else:
         print(f"Explanations found: {explanations}")
 
-main()
