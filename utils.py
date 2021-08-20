@@ -145,6 +145,18 @@ def set_all_possible_transforms(original_env, env_name, anticipated_policy):
     return basic_relevant_transforms
 
 
+def load_existing_transforms_from_dir(working_dir="Transforms/taxi_example_data/taxi_transformed_env/"):
+    possible_env_files = os.listdir(working_dir)
+    cur_transforms = dict()
+    dict_idx = 0
+    for i, file_name in enumerate(possible_env_files):
+        transform_name, new_env = load_transform_by_name(file_name, dir_name="")
+        cur_transforms[dict_idx] = transform_name, new_env
+    global transforms
+    transforms = cur_transforms
+    return cur_transforms
+
+
 def load_existing_transforms_by_anticipated_policy(env_name, anticipated_policy,
                                                    working_dir="Transforms/taxi_example_data/taxi_transformed_env/"):
     possible_env_files = os.listdir(working_dir)
@@ -165,7 +177,7 @@ def load_existing_transforms_by_anticipated_policy(env_name, anticipated_policy,
                 dict_idx += 1
                 # precondition_idx = file_name[file_name.find("(") + 1:file_name.find(")")]
                 # precondition_val = file_name[file_name.find("[") + 1:file_name.find("]")]
-                transform_name, new_env = load_transform_by_name(file_name, dir_name=directory)
+                transform_name, new_env = load_transform_by_name(file_name)
                 cur_transforms[dict_idx] = transform_name, new_env
     global transforms
     transforms = cur_transforms

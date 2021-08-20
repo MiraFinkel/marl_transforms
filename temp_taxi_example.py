@@ -31,7 +31,7 @@ def main():
     if anticipated_policy_achieved:
         print("The algorithm achieved the policy. We finished our work.")
 
-    transforms = load_existing_transforms_by_anticipated_policy(env_name, anticipated_policy)
+    transforms = load_existing_transforms_from_dir()
     explanations = []
 
     for params, (transform_name, transformed_env) in transforms.items():
@@ -63,3 +63,4 @@ def main():
     else:
         print(f"Explanations found: {explanations}")
 
+main()
