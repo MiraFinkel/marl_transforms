@@ -13,7 +13,6 @@ import Agents.RL_agents.rl_agent as rl_agent
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.python.client import device_lib
-import GPUtil
 from tensorflow.python.keras import backend as K
 
 
