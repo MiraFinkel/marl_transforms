@@ -15,13 +15,13 @@ def print_info(it, episode_result):
                                episode_result[EPISODE_STEP_NUM_MEAN]))
 
 
-def get_rl_agent(agent_name, env, env_name=None, env_to_agent=None):  # TODO - fix the environment
+def get_rl_agent(agent_name, env, callbacks=None,  env_name=None, env_to_agent=None):  # TODO - fix the environment
     if is_rllib_agent(agent_name):
         agent = get_rllib_agent(agent_name, env_name, env, env_to_agent)
     elif agent_name == HANDS_ON_DQN:
         agent = HandsOnDQNAgent(env=env)
     elif agent_name == KERAS_DQN:
-        agent = DQNKeras(env=env)
+        agent = DQNKeras(env=env, callbacks=callbacks)
     elif agent_name == Q_LEARNING:
         agent = QLearningAgent(env=env)
     elif agent_name == KERAS_SARSA:
@@ -33,15 +33,14 @@ def get_rl_agent(agent_name, env, env_name=None, env_to_agent=None):  # TODO - f
     return agent
 
 
-def run(agent, num_of_episodes, method=TRAIN, print_process=True):
+def run(agent, num_of_episodes, method=TRAIN, print_process=True, visualize=True):
     result = {EPISODE_REWARD_MEAN: np.zeros(num_of_episodes), EPISODE_REWARD_MAX: np.zeros(num_of_episodes),
               EPISODE_REWARD_MIN: np.zeros(num_of_episodes), EPISODE_STEP_NUM_MEAN: np.zeros(num_of_episodes),
               EPISODE_VARIANCE: np.zeros(num_of_episodes)}
     print_rate = 100
-    if method == TRAIN:
-        print("Training:")
-    else:
-        print("\nEvaluating:")
+    if print_process:
+        message = "Training:" if method == TRAIN else "\nEvaluating:"
+        print(message)
     if not isinstance(agent, DQNKeras): # and not isinstance(agent, KerasSarsaAgent): TODO - to add this!
         for it in range(num_of_episodes):
             episode_result = agent.run()
@@ -55,11 +54,11 @@ def run(agent, num_of_episodes, method=TRAIN, print_process=True):
             result[EPISODE_STEP_NUM_MEAN][it] = (episode_result[EPISODE_STEP_NUM_MEAN])
             result[EPISODE_VARIANCE][it] = (episode_result[EPISODE_VARIANCE])
         if method == EVALUATE:
-            agent.evaluate()
+            agent.evaluate(visualize)
     else:
         # result = agent.run()
         if method == EVALUATE:
-            agent.evaluate()
+            agent.evaluate(visualize)
         else:
             result = agent.run()
     return result
@@ -103,8 +102,8 @@ def run_episode(env, agent, method=TRAIN):
     return result
 
 
-def create_agent(env, agent_name, env_name=None):
-    agent = get_rl_agent(agent_name, env)
+def create_agent(env, agent_name, callbacks=None, env_name=None):
+    agent = get_rl_agent(agent_name, env, callbacks)
     return agent
 
 

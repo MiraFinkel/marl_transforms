@@ -1,6 +1,4 @@
 /venv
 /.idea
 /__pycache__
-myplot1.png
-myplot2.png
-myplot3.png
+pyvenv.cfg

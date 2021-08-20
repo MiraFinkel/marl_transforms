@@ -1,14 +1,14 @@
 import collections
 import copy
 import pickle
+import os
 
 from Environments.SingleTaxiEnv.single_taxi_wrapper import *
-from Transforms.env_precinditions import EnvPreconditions
 from Transforms.transform_constants import *
-from scipy import linalg
-from collections import ChainMap
+from save_load_utils import make_dir
 
 DETERMINISTIC = True
+SAVE_PATH = "Transforms/taxi_example_data/"
 
 
 class SingleTaxiTransformedEnv(SingleTaxiSimpleEnv):
@@ -39,18 +39,10 @@ class SingleTaxiTransformedEnv(SingleTaxiSimpleEnv):
         return int(transformed_next_state), r, d, p
 
 
-class PreconditionInfo:
-    def __init__(self):
-        self.actions = []
-        self.prob_actions = None
-
-    # def process_preconditions_info(self, preconditions_info):
-    #     for act in preconditions_info:
-
-
 def preconditions_relaxation(preconditions_info, env, deterministic=DETERMINISTIC):
     # preconditions = EnvPreconditions(env)
-    a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
+    a_file = open(SAVE_PATH + "taxi_example_preconditions.pkl", "rb")
+    # a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
     preconditions = pickle.load(a_file)
 
     diff_dict, state_by_diff, next_state_by_action = get_diff_for_actions(env.P, env)
@@ -68,7 +60,7 @@ def preconditions_relaxation(preconditions_info, env, deterministic=DETERMINISTI
 
 def pre_process_info_and_update_p(env, act_to_diff, diff_dict, pre_info, act, preconditions, act_prob=None):
     state_to_replace = get_state_to_replace(env, pre_info, act, preconditions)
-    mapping_states_dict = get_mapping_states_dict(env, state_to_replace, diff_dict[act_to_diff], preconditions)
+    mapping_states_dict = get_mapping_states_dict(env, state_to_replace, diff_dict[act_to_diff])
     update_p_matrix_by_relax_preconditions(env, mapping_states_dict, act, act_prob)
 
 
@@ -105,29 +97,38 @@ def is_state_need_a_replacement(act, preconditions, preconditions_info, act_prob
         allowed_features_by_action = preconditions.allowed_features[act]
 
 
-def get_mapping_states_dict(env, state_to_replace, optional_diff_vec, preconditions):
+def get_mapping_states_dict(env, state_to_replace, optional_diff_vec):
     mapping_states_dict = dict((s, 0) for s in state_to_replace)
     for state in state_to_replace:
         decoded_state = np.array(env.decode(state))
         diff_vec = np.array([0] * len(decoded_state))
-        if len(optional_diff_vec) > 1:
+        if len(optional_diff_vec) > 3:
             for key, val in optional_diff_vec.items():
                 val = list(val)[0]
                 tmp_diff_vec = np.array(key)
-                if (decoded_state + tmp_diff_vec)[val[0]] == val[1]:
-                    diff_vec = tmp_diff_vec
+                if (decoded_state + tmp_diff_vec[0])[val[0]] == val[1]:
+                    diff_vec = tmp_diff_vec[0]
+                    reward = tmp_diff_vec[1]
+                    done = tmp_diff_vec[2]
                     break
+                else:
+                    reward = tmp_diff_vec[1]
+                    done = tmp_diff_vec[2]
         else:
-            diff_vec = np.array(optional_diff_vec[0])
+            diff_vec = np.array(optional_diff_vec[0][0])
+            reward = optional_diff_vec[1]
+            done = optional_diff_vec[2]
         not_legal_next_state = decoded_state + diff_vec
         state_is_legal, not_valid_idx = env.check_if_state_is_legal(not_legal_next_state, return_idxes=True)
         if not state_is_legal:
             new_not_legal_next_state = copy.deepcopy(not_legal_next_state)
             new_not_legal_next_state[not_valid_idx] = decoded_state[not_valid_idx]
             if (new_not_legal_next_state - decoded_state).any():
-                mapping_states_dict[state] = (env.encode(*new_not_legal_next_state))
+                mapping_states_dict[state] = (env.encode(*new_not_legal_next_state), reward, done)
             else:
-                mapping_states_dict[state] = state
+                mapping_states_dict[state] = (state, reward, done)
+        else:
+            mapping_states_dict[state] = (env.encode(*not_legal_next_state), reward, done)
     return mapping_states_dict
 
 
@@ -135,22 +136,26 @@ def update_p_matrix_by_relax_preconditions(env, mapping_states_dict, pre_action,
     for state in mapping_states_dict:
         if pre_prob_action is not None:
             cur_info = list(env.P[state][pre_action][pre_prob_action])
-            cur_info[1] = mapping_states_dict[state]
-            cur_info[3] = False
+            cur_info[1] = mapping_states_dict[state][0]
+            cur_info[2] = mapping_states_dict[state][1]
+            cur_info[3] = mapping_states_dict[state][2]
             env.P[state][pre_action][pre_prob_action] = cur_info
         else:  # deterministic case
             cur_info = list(env.P[state][pre_action][0])
-            cur_info[1] = mapping_states_dict[state]
-            cur_info[3] = False
+            cur_info[1] = mapping_states_dict[state][0]
+            cur_info[2] = mapping_states_dict[state][1]
+            cur_info[3] = mapping_states_dict[state][2]
             env.P[state][pre_action] = [tuple(cur_info)]
 
 
 def get_dicts(env, state, act_probs, act, next_state_dict_by_action, diff_dict_by_action, state_by_diff):
     next_state = act_probs[1]  # extract next state from the state prob
+    reward = act_probs[2]
+    done = act_probs[3]
     state_diff = np.array(env.decode(next_state)) - np.array(env.decode(state))
     if state_diff.any():
         next_state_dict_by_action[act].add((state, next_state))
-        diff_dict_by_action[act].append(state_diff)
+        diff_dict_by_action[act].append([state_diff, reward, done])
         state_by_diff[act].add(state)
     return next_state_dict_by_action, diff_dict_by_action, state_by_diff
 
@@ -174,12 +179,14 @@ def get_diff_for_actions(p, env):
                                                                                         diff_by_action, state_by_diff)
     diff_dict = {}
     for i, action_diff in enumerate(diff_by_action):
-        tmp_diff = [tuple(diff) for diff in action_diff]
+        tmp_diff = [tuple(diff[0]) for diff in action_diff]
         occurrences = collections.Counter(tuple(tmp_diff))
         occurrences = occurrences.keys()
+        reward = action_diff[0][1]
+        done = action_diff[0][2] if i != 5 else False  # TODO - TEMPORARY! to change
         if len(occurrences) > 1:
             tmp_occ = list(occurrences)
-            diff_dict[i] = dict((o, set()) for o in tmp_occ)
+            diff_dict[i] = dict(((x, reward, done), set()) for x in tmp_occ)
             for s, next_state in next_state_by_action[i]:
                 for diff in tmp_occ:
                     decoded_state, decoded_next_state = np.array(env.decode(s)), np.array(env.decode(next_state))
@@ -187,9 +194,9 @@ def get_diff_for_actions(p, env):
                     if not (state_diff - diff).any():
                         idx = np.nonzero(diff)
                         val = decoded_next_state[idx]
-                        diff_dict[i][diff].add((tuple(idx[0]), tuple(val)))
+                        diff_dict[i][(diff, reward, done)].add((tuple(idx[0]), tuple(val)))
         else:
-            diff_dict[i] = list(occurrences)
+            diff_dict[i] = (list(occurrences), reward, done)
     return diff_dict, state_by_diff, next_state_by_action
 
 
@@ -243,6 +250,9 @@ def get_single_taxi_transform_name(transforms):
 
 
 def generate_triple_of_transforms(env_pre):
+    dir_name = "triple_transform_envs"
+    make_dir(SAVE_PATH + "taxi_transformed_env/" + dir_name)
+
     same_precondition = False
     for act1, pre1 in env_pre.not_allowed_features.items():
         for act2, pre2 in env_pre.not_allowed_features.items():
@@ -265,23 +275,19 @@ def generate_triple_of_transforms(env_pre):
                                             print(f"act2: {act2} , pre_idx2: {pre_idx2} , pre_val2: {pre_val2}")
                                             print(f"act3: {act3} , pre_idx3: {pre_idx3} , pre_val3: {pre_val3}")
                                             print("\n")
+
+                                            env_file_name = f"{SAVE_PATH}taxi_transformed_env/{dir_name}/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}_{act3}_{pre_idx3}_{pre_val3}"
                                             precondition = {act1: {pre_idx1: pre_val1},
                                                             act2: {pre_idx2: pre_val2},
                                                             act3: {pre_idx3: pre_val3}}
-                                            cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
-                                                              ALL_OUTCOME_DETERMINIZATION: False,
-                                                              MOST_LIKELY_OUTCOME: False,
-                                                              PRECONDITION_RELAXATION: precondition}
-                                            new_env = SingleTaxiTransformedEnv(cur_transforms)
-                                            a_file = open(
-                                                f"taxi_example_data/taxi_transformed_env/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}_{act3}_{pre_idx3}_{pre_val3}" + ".pkl",
-                                                "wb")
-                                            pickle.dump(new_env, a_file)
-                                            a_file.close()
+                                            generate_transformed_env(precondition, env_file_name, save=True)
                                         same_precondition = False
 
 
-def generate_tuple_of_transforms(env_pre):
+def generate_double_of_transforms(env_pre):
+    dir_name = "double_transform_envs"
+    make_dir(SAVE_PATH + "taxi_transformed_env/" + dir_name)
+
     same_precondition = False
     for act1, pre1 in env_pre.not_allowed_features.items():
         for act2, pre2 in env_pre.not_allowed_features.items():
@@ -295,48 +301,51 @@ def generate_tuple_of_transforms(env_pre):
                             if not same_precondition:
                                 print(f"act1: {act1} , pre_idx1: {pre_idx1} , pre_val1: {pre_val1}")
                                 print(f"act2: {act2} , pre_idx2: {pre_idx2} , pre_val2: {pre_val2}")
+
+                                env_file_name = f"{SAVE_PATH}taxi_transformed_env/{dir_name}/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}"
                                 precondition = {act1: {pre_idx1: pre_val1},
                                                 act2: {pre_idx2: pre_val2}}
-                                cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
-                                                  ALL_OUTCOME_DETERMINIZATION: False,
-                                                  MOST_LIKELY_OUTCOME: False,
-                                                  PRECONDITION_RELAXATION: precondition}
-                                new_env = SingleTaxiTransformedEnv(cur_transforms)
-                                a_file = open(
-                                    f"taxi_example_data/taxi_transformed_env/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}" + ".pkl",
-                                    "wb")
-                                pickle.dump(new_env, a_file)
-                                a_file.close()
+                                generate_transformed_env(precondition, env_file_name, save=True)
                             same_precondition = False
 
 
 def generate_single_transforms(env_preconditions):
+    dir_name = "single_transform_envs"
+    make_dir(SAVE_PATH + "taxi_transformed_env/" + dir_name)
+
     for act, preconditions in env_preconditions.not_allowed_features.items():
         for precondition_idx in preconditions.keys():
             for precondition_val in preconditions[precondition_idx]:
                 print(
                     f"calculating for action1: {act} , precondition_idx1: {precondition_idx} , precondition_val1: {precondition_val}")
+                env_file_name = f"{SAVE_PATH}taxi_transformed_env/{dir_name}/{act}_{precondition_idx}_{precondition_val}"
                 precondition = {act: {precondition_idx: precondition_val}}
-                cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
-                                  ALL_OUTCOME_DETERMINIZATION: False,
-                                  MOST_LIKELY_OUTCOME: False,
-                                  PRECONDITION_RELAXATION: precondition}
-                new_env = SingleTaxiTransformedEnv(cur_transforms)
-                a_file = open(
-                    f"taxi_example_data/taxi_transformed_env/{act}_{precondition_idx}_{precondition_val}" + ".pkl",
-                    "wb")
-                pickle.dump(new_env, a_file)
-                a_file.close()
+                generate_transformed_env(precondition, env_file_name, save=True)
 
 
-if __name__ == '__main__':
-    env_default_values = [0, 0, 0, 1, MAX_FUEL - 1]
-    a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
-    cur_env_preconditions = pickle.load(a_file)
+def generate_transformed_env(precondition, env_file_name='', save=True,
+                             env_default_values=None):
+    cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
+                      ALL_OUTCOME_DETERMINIZATION: False,
+                      MOST_LIKELY_OUTCOME: False,
+                      PRECONDITION_RELAXATION: precondition}
+    new_env = SingleTaxiTransformedEnv(cur_transforms)
+    if save:
+        a_file = open(env_file_name + ".pkl", "wb")
+        pickle.dump(new_env, a_file)
+        a_file.close()
+    return new_env
 
-    # generate_single_transforms(cur_env_preconditions)
-    # generate_tuple_of_transforms(cur_env_preconditions)
-    generate_triple_of_transforms(cur_env_preconditions)
 
-
-    print("DONE!")
+# if __name__ == '__main__':
+#     #     env_default_values = [0, 0, 0, 1, MAX_FUEL - 1]
+#     a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
+#     cur_env_preconditions = pickle.load(a_file)
+#
+#     env_file_name = ""
+#     precondition = {0: {(4,): [0]}}
+#     env = generate_transformed_env(precondition, "", save=False)
+# #     # generate_tuple_of_transforms(cur_env_preconditions)
+# #     # generate_triple_of_transforms(cur_env_preconditions)
+# #
+#     print("DONE!")
