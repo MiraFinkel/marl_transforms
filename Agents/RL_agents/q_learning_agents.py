@@ -17,6 +17,7 @@ from rl.agents.dqn import DQNAgent
 from rl.policy import EpsGreedyQPolicy
 from rl.memory import SequentialMemory
 from constants import *
+import tensorflow as tf
 
 HANDS_ON_DQN = "hands_on_dqn"
 KERAS_DQN = "keras_dqn"
@@ -241,10 +242,11 @@ class HandsOnDQNAgent(AbstractAgent):
 
 
 class DQNKeras(AbstractAgent):
-    def __init__(self, env, timesteps_per_episode=60, batch_size=32):
+    def __init__(self, env, callbacks=None, timesteps_per_episode=60, batch_size=32):
         super().__init__(env, timesteps_per_episode)
         self.action_size = env.action_space.n
         self.state_size = env.num_states
+        self.callbacks = callbacks
         np.random.seed(123)
         if hasattr(env, '_seed'):
             env._seed(123)
@@ -275,10 +277,14 @@ class DQNKeras(AbstractAgent):
         "episode_len_mean": __}
         """
         self.dqn_only_embedding.compile(Adam(lr=1e-3), metrics=['mae'])
-        # history = self.dqn_only_embedding.fit(self.env, nb_steps=1000000, visualize=False, verbose=1, nb_max_episode_steps=110, log_interval=100000)
-        history = self.dqn_only_embedding.fit(self.env, nb_steps=150000, visualize=False, verbose=1, nb_max_episode_steps=60, log_interval=150000)
+        history = self.dqn_only_embedding.fit(self.env, nb_steps=200000, visualize=False, verbose=1,
+                                              nb_max_episode_steps=60, log_interval=200000)
+
+        # history = self.dqn_only_embedding.fit(self.env, nb_steps=2000, visualize=False, verbose=1,
+        #                                       nb_max_episode_steps=60, log_interval=2000)
         result = {EPISODE_REWARD_MEAN: np.array(history.history["episode_reward"]),
-                  EPISODE_STEP_NUM_MEAN: np.array(history.history["nb_episode_steps"]), EPISODE_REWARD_MIN: np.empty([]),
+                  EPISODE_STEP_NUM_MEAN: np.array(history.history["nb_episode_steps"]),
+                  EPISODE_REWARD_MIN: np.empty([]),
                   EPISODE_REWARD_MAX: np.empty([]), EPISODE_VARIANCE: np.empty([])}
         return result
 
@@ -300,8 +306,9 @@ class DQNKeras(AbstractAgent):
     def episode_callback(self, state, action, reward, next_state, terminated):
         pass
 
-    def evaluate(self):
-        self.dqn_only_embedding.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=150)
+    def evaluate(self, visualize=True):
+        self.dqn_only_embedding.test(self.env, nb_episodes=5, visualize=visualize,
+                                     nb_max_episode_steps=70)  # TODO - Change visualize to True
 
     def load_existing_agent(self, dir_path):
         self.q_network.load_weights(dir_path)

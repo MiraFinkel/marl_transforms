@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
-from qbstyles import mpl_style
+# from qbstyles import mpl_style
 from constants import *
 
-mpl_style(dark=False, minor_ticks=True)
+# mpl_style(dark=False, minor_ticks=True)
 figure_size = (12, 6)
 legend_alpha = 0.5
 SAVE_RATE = 500

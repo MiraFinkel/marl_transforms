@@ -1,4 +1,5 @@
 # from Environments.taxi_environment_wrapper import set_up_env_idx
+import multiprocessing
 import sys
 import os
 import shutil
@@ -9,73 +10,139 @@ from utils import *
 from visualize import *
 from Agents.RL_agents.q_learning_agents import *
 import Agents.RL_agents.rl_agent as rl_agent
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.python.client import device_lib
+import GPUtil
+from tensorflow.python.keras import backend as K
+
+
+def get_available_gpus():
+    local_device_protos = device_lib.list_local_devices()
+    return len([x.name for x in local_device_protos if x.device_type == 'GPU'])
+
+
+def log(string):
+    print(string)
+    f = open('mira.log', 'wb')
+    f.write(string)
+    f.close()
+
+
+# Prepare a directory to store all the checkpoints.
+checkpoint_dir = "./ckpt"
+if not os.path.exists(checkpoint_dir):
+    os.makedirs(checkpoint_dir)
+
+
+def make_or_restore_model(transformed_env, agent_name, callbacks=None):
+    from tensorflow import keras
+    # Either restore the latest model, or create a fresh one
+    # if there is no checkpoint available.
+    checkpoints = [checkpoint_dir + "/" + name for name in os.listdir(checkpoint_dir)]
+    if checkpoints:
+        latest_checkpoint = max(checkpoints, key=os.path.getctime)
+        print("Restoring from", latest_checkpoint)
+        return keras.models.load_model(latest_checkpoint)
+    print("Creating a new model")
+    return rl_agent.create_agent(transformed_env, agent_name)
+
+
+def create_run_and_evaluate_agent(original_env, transformed_env, agent_name, env_name, num_of_episodes,
+                                  anticipated_policy, result, explanation):
+    # GPUtil.showUtilization()
+    agent = make_or_restore_model(transformed_env, agent_name)
+
+    print(f"\nTraining and evaluating the {agent_name} on {env_name} environment -", env_name)
+    train_result = rl_agent.run(agent, num_of_episodes, method=TRAIN)
+
+    evaluation_result = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
+
+    anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(original_env, agent, anticipated_policy)
+
+    result[env_name] = {EVALUATION_RESULTS: evaluation_result,
+                        TRAINING_RESULTS: train_result,
+                        SUCCESS_RATE: success_rate,
+                        GOT_AN_EXPLANATION: False}
+
+    if anticipated_policy_achieved:
+        print(f"Environment {env_name} achieved an explanation!")
+        explanation.append(env_name)
+        result[env_name][GOT_AN_EXPLANATION] = True
+
+    save_trained_model(agent, agent_name, env_name)
+    return result, explanation
+
+
+def run_multiprocess(original_env, transformed_env, agent_name, transform_name, num_of_episodes, anticipated_policy,
+                     explanation):
+    process_list = []
+    NUM_GPUS = get_available_gpus()
+    manager = multiprocessing.Manager()
+    result = manager.dict()  # create shared data structure
+    num_process_running = 0
+    if num_process_running < NUM_GPUS:
+        num_process_running += 1
+        p = multiprocessing.Process(target=create_run_and_evaluate_agent, args=(
+            original_env, transformed_env, agent_name, transform_name, num_of_episodes,
+            anticipated_policy, result, explanation))
+        process_list.append(p)
+        p.start()
+    else:
+        for process in process_list:
+            process.join()
+
+        process_list = []
+        num_process_running = 1
+        p = multiprocessing.Process(target=create_run_and_evaluate_agent, args=(
+            original_env, transformed_env, agent_name, transform_name, num_of_episodes, anticipated_policy, result,
+            explanation))
+        process_list.append(p)
+        p.start()
+
+    for name, res in result.items():
+        if res["anticipated_policy_achieved"]:
+            explanation.append(name)
+            real_name = name
+            result[real_name][GOT_AN_EXPLANATION] = True
+    return result, explanation
 
 
 def run_experiment(env_name, agent_name, num_of_episodes, num_states_in_partial_policy):
+    config = tf.compat.v1.ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = tf.compat.v1.Session(config=config)
+    K.set_session(session)
+
     result = {}
-    # get the environment
     original_env = get_env(env_name)
 
-    # get full anticipated policy
-    full_expert_policy_dict = get_expert(env_name, original_env).full_expert_policy_dict()
-
     # the anticipated policy (which is part of our input and defined by the user)
-    anticipated_policy = sample_anticipated_policy(full_expert_policy_dict, num_states_in_partial_policy)
+    # full_expert_policy_dict = get_expert(env_name, original_env).full_expert_policy_dict()
+    # anticipated_policy = sample_anticipated_policy(full_expert_policy_dict, num_states_in_partial_policy)
+
     anticipated_policy = dict()
     anticipated_policy[(2, 0, 0, 3, None)] = [1]
     anticipated_policy[(1, 0, 0, 3, None)] = [1]
     anticipated_policy[(0, 0, 0, 3, None)] = [4]
 
-    # create agent
-    agent = rl_agent.create_agent(original_env, agent_name)
-    # train the agent in the environment
-    print("Training and evaluating the agent on the original environment...")
-    # original_env_result_train = rl_agent.run(agent, num_of_episodes, method=TRAIN)
-
-    # evaluate the performance of the agent
-    # original_env_result_evaluate = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
-
-    # check if the anticipated policy is achieved
-    anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(original_env, agent, anticipated_policy)
-    if anticipated_policy_achieved:
-        print("The algorithm achieved the policy. We finished our work.")
-        # sys.exit()
-
-    # result[ORIGINAL_ENV] = {EVALUATION_RESULTS: original_env_result_evaluate,
-    #                         TRAINING_RESULTS: original_env_result_train,
-    #                         SUCCESS_RATE: success_rate,
-    #                         GOT_AN_EXPLANATION: None}
-
-    # create a transformed environment
-    # transforms = set_all_possible_transforms(original_env, env_name, anticipated_policy)
-    transforms = load_existing_transforms(env_name, anticipated_policy)
     explanation = []
 
-    transformed_env = original_env
+    # result, explanation = create_run_and_evaluate_agent(original_env, original_env, agent_name, ORIGINAL_ENV,
+    #                                                     num_of_episodes,
+    #                                                     anticipated_policy, result, explanation)
+    transforms = dict()
+    file_names = ['1_(4,)_[0]_4_(1,)_[2]_4_(0,)_[2].pkl', '4_(0,)_[2].pkl']
+    for i, file_name in enumerate(file_names):
+        transforms[i] = load_transform_by_name(file_name)
+    # transforms = load_existing_transforms(env_name, anticipated_policy)
+
     for params, (transform_name, transformed_env) in transforms.items():
-        # create transformed environment
-        # transformed_env = transform(params)
-
-        # create agent
-        agent = rl_agent.create_agent(transformed_env, agent_name)
-        # train the agent in the environment
-        print("\nTraining and evaluating the agent on the transformed environment -", transform_name)
-        transformed_train_result = rl_agent.run(agent, num_of_episodes, method=TRAIN)
-        # evaluate the performance of the agent
-        transformed_evaluation_result = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
-
-        # check if the anticipated policy is achieved in trans_env
-        anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(original_env, agent,
-                                                                                   anticipated_policy)
-
-        result[transform_name] = {EVALUATION_RESULTS: transformed_evaluation_result,
-                                  TRAINING_RESULTS: transformed_train_result,
-                                  SUCCESS_RATE: success_rate}
-        if anticipated_policy_achieved:
-            explanation.append(transform_name)
-            result[transform_name][GOT_AN_EXPLANATION] = True
-
-        save_trained_model(agent, agent_name, transform_name)
+        result, explanation = run_multiprocess(original_env, transformed_env, agent_name, transform_name,
+                                               num_of_episodes, anticipated_policy, explanation)
+        # result, explanation = create_run_and_evaluate_agent(original_env, transformed_env, agent_name, transform_name,
+        #                                                     num_of_episodes,
+        #                                                     anticipated_policy, result, explanation)
 
     if explanation is None:
         print("no explanation found - you are too dumb for our system")
@@ -148,7 +215,7 @@ def default_experiment(agent_name, env_name, num_of_epochs, num_of_episodes_per_
     pkl_name = output_folder + agent_name + '_all_stats_' + str(num_of_episodes_per_epoch) + "_states_" + str(
         num_states_in_partial_policy) + ".pkl"
     output = open(pkl_name, 'wb')
-    dill.dump(result, output)
+    pickle.dump(result, output)
     output.close()
 
     # plot
@@ -187,5 +254,3 @@ def different_envs_experiment():
     # plot_graph_by_transform_name_and_env(agent_name, all_env_evaluate_results, "300_env_evaluate_results_5000_episodes")
     # plot_success_rate_charts(names, [np.mean(v) for v in all_env_success_results.values()],
     #                          "success_rate_300_env_5000_episodes")
-
-

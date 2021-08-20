@@ -1,6 +1,11 @@
 /venv
 /.idea
 /__pycache__
-myplot1.png
-myplot2.png
-myplot3.png
+pyvenv.cfg
+Agents/RL_agents/__pycache__/
+Agents/RL_agents/saved_models/
+Environments/LunarLander/__pycache__/
+Environments/MultiTaxiEnv/__pycache__/
+Environments/SingleTaxiEnv/__pycache__/
+Environments/__pycache__/
+Transforms/__pycache__/
