@@ -9,3 +9,5 @@ Environments/MultiTaxiEnv/__pycache__/
 Environments/SingleTaxiEnv/__pycache__/
 Environments/__pycache__/
 Transforms/__pycache__/
+Transforms/ckpt/
+Transforms/taxi_example_data/all_single_transformed_envs.pkl
