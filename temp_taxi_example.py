@@ -31,7 +31,9 @@ def main():
     if anticipated_policy_achieved:
         print("The algorithm achieved the policy. We finished our work.")
 
-    transforms = load_existing_transforms_from_dir()
+    # transforms = load_existing_transforms_from_dir()
+    t_name, t_env = load_transform_by_name("0_(4,)_[0]_1_(4,)_[0]_2_(4,)_[0].pkl", dir_name="")
+    transforms = {0: (t_name, t_env)}
     explanations = []
 
     for params, (transform_name, transformed_env) in transforms.items():
@@ -42,8 +44,8 @@ def main():
             continue
         transformed_train_result, explanation = load_existing_results(agent_name, transform_name, num_of_episodes)
         # evaluate the performance of the agent
-        transformed_evaluation_result = rl_agent.run(agent, num_of_episodes, method=EVALUATE, print_process=False,
-                                                     visualize=False)
+        transformed_evaluation_result = rl_agent.run(agent, num_of_episodes, method=EVALUATE, print_process=True,
+                                                     visualize=True)
 
         # check if the anticipated policy is achieved in trans_env
         anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(original_env, agent,
@@ -63,4 +65,4 @@ def main():
     else:
         print(f"Explanations found: {explanations}")
 
-main()
+# main()
