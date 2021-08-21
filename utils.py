@@ -152,6 +152,7 @@ def load_existing_transforms_from_dir(working_dir="Transforms/taxi_example_data/
     for i, file_name in enumerate(possible_env_files):
         transform_name, new_env = load_transform_by_name(file_name, dir_name="")
         cur_transforms[dict_idx] = transform_name, new_env
+        dict_idx += 1
     global transforms
     transforms = cur_transforms
     return cur_transforms
