@@ -5,7 +5,7 @@ import os
 
 from Environments.SingleTaxiEnv.single_taxi_wrapper import *
 from Transforms.transform_constants import *
-from save_load_utils import make_dir
+from save_load_utils import make_dir, save_pkl_file
 
 DETERMINISTIC = True
 SAVE_PATH = "Transforms/taxi_example_data/"
@@ -41,8 +41,8 @@ class SingleTaxiTransformedEnv(SingleTaxiSimpleEnv):
 
 def preconditions_relaxation(preconditions_info, env, deterministic=DETERMINISTIC):
     # preconditions = EnvPreconditions(env)
-    a_file = open(SAVE_PATH + "taxi_example_preconditions.pkl", "rb")
-    # a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
+    # a_file = open(SAVE_PATH + "taxi_example_preconditions.pkl", "rb")
+    a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
     preconditions = pickle.load(a_file)
 
     diff_dict, state_by_diff, next_state_by_action = get_diff_for_actions(env.P, env)
@@ -183,7 +183,7 @@ def get_diff_for_actions(p, env):
         occurrences = collections.Counter(tuple(tmp_diff))
         occurrences = occurrences.keys()
         reward = action_diff[0][1]
-        done = action_diff[0][2] if i != 5 else False  # TODO - TEMPORARY! to change
+        done = action_diff[0][2] if (i != 5 and reward != 100) else True  # TODO - TEMPORARY! to change
         if len(occurrences) > 1:
             tmp_occ = list(occurrences)
             diff_dict[i] = dict(((x, reward, done), set()) for x in tmp_occ)
@@ -323,17 +323,14 @@ def generate_single_transforms(env_preconditions):
                 generate_transformed_env(precondition, env_file_name, save=True)
 
 
-def generate_transformed_env(precondition, env_file_name='', save=True,
-                             env_default_values=None):
+def generate_transformed_env(precondition, env_file_name='', save=True, env_default_values=None):
     cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
                       ALL_OUTCOME_DETERMINIZATION: False,
                       MOST_LIKELY_OUTCOME: False,
                       PRECONDITION_RELAXATION: precondition}
     new_env = SingleTaxiTransformedEnv(cur_transforms)
     if save:
-        a_file = open(env_file_name + ".pkl", "wb")
-        pickle.dump(new_env, a_file)
-        a_file.close()
+        save_pkl_file(env_file_name + ".pkl", new_env)
     return new_env
 
 
@@ -342,10 +339,17 @@ def generate_transformed_env(precondition, env_file_name='', save=True,
 #     a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
 #     cur_env_preconditions = pickle.load(a_file)
 #
-#     env_file_name = ""
-#     precondition = {0: {(4,): [0]}}
-#     env = generate_transformed_env(precondition, "", save=False)
-# #     # generate_tuple_of_transforms(cur_env_preconditions)
-# #     # generate_triple_of_transforms(cur_env_preconditions)
-# #
+#     act1, act2, act3, act4, act5 = 0, 1, 2, 4, 5
+#     pre_idx = (4,)
+#     pre_val = [0]
+#     dir_name = "taxi_example_data/taxi_transformed_env/"
+#     env_file_name = f"{act1}_{pre_idx}_{pre_val}_{act2}_{pre_idx}_{pre_val}_{act3}_{pre_idx}_{pre_val}_{act4}_{pre_idx}_{pre_val}_{act5}_{pre_idx}_{pre_val}.pkl"
+#     precondition = {act1: {pre_idx: pre_val},
+#                     act2: {pre_idx: pre_val},
+#                     act3: {pre_idx: pre_val},
+#                     act4: {pre_idx: pre_val},
+#                     act5: {pre_idx: pre_val},
+#                     }
+#     env = generate_transformed_env(precondition, env_file_name=dir_name + env_file_name, save=True)
+#
 #     print("DONE!")
