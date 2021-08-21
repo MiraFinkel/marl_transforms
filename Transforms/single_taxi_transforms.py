@@ -8,7 +8,7 @@ from Transforms.transform_constants import *
 from save_load_utils import make_dir, save_pkl_file
 
 DETERMINISTIC = True
-SAVE_PATH = "Transforms/taxi_example_data/"
+SAVE_PATH = "../Transforms/taxi_example_data/"
 
 
 class SingleTaxiTransformedEnv(SingleTaxiSimpleEnv):
@@ -41,15 +41,14 @@ class SingleTaxiTransformedEnv(SingleTaxiSimpleEnv):
 
 def preconditions_relaxation(preconditions_info, env, deterministic=DETERMINISTIC):
     # preconditions = EnvPreconditions(env)
-    # a_file = open(SAVE_PATH + "taxi_example_preconditions.pkl", "rb")
-    a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
+    a_file = open(SAVE_PATH + "taxi_example_preconditions.pkl", "rb")
     preconditions = pickle.load(a_file)
 
     diff_dict, state_by_diff, next_state_by_action = get_diff_for_actions(env.P, env)
     # a_file = open("taxi_example_data/diff_dict.pkl", "rb")
     # diff_dict = pickle.load(a_file)
 
-    for act, act_info in preconditions_info.items():  # TODO - add case when there multiple diff_dict values
+    for act, act_info in preconditions_info.items():
         if deterministic:  # deterministic case
             pre_process_info_and_update_p(env, act, diff_dict, act_info, act, preconditions, None)
         else:
@@ -81,8 +80,8 @@ def is_sufficient_for_action(relaxed_idx, relaxed_val, not_allowed_features, act
     result = True
     for key, values in not_allowed_features[act].items():
         for val in values:
-            if ([decoded_state[list(key)]] == val).all() and (
-                    (np.array([relaxed_idx != key])).all() or (np.array([relaxed_val != val])).all()):
+            if np.array([decoded_state[list(key)] == val]).all() and (
+                    np.array([relaxed_idx != key]).all() or np.array([relaxed_val != val]).all()):
                 result = False
                 break
         if not result:
