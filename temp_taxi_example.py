@@ -11,9 +11,6 @@ def main():
     agent_name = KERAS_DQN
     num_of_episodes = 200000
     results = {}
-    # get the environment
-
-    transform_name = ORIGINAL_ENV
     original_env = get_env(env_name)
 
     # anticipated policy is <state, action> pairs
