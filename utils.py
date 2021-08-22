@@ -111,8 +111,8 @@ def is_anticipated_policy_achieved(env, agent, anticipated_policy):
     agent.evaluating = True
     success_policies_set, failed_policies_set, not_reached_policy_set = set(), set(), set()
     cur_state = env.reset()
-    done = False
-    while not done:
+    done, steps_num = False, 0
+    while not done and steps_num < 100:
         agent_action = agent.compute_action(cur_state)
         is_align, anticipated_action, anticipated_state = is_state_align_with_anticipated_policy(env, cur_state, anticipated_policy)
         if is_align:
@@ -121,6 +121,7 @@ def is_anticipated_policy_achieved(env, agent, anticipated_policy):
             else:
                 failed_policies_set.add(anticipated_state)
         cur_state, reward, done, prob = env.step(agent_action)
+        steps_num += 1
     for anticipated_state in anticipated_policy.keys():
         if anticipated_state not in success_policies_set and anticipated_state not in failed_policies_set:
             not_reached_policy_set.add(anticipated_state)

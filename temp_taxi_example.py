@@ -44,7 +44,7 @@ def main():
         transformed_train_result, explanation = load_existing_results(agent_name, transform_name, num_of_episodes)
         # evaluate the performance of the agent
         transformed_evaluation_result = rl_agent.run(agent, num_of_episodes, method=EVALUATE, print_process=True,
-                                                     visualize=True)
+                                                     visualize=False)
 
         # check if the anticipated policy is achieved in trans_env
         anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(original_env, agent,
@@ -55,7 +55,7 @@ def main():
                                    SUCCESS_RATE: success_rate,
                                    GOT_AN_EXPLANATION: False}
         if anticipated_policy_achieved:
-            print(f"Got an explanation: {explanation}")
+            print(f"Got an explanation: {transform_name}")
             explanations.append(transform_name)
             results[transform_name][GOT_AN_EXPLANATION] = True
 
