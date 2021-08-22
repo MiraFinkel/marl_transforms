@@ -23,8 +23,7 @@ def main():
 
     new_agent = load_existing_agent(original_env, agent_name, ORIGINAL_ENV, TRAINED_AGENTS_DIR_PATH)
 
-    evaluation_result = rl_agent.run(new_agent, 5, method=EVALUATE, print_process=False,
-                                                     visualize=False)
+    evaluation_result = rl_agent.run(new_agent, 5, method=EVALUATE, print_process=False, visualize=False)
 
     anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(original_env, new_agent,
                                                                                anticipated_policy)
@@ -32,7 +31,7 @@ def main():
         print("The algorithm achieved the policy. We finished our work.")
 
     # transforms = load_existing_transforms_from_dir()
-    t_name, t_env = load_transform_by_name("0_(4,)_[0]_1_(4,)_[0]_2_(4,)_[0].pkl", dir_name="")
+    t_name, t_env = load_transform_by_name("0_(4,)_[0]_1_(4,)_[0]_2_(4,)_[0]_4_(4,)_[0]_5_(4,)_[0].pkl", dir_name="../Transforms/taxi_example_data/taxi_transformed_env/")
     transforms = {0: (t_name, t_env)}
     explanations = []
 
@@ -64,3 +63,6 @@ def main():
         print("No explanation found! :-(")
     else:
         print(f"Explanations found: {explanations}")
+
+
+# main()

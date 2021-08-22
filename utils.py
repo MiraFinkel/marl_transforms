@@ -86,25 +86,68 @@ def print_num_of_success_failed_policies(num_of_success_policies, num_of_failed_
     print("num_of_failed_policies: ", num_of_failed_policies)
 
 
+# def is_anticipated_policy_achieved(env, agent, anticipated_policy):
+#     agent.evaluating = True
+#     num_of_success_policies, num_of_failed_policies = 0, 0
+#     for partial_obs in anticipated_policy.keys():
+#         original_partial_obs = partial_obs
+#         partial_obs = list(partial_obs)
+#         states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
+#         for i, state in enumerate(states_from_partial_obs):
+#             action = agent.compute_action(state)
+#             if is_actions_align(action, anticipated_policy[original_partial_obs]):
+#                 num_of_success_policies += 1
+#             else:
+#                 num_of_failed_policies += 1
+#
+#     all_policies = num_of_success_policies + num_of_failed_policies
+#     success_rate = num_of_success_policies / (all_policies if all_policies != 0 else 1)
+#     print("\nSuccess rate:", success_rate)
+#     agent.evaluating = False
+#     return success_rate > 0.8, success_rate
+
+
 def is_anticipated_policy_achieved(env, agent, anticipated_policy):
     agent.evaluating = True
-    num_of_success_policies, num_of_failed_policies = 0, 0
-    for partial_obs in anticipated_policy.keys():
-        original_partial_obs = partial_obs
-        partial_obs = list(partial_obs)
-        states_from_partial_obs = env.get_states_from_partial_obs(partial_obs)
-        for i, state in enumerate(states_from_partial_obs):
-            action = agent.compute_action(state)
-            if is_actions_align(action, anticipated_policy[original_partial_obs]):
-                num_of_success_policies += 1
+    success_policies_set, failed_policies_set, not_reached_policy_set = set(), set(), set()
+    cur_state = env.reset()
+    done = False
+    while not done:
+        agent_action = agent.compute_action(cur_state)
+        is_align, anticipated_action, anticipated_state = is_state_align_with_anticipated_policy(env, cur_state, anticipated_policy)
+        if is_align:
+            if is_actions_align(agent_action, anticipated_action):
+                success_policies_set.add(anticipated_state)
             else:
-                num_of_failed_policies += 1
-
+                failed_policies_set.add(anticipated_state)
+        cur_state, reward, done, prob = env.step(agent_action)
+    for anticipated_state in anticipated_policy.keys():
+        if anticipated_state not in success_policies_set and anticipated_state not in failed_policies_set:
+            not_reached_policy_set.add(anticipated_state)
+    num_of_success_policies, num_of_failed_policies = len(success_policies_set), len(failed_policies_set)
     all_policies = num_of_success_policies + num_of_failed_policies
     success_rate = num_of_success_policies / (all_policies if all_policies != 0 else 1)
     print("\nSuccess rate:", success_rate)
+    if len(not_reached_policy_set) != 0:
+        print(f"PAY ATTENTION: there are some policies that the agent can't reach: {not_reached_policy_set}")
     agent.evaluating = False
     return success_rate > 0.8, success_rate
+
+
+def is_state_align_with_anticipated_state(env, state, anticipated_state):
+    anticipated_state = list(anticipated_state)
+    decoded_state = env.decode(state)
+    for (anticipated_feature, feature) in zip(anticipated_state, decoded_state):
+        if anticipated_feature and feature != anticipated_feature:
+            return False
+    return True
+
+
+def is_state_align_with_anticipated_policy(env, state, anticipated_policy):
+    for anticipated_state, anticipated_action in anticipated_policy.items():
+        if is_state_align_with_anticipated_state(env, state, anticipated_state):
+            return True, anticipated_action[0], anticipated_state
+    return False, None, None
 
 
 def get_transformed_env(env_name):
@@ -185,10 +228,9 @@ def load_existing_transforms_by_anticipated_policy(env_name, anticipated_policy,
     return cur_transforms
 
 
-def load_transform_by_name(file_name, dir_name="single_transform_envs"):
-    working_dir = "Transforms/taxi_example_data/taxi_transformed_env/" + dir_name + "/"
+def load_transform_by_name(file_name, dir_name="Transforms/taxi_example_data/taxi_transformed_env/"):
     transform_name = file_name[:-4]
-    file = open(working_dir + file_name, "rb")
+    file = open(dir_name + file_name, "rb")
     new_env = pickle.load(file)
     return transform_name, new_env
 
