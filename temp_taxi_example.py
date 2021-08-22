@@ -1,7 +1,7 @@
 from experiments import *
 from Transforms.single_taxi_transforms import *
 
-AGENT_DATA_PATH = "../Agents/TrainedAgents/"
+AGENT_DATA_PATH = "Agents/TrainedAgents/"
 TRAINED_AGENTS_DIR_PATH = AGENT_DATA_PATH + "trained_models/"
 
 
@@ -30,9 +30,9 @@ def main():
     if anticipated_policy_achieved:
         print("The algorithm achieved the policy. We finished our work.")
 
-    # transforms = load_existing_transforms_from_dir()
-    t_name, t_env = load_transform_by_name("0_(4,)_[0]_1_(4,)_[0]_2_(4,)_[0]_4_(4,)_[0]_5_(4,)_[0].pkl", dir_name="../Transforms/taxi_example_data/taxi_transformed_env/")
-    transforms = {0: (t_name, t_env)}
+    transforms = load_existing_transforms_from_dir()
+    # t_name, t_env = load_transform_by_name("0_(4,)_[0]_1_(4,)_[0]_2_(4,)_[0]_4_(4,)_[0]_5_(4,)_[0].pkl", dir_name="Transforms/taxi_example_data/taxi_transformed_env/")
+    # transforms = {0: (t_name, t_env)}
     explanations = []
 
     for params, (transform_name, transformed_env) in transforms.items():
