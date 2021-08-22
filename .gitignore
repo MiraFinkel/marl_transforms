@@ -3,7 +3,6 @@
 /__pycache__
 pyvenv.cfg
 Agents/RL_agents/__pycache__/
-Agents/RL_agents/saved_models/
 Environments/LunarLander/__pycache__/
 Environments/MultiTaxiEnv/__pycache__/
 Environments/SingleTaxiEnv/__pycache__/
