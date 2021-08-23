@@ -16,7 +16,12 @@ def main():
     # anticipated policy is <state, action> pairs
     anticipated_policy = {(2, 0, 0, 3, None): [1],
                           (1, 0, 0, 3, None): [1],
-                          (0, 0, 0, 3, None): [4]}
+                          (0, 0, 0, 3, None): [4],
+                          (0, 0, 4, 3, None): [0],
+                          (1, 0, 4, 3, None): [2],
+                          (1, 1, 4, 3, None): [2],
+                          (1, 2, 4, 3, None): [0],
+                          (2, 2, 4, 3, None): [5]}
 
     new_agent = load_existing_agent(original_env, agent_name, ORIGINAL_ENV, TRAINED_AGENTS_DIR_PATH)
 
@@ -61,5 +66,17 @@ def main():
     else:
         print(f"Explanations found: {explanations}")
 
+    success_rates = [v[SUCCESS_RATE] for v in results.values()]
+    names = [_ for _ in range(len(success_rates))]
+    names_translation_dict = dict()
+    for i, k in enumerate(results.keys()):
+        names_translation_dict[i] = k
+    fig, ax = plt.subplots()
+    ax.bar(names, success_rates)
+    ax.set_xticks(np.arange(len(names)))
+    ax.set_ylabel("Success Rate")
+    ax.set_title("Success Rate of the different transformed environments")
+    plt.show()
+    a = 7
 
 # main()
