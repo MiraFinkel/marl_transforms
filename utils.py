@@ -106,40 +106,45 @@ def print_num_of_success_failed_policies(num_of_success_policies, num_of_failed_
 #     agent.evaluating = False
 #     return success_rate > 0.8, success_rate
 
+def add_one_if_in_dict(given_dict, key):
+    given_dict[key] = given_dict[key] + 1 if key in given_dict.keys() else 1
+    return given_dict
+
 
 def is_anticipated_policy_achieved(env, agent, anticipated_policy):
     agent.evaluating = True
-    success_policies_set, failed_policies_set, not_reached_policy_set = set(), set(), set()
+    success_policies_dict, failed_policies_dict, not_reached_policy_dict = dict(), dict(), dict()
     cur_state = env.reset()
     done, steps_num = False, 0
     while not done and steps_num < 100:
         agent_action = agent.compute_action(cur_state)
-        is_align, anticipated_action, anticipated_state = is_state_align_with_anticipated_policy(env, cur_state, anticipated_policy)
+        is_align, anticipated_action, anticipated_state = is_state_align_with_anticipated_policy(env, cur_state,
+                                                                                                 anticipated_policy)
         if is_align:
             if is_actions_align(agent_action, anticipated_action):
-                success_policies_set.add(anticipated_state)
+                success_policies_dict = add_one_if_in_dict(success_policies_dict, anticipated_state)
             else:
-                failed_policies_set.add(anticipated_state)
+                failed_policies_dict = add_one_if_in_dict(failed_policies_dict, anticipated_state)
         cur_state, reward, done, prob = env.step(agent_action)
         steps_num += 1
     for anticipated_state in anticipated_policy.keys():
-        if anticipated_state not in success_policies_set and anticipated_state not in failed_policies_set:
-            not_reached_policy_set.add(anticipated_state)
-    num_of_success_policies, num_of_failed_policies = len(success_policies_set), len(failed_policies_set)
+        if anticipated_state not in success_policies_dict and anticipated_state not in failed_policies_dict:
+            not_reached_policy_dict = add_one_if_in_dict(not_reached_policy_dict, anticipated_state)
+    num_of_success_policies, num_of_failed_policies = len(success_policies_dict), len(failed_policies_dict)
     all_policies = num_of_success_policies + num_of_failed_policies
     success_rate = num_of_success_policies / (all_policies if all_policies != 0 else 1)
     print("\nSuccess rate:", success_rate)
-    if len(not_reached_policy_set) != 0:
-        print(f"PAY ATTENTION: there are some policies that the agent can't reach: {not_reached_policy_set}")
+    if len(not_reached_policy_dict) != 0:
+        print(f"PAY ATTENTION: there are some policies that the agent can't reach: {not_reached_policy_dict}")
     agent.evaluating = False
-    return success_rate > 0.8, success_rate
+    return success_rate == 1.0, success_rate
 
 
 def is_state_align_with_anticipated_state(env, state, anticipated_state):
     anticipated_state = list(anticipated_state)
     decoded_state = env.decode(state)
     for (anticipated_feature, feature) in zip(anticipated_state, decoded_state):
-        if anticipated_feature and feature != anticipated_feature:
+        if anticipated_feature is not None and feature != anticipated_feature:
             return False
     return True
 
