@@ -25,3 +25,12 @@ SUCCESS_RATE = "success_rate"
 GOT_AN_EXPLANATION = "explanation"
 ORIGINAL_ENV = "original_env"
 FUEL_TRANSFORMED_ENV = "fuel"
+
+ANTICIPATED_POLICY = {(2, 0, 0, 3, None): [1],
+                      (1, 0, 0, 3, None): [1],
+                      (0, 0, 0, 3, None): [4],
+                      (0, 0, 4, 3, None): [0],
+                      (1, 0, 4, 3, None): [2],
+                      (1, 1, 4, 3, None): [2],
+                      (1, 2, 4, 3, None): [0],
+                      (2, 2, 4, 3, None): [5]}

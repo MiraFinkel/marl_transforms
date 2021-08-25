@@ -20,6 +20,10 @@ def save_pkl_file(file_name, data):
 def load_pkl_file(file_path):
     if file_path[-4:] != ".pkl":
         file_path = file_path + ".pkl"
-    a_file = open(file_path, "rb")
-    obj = pickle.load(a_file)
+    try:
+        a_file = open(file_path, "rb")
+        obj = pickle.load(a_file)
+    except:
+        print(f"ERROR: cannot load object from file path: {file_path}")
+        obj = None
     return obj

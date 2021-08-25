@@ -16,7 +16,6 @@ RESULTS_DIR_PATH = AGENT_DATA_PATH + "results/"
 def check_success_rate():
     success_rates = {}
     for file in os.listdir(ENV_DIR_PATH):
-
         success_rate = visualize_trained_agent(file)
         success_rates[file[:-4]] = success_rate
 
@@ -48,7 +47,7 @@ def visualize_trained_agent(file_name):
 
 
 def create_single_taxi_transforms():
-    a_file = open("Transforms/taxi_example_data/taxi_example_preconditions.pkl", "rb")
+    a_file = open("Transforms/taxi_example_data/" + PRECONDITIONS_FILE_NAME, "rb")
     cur_env_preconditions = pickle.load(a_file)
     processes = []
     functions = [generate_single_transforms, generate_double_of_transforms, generate_triple_of_transforms]
@@ -63,5 +62,8 @@ def create_single_taxi_transforms():
 
 if __name__ == '__main__':
     # check_success_rate()
-    create_single_taxi_transforms()
+    # create_single_taxi_transforms()
+    a_file = open("Transforms/taxi_example_data/" + PRECONDITIONS_FILE_NAME, "rb")
+    cur_env_preconditions = pickle.load(a_file)
+    generate_triple_of_transforms(cur_env_preconditions)
     print("DONE!")

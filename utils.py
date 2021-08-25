@@ -113,7 +113,7 @@ def add_one_if_in_dict(given_dict, key):
 
 def is_anticipated_policy_achieved(env, agent, anticipated_policy):
     agent.evaluating = True
-    success_policies_dict, failed_policies_dict, not_reached_policy_dict = dict(), dict(), dict()
+    success_policies_set, failed_policies_set, not_reached_policy_set = set(), set(), set()
     cur_state = env.reset()
     done, steps_num = False, 0
     while not done and steps_num < 100:
@@ -122,20 +122,20 @@ def is_anticipated_policy_achieved(env, agent, anticipated_policy):
                                                                                                  anticipated_policy)
         if is_align:
             if is_actions_align(agent_action, anticipated_action):
-                success_policies_dict = add_one_if_in_dict(success_policies_dict, anticipated_state)
+                success_policies_set.add(anticipated_state)
             else:
-                failed_policies_dict = add_one_if_in_dict(failed_policies_dict, anticipated_state)
+                failed_policies_set.add(anticipated_state)
         cur_state, reward, done, prob = env.step(agent_action)
         steps_num += 1
     for anticipated_state in anticipated_policy.keys():
-        if anticipated_state not in success_policies_dict and anticipated_state not in failed_policies_dict:
-            not_reached_policy_dict = add_one_if_in_dict(not_reached_policy_dict, anticipated_state)
-    num_of_success_policies, num_of_failed_policies = len(success_policies_dict), len(failed_policies_dict)
+        if anticipated_state not in success_policies_set and anticipated_state not in failed_policies_set:
+            not_reached_policy_set.add(anticipated_state)
+    num_of_success_policies, num_of_failed_policies = len(success_policies_set), len(failed_policies_set)
     all_policies = num_of_success_policies + num_of_failed_policies
     success_rate = num_of_success_policies / (all_policies if all_policies != 0 else 1)
     print("\nSuccess rate:", success_rate)
-    if len(not_reached_policy_dict) != 0:
-        print(f"PAY ATTENTION: there are some policies that the agent can't reach: {not_reached_policy_dict}")
+    if len(not_reached_policy_set) != 0:
+        print(f"There are some states that the agent can't reach: {not_reached_policy_set}")
     agent.evaluating = False
     return success_rate == 1.0, success_rate
 

@@ -28,14 +28,12 @@ def log(string):
     f.close()
 
 
-# Prepare a directory to store all the checkpoints.
-checkpoint_dir = "./ckpt"
-if not os.path.exists(checkpoint_dir):
-    os.makedirs(checkpoint_dir)
-
-
 def make_or_restore_model(transformed_env, agent_name, callbacks=None):
     from tensorflow import keras
+    # Prepare a directory to store all the checkpoints.
+    checkpoint_dir = "./ckpt"
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
     # Either restore the latest model, or create a fresh one
     # if there is no checkpoint available.
     checkpoints = [checkpoint_dir + "/" + name for name in os.listdir(checkpoint_dir)]
