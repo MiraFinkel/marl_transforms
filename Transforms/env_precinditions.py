@@ -1,10 +1,8 @@
 import copy
 import pickle
-
 import pandas as pd
 import numpy as np
 from itertools import combinations
-
 
 # from Environments.SingleTaxiEnv.single_taxi_env import SingleTaxiEnv
 
@@ -123,7 +121,7 @@ def clean_pyramid(features_to_clean):
                     j_same_idx = np.where(np.array(idx_j) == same_idx)
                     for val_i in idx_val_i:
                         for k, val_j in enumerate(idx_val_j):
-                            is_same_idx = val_i[i_same_idx] == val_j[j_same_idx] if same_idx else False
+                            is_same_idx = np.array([val_i[i_same_idx] == val_j[j_same_idx]]).all() if same_idx else False
                             if is_same_idx:
                                 if idx_j not in clean_idx[action]:
                                     clean_idx[action][idx_j] = [k]
@@ -141,7 +139,8 @@ def clean_pyramid(features_to_clean):
 class EnvPreconditions:
     def __init__(self, env):
         self.env = env
-        self.allowed_states, self.not_allowed_states = divide_states_for_allowed_and_not(env.P, env.decode, env.num_actions)
+        self.allowed_states, self.not_allowed_states = divide_states_for_allowed_and_not(env.P, env.decode,
+                                                                                         env.num_actions)
         # a_file = open("taxi_example_data/allowed_states.pkl", "rb")
         # self.allowed_states = pickle.load(a_file)
         # a_file = open("taxi_example_data/not_allowed_states.pkl", "rb")
@@ -179,16 +178,16 @@ class EnvPreconditions:
         return relevant_preconditions
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # env_default_values = [0, 0, 0, 1, MAX_FUEL - 1]
     # state_visibility_indexes = []
     # cur_transforms = {STATE_VISIBILITY_TRANSFORM: (state_visibility_indexes, env_default_values),
-    #                   ALL_OUTCOME_DETERMINIZATION: False,
-    #                   MOST_LIKELY_OUTCOME: True}
+    # ALL_OUTCOME_DETERMINIZATION: False,
+    # MOST_LIKELY_OUTCOME: True}
     # env = SingleTaxiTransformedEnv(cur_transforms)
     # f_names = ["new_row", "new_col", "new_pass_idx", "dest_idx", "fuel"]
     # a_names = ["SOUTH", "NORTH", "EAST", "WEST", "PICKUP", "DROPOFF", "REFUEL"]
 
-    # taxi_env = SingleTaxiEnv(deterministic=False)
+    # taxi_env = SingleTaxiEnv(deterministic=True)
     # preconditions = EnvPreconditions(taxi_env)
-    pass
+    # pass

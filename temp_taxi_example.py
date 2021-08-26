@@ -1,8 +1,9 @@
 from experiments import *
 from Transforms.single_taxi_transforms import *
+from save_load_utils import *
 
-AGENT_DATA_PATH = "Agents/TrainedAgents/"
-TRAINED_AGENTS_DIR_PATH = AGENT_DATA_PATH + "trained_models/"
+# AGENT_DATA_PATH = "Agents/TrainedAgents/"
+# TRAINED_AGENTS_DIR_PATH = AGENT_DATA_PATH + "trained_models_on_big_taxi_env/"
 
 
 def main():
@@ -14,14 +15,7 @@ def main():
     original_env = get_env(env_name)
 
     # anticipated policy is <state, action> pairs
-    anticipated_policy = {(2, 0, 0, 3, None): [1],
-                          (1, 0, 0, 3, None): [1],
-                          (0, 0, 0, 3, None): [4],
-                          (0, 0, 4, 3, None): [0],
-                          (1, 0, 4, 3, None): [2],
-                          (1, 1, 4, 3, None): [2],
-                          (1, 2, 4, 3, None): [0],
-                          (2, 2, 4, 3, None): [5]}
+    anticipated_policy = ANTICIPATED_POLICY
 
     new_agent = load_existing_agent(original_env, agent_name, ORIGINAL_ENV, TRAINED_AGENTS_DIR_PATH)
 
@@ -32,13 +26,16 @@ def main():
     if anticipated_policy_achieved:
         print("The algorithm achieved the policy. We finished our work.")
 
-    transforms = load_existing_transforms_from_dir()
-    # t_name, t_env = load_transform_by_name("0_(4,)_[0]_1_(4,)_[0]_2_(4,)_[0]_4_(4,)_[0]_5_(4,)_[0].pkl", dir_name="Transforms/taxi_example_data/taxi_transformed_env/")
+    # transforms = load_existing_transforms_from_dir()
+    transform_list = os.listdir(TRANSFORMS_PATH)
+    # cur_transform_name = "0_(4,)_[0]_1_(4,)_[0]_2_(4,)_[0]_4_(4,)_[0]_5_(4,)_[0].pkl"
+    # t_name, t_env = load_transform_by_name(cur_transform_name, dir_name=TRANSFORMS_PATH)
     # transforms = {0: (t_name, t_env)}
     explanations = []
-
-    for params, (transform_name, transformed_env) in transforms.items():
+    for f in transform_list:
+        # for params, (transform_name, transformed_env) in transforms.items():
         # create agent
+        transform_name, transformed_env = load_transform_by_name(f)
         print(f"\nEvaluating agent on the transformed environment: {transform_name}")
         agent = load_existing_agent(transformed_env, agent_name, transform_name, TRAINED_AGENTS_DIR_PATH)
         if agent is None:
@@ -76,6 +73,7 @@ def main():
     ax.set_xticks(np.arange(len(names)))
     ax.set_ylabel("Success Rate")
     ax.set_title("Success Rate of the different transformed environments")
+    print(f"for translating the labels into transform name: \n{names_translation_dict}")
     plt.show()
     a = 7
 

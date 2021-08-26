@@ -10,7 +10,7 @@ class SingleTaxiSimpleEnv(SingleTaxiEnv, AbstractWrapperEnv):
         self.transform_num = 7
 
     def is_possible_initial_state(self, pass_idx, dest_idx, row, col):
-        return pass_idx < 4 and pass_idx != dest_idx and row == 2 and col == 0  # Fix taxi initial position
+        return pass_idx < 4 and pass_idx != dest_idx and row == 4 and col == 0  # Fix taxi initial position
 
     def get_states_from_partial_obs(self, partial_obs):
         partial_obs_aligned_with_env = False

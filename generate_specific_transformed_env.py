@@ -10,7 +10,7 @@ def generate_specific_transformed_env():
     act1, act2, act3, act4, act5 = 0, 1, 2, 4, 5
     pre_idx = (4,)
     pre_val = [0]
-    dir_name = "taxi_example_data/taxi_transformed_env/"
+    dir_name = TRANSFORMS_PATH
     env_file_name = f"{act1}_{pre_idx}_{pre_val}_{act2}_{pre_idx}_{pre_val}_{act3}_{pre_idx}_{pre_val}_{act4}_{pre_idx}_{pre_val}_{act5}_{pre_idx}_{pre_val}.pkl"
     precondition = {act1: {pre_idx: pre_val},
                     act2: {pre_idx: pre_val},
@@ -25,7 +25,7 @@ def generate_specific_transformed_env():
 
 
 def create_data_structure_with_all_envs():
-    data_path = "C:/Python/MARL_lab/backup_2008_1900/taxi_example_data/taxi_transformed_env/single_transform_envs/"
+    data_path = TRAINED_AGENT_ON_SPECIFIC_TRANSFORM_NUM_PATH
     all_single_transformed_envs = {}
     for file_name in os.listdir(data_path):
         transform_name = file_name[:-4]

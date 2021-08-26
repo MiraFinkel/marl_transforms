@@ -107,7 +107,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
     metadata = {'render.modes': ['human', 'ansi']}
 
     def __init__(self, deterministic=True):
-        self.desc = np.asarray(SMALL_EXAMPLE, dtype='c')
+        self.desc = np.asarray(MAP, dtype='c')
         w, h = self.desc.shape
         self.last_action = None
         self.passengers_locations, self.fuel_station = self.get_info_from_map()
@@ -139,7 +139,8 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
                         for fuel in range(self.taxi_fuel):
                             init_fuel = fuel
                             state = self.encode(row, col, pass_idx, dest_idx, fuel)
-                            if self.is_possible_initial_state(pass_idx, dest_idx, row, col) and state == 6152:
+                            if self.is_possible_initial_state(pass_idx, dest_idx, row,
+                                                              col) and state == 20154:  # and state == 6152:
                                 self.initial_state_distribution[state] += 1.0
                             for action in range(self.num_actions):
                                 new_row, new_col, new_pass_idx = row, col, pass_idx
@@ -350,18 +351,29 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
                     fuel_station = (x - 1, int(y / 2))
         return passenger_locations, fuel_station
 
-
-if __name__ == '__main__':
-    new_env = SingleTaxiEnv()
-    new_env.reset()
-    actions = [2, 6, 6, 6, 6, 6, 3, 1, 1, 1, 4, 0, 2, 2, 0, 0, 5]
-    all_reward = 0
-    for act in actions:
-        new_env.render()
-        next_s, r, d, prob = new_env.step(act)
-        all_reward += r
-        print("state:", new_env.decode(next_s))
-        print("reward:", r, "done:", d, "prob:", prob)
-        print("all_reward:", all_reward)
-
-    passenger_locations, fuel_station = new_env.get_info_from_map()
+#
+# if __name__ == '__main__':
+#     new_env = SingleTaxiEnv(deterministic=True)
+#     new_env.reset()
+#     actions = [2, 6, 6, 6, 6, 6, 3, 1, 1, 1, 4, 0, 2, 2, 0, 0, 5]
+#   actions = [2, 2, 6, 1, 1, 3, 3, 1, 1, 4, 0, 0, 2, 2, 2, 2, 0, 0, 5]
+#     all_reward = 0
+#     for act in actions:
+#         new_env.render()
+#         next_s, r, d, prob = new_env.step(act)
+#         all_reward += r
+#         print("state:", new_env.decode(next_s))
+#         print("reward:", r, "done:", d, "prob:", prob)
+#         print("all_reward:", all_reward)
+#
+#     passenger_locations, fuel_station = new_env.get_info_from_map()
+# new_env.reset()
+# actions = [2, 2, 6, 1, 1, 3, 3, 1, 1, 4, 0, 0, 2, 2, 2, 2, 0, 0, 5]
+# all_reward = 0
+# for act in actions:
+#     new_env.render()
+#     next_s, r, d, prob = new_env.step(act)
+#     all_reward += r
+#     print("state:", new_env.decode(next_s))
+#     print("reward:", r, "done:", d, "prob:", prob)
+#     print("all_reward:", all_reward)
