@@ -1,8 +1,9 @@
 from experiments import *
 from Transforms.single_taxi_transforms import *
+from save_load_utils import *
 
-AGENT_DATA_PATH = "Agents/TrainedAgents/"
-TRAINED_AGENTS_DIR_PATH = AGENT_DATA_PATH + "trained_models/"
+# AGENT_DATA_PATH = "Agents/TrainedAgents/"
+# TRAINED_AGENTS_DIR_PATH = AGENT_DATA_PATH + "trained_models_on_big_taxi_env/"
 
 
 def main():
@@ -26,8 +27,9 @@ def main():
         print("The algorithm achieved the policy. We finished our work.")
 
     # transforms = load_existing_transforms_from_dir()
-    transform_list = os.listdir("Transforms/taxi_example_data/taxi_transformed_env/")
-    # t_name, t_env = load_transform_by_name("0_(4,)_[0]_1_(4,)_[0]_2_(4,)_[0]_4_(4,)_[0]_5_(4,)_[0].pkl", dir_name="Transforms/taxi_example_data/taxi_transformed_env/")
+    transform_list = os.listdir(TRANSFORMS_PATH)
+    # cur_transform_name = "0_(4,)_[0]_1_(4,)_[0]_2_(4,)_[0]_4_(4,)_[0]_5_(4,)_[0].pkl"
+    # t_name, t_env = load_transform_by_name(cur_transform_name, dir_name=TRANSFORMS_PATH)
     # transforms = {0: (t_name, t_env)}
     explanations = []
     for f in transform_list:

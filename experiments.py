@@ -1,17 +1,14 @@
 # from Environments.taxi_environment_wrapper import set_up_env_idx
 import multiprocessing
-import sys
 import os
-import shutil
-import dill
 import pickle
-from Observer.anticipated_policy_generator import *
+import shutil
+from save_load_utils import save_trained_model, make_or_restore_model, load_transform_by_name
 from utils import *
 from visualize import *
 from Agents.RL_agents.q_learning_agents import *
 import Agents.RL_agents.rl_agent as rl_agent
 import tensorflow as tf
-from tensorflow import keras
 from tensorflow.python.client import device_lib
 from tensorflow.python.keras import backend as K
 
@@ -28,29 +25,12 @@ def log(string):
     f.close()
 
 
-def make_or_restore_model(transformed_env, agent_name, callbacks=None):
-    from tensorflow import keras
-    # Prepare a directory to store all the checkpoints.
-    checkpoint_dir = "./ckpt"
-    if not os.path.exists(checkpoint_dir):
-        os.makedirs(checkpoint_dir)
-    # Either restore the latest model, or create a fresh one
-    # if there is no checkpoint available.
-    checkpoints = [checkpoint_dir + "/" + name for name in os.listdir(checkpoint_dir)]
-    if checkpoints:
-        latest_checkpoint = max(checkpoints, key=os.path.getctime)
-        print("Restoring from", latest_checkpoint)
-        return keras.models.load_model(latest_checkpoint)
-    print("Creating a new model")
-    return rl_agent.create_agent(transformed_env, agent_name)
-
-
 def create_run_and_evaluate_agent(original_env, transformed_env, agent_name, env_name, num_of_episodes,
                                   anticipated_policy, result, explanation):
     # GPUtil.showUtilization()
     agent = make_or_restore_model(transformed_env, agent_name)
 
-    print(f"\nTraining and evaluating the {agent_name} on {env_name} environment -", env_name)
+    print(f"\nTraining and evaluating the {agent_name} on \"{env_name}\" environment")
     train_result = rl_agent.run(agent, num_of_episodes, method=TRAIN)
 
     evaluation_result = rl_agent.run(agent, num_of_episodes, method=EVALUATE)

@@ -1,7 +1,7 @@
 from experiments import *
 from save_load_utils import *
-
-DIR_PATH = "Agents/TrainedAgents/"
+from constants import *
+from save_load_utils import load_transform_by_name
 
 
 def generate_agent(env_name, agent_name, num_of_episodes, transformed_env, transform_name):
@@ -19,16 +19,16 @@ def generate_agent(env_name, agent_name, num_of_episodes, transformed_env, trans
     else:
         print(f"explanation found {explanation}!!")
 
-    dir_name = DIR_PATH + transform_name + "_" + agent_name + "_200000"
+    dir_name = TRAINED_AGENTS_DIR_PATH + transform_name + "_" + agent_name + "_200000"
     make_dir(dir_name)
     save_pkl_file(dir_name + "/" + transform_name + "_" + agent_name + "_result", result)
     save_pkl_file(dir_name + "/" + transform_name + "_" + agent_name + "_explanation", explanation)
 
 
 if __name__ == '__main__':
-    path = sys.argv[1:][0]
+    # path = sys.argv[1:][0]
+    path = "0_(0,)_[4].pkl"
     file_name = os.path.basename(path)
-    if file_name.find('5') != -1:
-        transform_dir = "single_transform_envs/"
-        transform_name, new_env = load_transform_by_name(transform_dir + file_name)
-        generate_agent(SINGLE_TAXI_EXAMPLE, KERAS_DQN, 100, new_env, transform_name)
+    transform_dir = "single_transform_envs/"
+    transform_name, new_env = load_transform_by_name(transform_dir + file_name)
+    generate_agent(SINGLE_TAXI_EXAMPLE, KERAS_DQN, 100, new_env, transform_name)

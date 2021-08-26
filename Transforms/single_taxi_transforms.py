@@ -1,5 +1,4 @@
 import collections
-import copy
 
 from Environments.SingleTaxiEnv.single_taxi_wrapper import *
 from Transforms.transform_constants import *
@@ -7,9 +6,6 @@ from save_load_utils import *
 from Transforms.env_precinditions import *
 
 DETERMINISTIC = True
-SAVE_PATH = "Transforms/taxi_example_data/"
-WORKING_ENV_DIR = "big_taxi_transformed_env/"
-PRECONDITIONS_FILE_NAME = "big_taxi_env_preconditions.pkl"
 
 
 class SingleTaxiTransformedEnv(SingleTaxiSimpleEnv):
@@ -42,7 +38,7 @@ class SingleTaxiTransformedEnv(SingleTaxiSimpleEnv):
 
 def preconditions_relaxation(preconditions_info, env, deterministic=DETERMINISTIC):
     # preconditions = EnvPreconditions(env)
-    a_file = open(SAVE_PATH + PRECONDITIONS_FILE_NAME, "rb")
+    a_file = open(PRECONDITIONS_PATH, "rb")
     preconditions = pickle.load(a_file)
 
     diff_dict, state_by_diff, next_state_by_action = get_diff_for_actions(env.P, env)
@@ -251,7 +247,7 @@ def get_single_taxi_transform_name(transforms):
 
 def generate_triple_of_transforms(env_pre):
     dir_name = "triple_transform_envs"
-    make_dir(SAVE_PATH + WORKING_ENV_DIR + dir_name)
+    make_dir(TRAINED_AGENT_SAVE_PATH + dir_name)
 
     same_precondition = False
     for act1, pre1 in env_pre.not_allowed_features.items():
@@ -272,7 +268,7 @@ def generate_triple_of_transforms(env_pre):
                                             same_precondition = True
                                         if not same_precondition:
 
-                                            env_file_name = f"{SAVE_PATH}{WORKING_ENV_DIR}{dir_name}/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}_{act3}_{pre_idx3}_{pre_val3}"
+                                            env_file_name = f"{TRAINED_AGENT_SAVE_PATH}{dir_name}/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}_{act3}_{pre_idx3}_{pre_val3}"
                                             if not os.path.exists(env_file_name + ".pkl"):
                                                 print(f"act1: {act1} , pre_idx1: {pre_idx1} , pre_val1: {pre_val1}")
                                                 print(f"act2: {act2} , pre_idx2: {pre_idx2} , pre_val2: {pre_val2}")
@@ -289,7 +285,7 @@ def generate_triple_of_transforms(env_pre):
 
 def generate_double_of_transforms(env_pre):
     dir_name = "double_transform_envs"
-    make_dir(SAVE_PATH + WORKING_ENV_DIR + dir_name)
+    make_dir(TRAINED_AGENT_SAVE_PATH + dir_name)
 
     same_precondition = False
     for act1, pre1 in env_pre.not_allowed_features.items():
@@ -305,7 +301,7 @@ def generate_double_of_transforms(env_pre):
                                 print(f"act1: {act1} , pre_idx1: {pre_idx1} , pre_val1: {pre_val1}")
                                 print(f"act2: {act2} , pre_idx2: {pre_idx2} , pre_val2: {pre_val2}")
 
-                                env_file_name = f"{SAVE_PATH}{WORKING_ENV_DIR}{dir_name}/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}"
+                                env_file_name = f"{TRAINED_AGENT_SAVE_PATH}{dir_name}/{act1}_{pre_idx1}_{pre_val1}_{act2}_{pre_idx2}_{pre_val2}"
                                 precondition = {act1: {pre_idx1: pre_val1},
                                                 act2: {pre_idx2: pre_val2}}
                                 generate_transformed_env(precondition, env_file_name, save=True)
@@ -314,14 +310,14 @@ def generate_double_of_transforms(env_pre):
 
 def generate_single_transforms(env_preconditions):
     dir_name = "single_transform_envs"
-    make_dir(SAVE_PATH + WORKING_ENV_DIR + dir_name)
+    make_dir(TRAINED_AGENT_SAVE_PATH + dir_name)
 
     for act, preconditions in env_preconditions.not_allowed_features.items():
         for pre_idx in preconditions.keys():
             for pre_val in preconditions[pre_idx]:
                 print(
                     f"calculating for act1: {act} , pre_idx1: {pre_idx} , pre_val1: {pre_val}")
-                env_file_name = f"{SAVE_PATH}{WORKING_ENV_DIR}{dir_name}/{act}_{pre_idx}_{pre_val}"
+                env_file_name = f"{TRAINED_AGENT_SAVE_PATH}{dir_name}/{act}_{pre_idx}_{pre_val}"
                 precondition = {act: {pre_idx: pre_val}}
                 generate_transformed_env(precondition, env_file_name, save=True)
 
@@ -335,7 +331,6 @@ def generate_transformed_env(precondition, env_file_name='', save=True, env_defa
     if save:
         save_pkl_file(env_file_name + ".pkl", new_env)
     return new_env
-
 
 # if __name__ == '__main__':
 #     #     env_default_values = [0, 0, 0, 1, MAX_FUEL - 1]

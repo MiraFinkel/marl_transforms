@@ -1,18 +1,9 @@
-import itertools
-import pickle
-from itertools import product
-import os
-import re
-import copy
-
-from Agents.RL_agents import rl_agent
 from Observer.lunar_lander_expert import LunarLanderExpert
 from Observer.single_taxi_expert import SingleTaxiExpert
 from Observer.taxi_expert import Taxi_Expert
-from Transforms.single_taxi_transforms import SingleTaxiTransformedEnv
 from constants import *
 from Transforms.transform_constants import *
-from save_load_utils import load_pkl_file
+from save_load_utils import load_env_preconditions
 
 transforms = []
 transform_index = -1
@@ -86,7 +77,7 @@ def print_num_of_success_failed_policies(num_of_success_policies, num_of_failed_
     print("num_of_failed_policies: ", num_of_failed_policies)
 
 
-# def is_anticipated_policy_achieved(env, agent, anticipated_policy):
+# def is_anticipated_policy_achieved_old(env, agent, anticipated_policy):
 #     agent.evaluating = True
 #     num_of_success_policies, num_of_failed_policies = 0, 0
 #     for partial_obs in anticipated_policy.keys():
@@ -168,7 +159,7 @@ def get_transformed_env(env_name):
         return LunarLanderTransformedEnv
 
 
-# def set_all_possible_transforms(original_env, env_name):
+# def set_all_possible_transforms_old(original_env, env_name):
 #     binary_permutations = ["".join(seq) for seq in product("01", repeat=original_env.transform_num)]
 #     transforms = {}
 #     for per in binary_permutations:
@@ -192,102 +183,6 @@ def set_all_possible_transforms(original_env, env_name, anticipated_policy):
     global transforms
     transforms = basic_relevant_transforms
     return basic_relevant_transforms
-
-
-def load_existing_transforms_from_dir(working_dir="Transforms/taxi_example_data/taxi_transformed_env/"):
-    possible_env_files = os.listdir(working_dir)
-    cur_transforms = dict()
-    dict_idx = 0
-    for i, file_name in enumerate(possible_env_files):
-        transform_name, new_env = load_transform_by_name(file_name, dir_name=working_dir)
-        cur_transforms[dict_idx] = transform_name, new_env
-        dict_idx += 1
-    global transforms
-    transforms = cur_transforms
-    return cur_transforms
-
-
-def load_existing_transforms_by_anticipated_policy(env_name, anticipated_policy,
-                                                   working_dir="Transforms/taxi_example_data/taxi_transformed_env/"):
-    possible_env_files = os.listdir(working_dir)
-    cur_transforms = dict()
-    dict_idx = -1
-    anticipate_policy_actions = anticipated_policy.values()
-    all_possible_anticipated_policies = list(
-        itertools.combinations(anticipate_policy_actions, len(anticipate_policy_actions)))
-    for i, file_name in enumerate(possible_env_files):
-        string_for_extracting_actions = copy.deepcopy(file_name)
-        string_for_extracting_actions = re.sub("([\(\[]).*?([\)\]])", "\g<1>\g<2>", string_for_extracting_actions)
-        precondition_actions = [int(s) for s in string_for_extracting_actions.split('_') if s.isdigit()]
-        for policy_action_list in all_possible_anticipated_policies:
-            policy_action_list = [p for tmp in policy_action_list for p in tmp]
-            is_precondition_actions_relevant = any(
-                pre_action in policy_action_list for pre_action in precondition_actions)
-            if is_precondition_actions_relevant:
-                dict_idx += 1
-                # precondition_idx = file_name[file_name.find("(") + 1:file_name.find(")")]
-                # precondition_val = file_name[file_name.find("[") + 1:file_name.find("]")]
-                transform_name, new_env = load_transform_by_name(file_name)
-                cur_transforms[dict_idx] = transform_name, new_env
-    global transforms
-    transforms = cur_transforms
-    return cur_transforms
-
-
-def load_transform_by_name(file_name, dir_name="Transforms/taxi_example_data/taxi_transformed_env/"):
-    transform_name = file_name[:-4]
-    file = open(dir_name + file_name, "rb")
-    new_env = pickle.load(file)
-    return transform_name, new_env
-
-
-def load_existing_agent(env, agent_name, transform_name, trained_agents_path='./Agents/TrainedAgents/'):
-    model_name = agent_name + '_' + transform_name
-    dir_path = trained_agents_path + model_name + '/'
-    new_agent = rl_agent.create_agent(env, agent_name)
-    try:
-        new_agent = new_agent.load_existing_agent(dir_path + model_name)
-    except:
-        print(f"ERROR: bad agent: {dir_path + model_name}")
-        new_agent = None
-    return new_agent
-
-
-def load_existing_results(agent_name, env_name, num_episodes=200000, dir_path="Agents/TrainedAgents/results/"):
-    info_name = f"{env_name}_{agent_name}"
-    file_path = dir_path + info_name + f"_{num_episodes}/"
-    try:
-        explanation = load_pkl_file(file_path + info_name + "_explanation.pkl")
-        result = load_pkl_file(file_path + info_name + "_result.pkl")
-    except:
-        print(f"ERROR: Not available results for env_name: {env_name}, agent_name: {agent_name}")
-        result, explanation = [], []
-
-    return result, explanation
-
-
-def save_trained_model(agent, agent_name, transform_name):
-    model_name = agent_name + '_' + transform_name
-    dir_path = 'Agents/TrainedAgents/'
-    make_dir(dir_path + model_name)
-    dir_path = dir_path + model_name + '/'
-    agent.q_network.save_weights(dir_path + model_name)
-
-
-def make_dir(dir_name):
-    try:
-        os.mkdir(dir_name)
-    except OSError:
-        print("Directory %s exists already" % dir_name)
-
-
-def load_env_preconditions(env_name):
-    if env_name == SINGLE_TAXI_EXAMPLE:
-        a_file = open("Transforms/taxi_example_data/taxi_example_preconditions.pkl", "rb")
-        preconditions = pickle.load(a_file)
-        return preconditions
-    else:
-        raise Exception("not valid env_name")
 
 
 def get_next_transformed_env():
