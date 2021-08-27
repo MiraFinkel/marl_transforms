@@ -3,7 +3,7 @@ from Observer.single_taxi_expert import SingleTaxiExpert
 from Observer.taxi_expert import Taxi_Expert
 from constants import *
 from Transforms.transform_constants import *
-from save_load_utils import load_env_preconditions
+from save_load_utils import *
 
 transforms = []
 transform_index = -1

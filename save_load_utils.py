@@ -43,19 +43,18 @@ def save_trained_model(agent, agent_name, transform_name):
     agent.q_network.save_weights(dir_path + model_name)
 
 
-def make_or_restore_model(transformed_env, agent_name, checkpoint_dir_path=TRAINED_AGENT_SAVE_PATH):
-    from tensorflow import keras
+def make_or_restore_model(env, agent_name, transform_name, checkpoint_dir_path=TRAINED_AGENT_SAVE_PATH):
     # Prepare a directory to store all the checkpoints.
     if not os.path.exists(checkpoint_dir_path):
         os.makedirs(checkpoint_dir_path)
     # Either restore the latest model, or create a fresh one if there is no checkpoint available.
-    checkpoints = [checkpoint_dir_path + "/" + name for name in os.listdir(checkpoint_dir_path)]
+    checkpoints = [checkpoint_dir_path + name for name in os.listdir(checkpoint_dir_path)]
     if checkpoints:
         latest_checkpoint = max(checkpoints, key=os.path.getctime)
         print("Restoring from", latest_checkpoint)
-        return keras.models.load_model(latest_checkpoint)
+        return load_existing_agent(env, agent_name, transform_name)
     print("Creating a new model")
-    return rl_agent.create_agent(transformed_env, agent_name)
+    return rl_agent.create_agent(env, agent_name)
 
 
 def load_existing_results(agent_name, env_name, num_episodes=200000, dir_path=TRAINED_AGENT_RESULTS_PATH):
@@ -93,6 +92,28 @@ def load_existing_transforms_from_dir(working_dir=TRANSFORMS_PATH):
     return cur_transforms
 
 
+def get_precondition_actions_from_string(pre_string):
+    string_for_extracting_actions = copy.deepcopy(pre_string)
+    string_for_extracting_actions = re.sub("([\(\[]).*?([\)\]])", "\g<1>\g<2>", string_for_extracting_actions)
+    precondition_actions = [int(s) for s in string_for_extracting_actions.split('_') if s.isdigit()]
+    return precondition_actions
+
+
+def get_precondition_idx_from_string(single_pre_string):
+    pre_idx = single_pre_string[single_pre_string.find("(") + 1:single_pre_string.find(")")]
+    pre_idx = tuple(int(pre) for pre in pre_idx if pre != ' ' and pre != ',')
+    return pre_idx
+
+
+def get_precondition_val_from_string(single_pre_string):
+    pre_val = single_pre_string[single_pre_string.find("[") + 1:single_pre_string.find("]")]
+    pre_val = [int(pre) for pre in pre_val if pre != ' ']
+    return pre_val
+
+
+
+
+
 def load_existing_transforms_by_anticipated_policy(env_name, anticipated_policy, working_dir=TRANSFORMS_PATH):
     possible_env_files = os.listdir(working_dir)
     cur_transforms = dict()
@@ -101,9 +122,7 @@ def load_existing_transforms_by_anticipated_policy(env_name, anticipated_policy,
     all_possible_anticipated_policies = list(
         itertools.combinations(anticipate_policy_actions, len(anticipate_policy_actions)))
     for i, file_name in enumerate(possible_env_files):
-        string_for_extracting_actions = copy.deepcopy(file_name)
-        string_for_extracting_actions = re.sub("([\(\[]).*?([\)\]])", "\g<1>\g<2>", string_for_extracting_actions)
-        precondition_actions = [int(s) for s in string_for_extracting_actions.split('_') if s.isdigit()]
+        precondition_actions = get_precondition_actions_from_string(file_name)
         for policy_action_list in all_possible_anticipated_policies:
             policy_action_list = [p for tmp in policy_action_list for p in tmp]
             is_precondition_actions_relevant = any(

@@ -4,7 +4,7 @@ from utils import *
 
 def generate_specific_transformed_env():
     #     env_default_values = [0, 0, 0, 1, MAX_FUEL - 1]
-    # a_file = open("taxi_example_data/taxi_example_preconditions.pkl", "rb")
+    # a_file = open("taxi_example_data/small_taxi_env_preconditions.pkl", "rb")
     # cur_env_preconditions = pickle.load(a_file)
 
     act1, act2, act3, act4, act5 = 0, 1, 2, 4, 5

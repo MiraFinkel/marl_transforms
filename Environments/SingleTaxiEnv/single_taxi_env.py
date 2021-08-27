@@ -107,6 +107,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
     metadata = {'render.modes': ['human', 'ansi']}
 
     def __init__(self, deterministic=True):
+        self.deterministic = deterministic
         self.desc = np.asarray(MAP, dtype='c')
         w, h = self.desc.shape
         self.last_action = None
