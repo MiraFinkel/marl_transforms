@@ -4,16 +4,15 @@ from constants import *
 from save_load_utils import load_transform_by_name
 
 
-def generate_agent(env_name, agent_name, num_of_episodes, transformed_env, transform_name):
-    original_env = get_env(env_name)
+def generate_agent(original_env, agent_name, num_of_episodes, transformed_env, transform_name):
     result = dict()
     anticipated_policy = ANTICIPATED_POLICY
     explanation = []
 
     result, explanation = create_run_and_evaluate_agent(original_env, transformed_env, agent_name, transform_name,
                                                         num_of_episodes, anticipated_policy, result, explanation)
-    not_satisfied = explanation is None or len(explanation) == 0
-    if not_satisfied:
+    satisfaction = not (explanation is None or len(explanation) == 0)
+    if not satisfaction:
         print(f"{transform_name} is not your answer! it is not an explanation")
     else:
         print(f"explanation found {explanation}!!")
@@ -22,7 +21,7 @@ def generate_agent(env_name, agent_name, num_of_episodes, transformed_env, trans
     make_dir(dir_name)
     save_pkl_file(dir_name + "/" + transform_name + "_" + agent_name + "_result", result)
     save_pkl_file(dir_name + "/" + transform_name + "_" + agent_name + "_explanation", explanation)
-    return not_satisfied
+    return satisfaction
 
 
 if __name__ == '__main__':

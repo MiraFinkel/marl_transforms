@@ -1,5 +1,5 @@
 # ================= Train variables ================ #
-ITER_NUM = 200000
+ITER_NUM = 600000
 SPEAKER_LISTENER = "simple_speaker_listener"
 # =================== Transforms =================== #
 FUELS_TRANSFORM = "fuels_transform"
@@ -38,7 +38,7 @@ ANTICIPATED_POLICY = {(2, 0, 0, 3, None): [1],
 MAX_GRAPH_DEPTH = 6
 
 # ---------------------- PATHS ----------------------- #
-CUR_ENV_NAME = "small_taxi"
+CUR_ENV_NAME = "big_taxi"
 
 DATA_FOLDER = "Data/"
 TRAINED_AGENTS_DIR_PATH = DATA_FOLDER + "TrainedAgentsDQN/"
@@ -52,5 +52,5 @@ PRECONDITIONS_FILE_NAME = f"{CUR_ENV_NAME}_env_preconditions.pkl"
 PRECONDITIONS_PATH = TAXI_TRANSFORM_DATA_PATH + PRECONDITIONS_FILE_NAME
 PRECONDITION_GRAPH_PATH = TAXI_TRANSFORM_DATA_PATH + f"precondition_graph_{CUR_ENV_NAME}_env.pkl"
 ALL_SMALL_TAXI_TRANSFORMED_ENVS_PATH = TAXI_TRANSFORM_DATA_PATH + "all_single_transformed_envs.pkl"
-TRANSFORMS_PATH = TAXI_TRANSFORM_DATA_PATH + f"{CUR_ENV_NAME}_transformed_env/"
+TRANSFORMS_PATH = TAXI_TRANSFORM_DATA_PATH + f"{CUR_ENV_NAME}_transformed_envs/"
 

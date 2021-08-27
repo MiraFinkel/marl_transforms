@@ -1,16 +1,16 @@
 from itertools import product
 
-from Environments.SingleTaxiEnv.single_taxi_env import *
+from Environments.SingleTaxiEnv.single_small_taxi_env import *
 from Environments.abstract_wrapper_env import AbstractWrapperEnv
 
 
-class SingleTaxiSimpleEnv(SingleTaxiEnv, AbstractWrapperEnv):
+class SingleTaxiSimpleEnv(SingleSmallTaxiEnv, AbstractWrapperEnv):
     def __init__(self, deterministic=True):
         super().__init__(deterministic)
         self.transform_num = 7
 
     def is_possible_initial_state(self, pass_idx, dest_idx, row, col):
-        return pass_idx < 4 and pass_idx != dest_idx and row == 4 and col == 0  # Fix taxi initial position
+        return pass_idx < 4 and pass_idx != dest_idx and row == self.init_row and col == 0  # Fix taxi initial position
 
     def get_states_from_partial_obs(self, partial_obs):
         partial_obs_aligned_with_env = False

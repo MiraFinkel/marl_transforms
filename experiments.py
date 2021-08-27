@@ -24,13 +24,15 @@ def log(string):
 
 
 def create_run_and_evaluate_agent(original_env, transformed_env, agent_name, env_name, num_of_episodes,
-                                  anticipated_policy, result, explanation, retrain=True):
+                                  anticipated_policy, result, explanation):
     # GPUtil.showUtilization()
-    agent = make_or_restore_model(transformed_env, agent_name, env_name) if retrain else rl_agent.create_agent(
-        transformed_env, agent_name)
+    agent, restored = make_or_restore_model(transformed_env, agent_name, env_name)
 
     print(f"\nTraining and evaluating the {agent_name} on \"{env_name}\" environment")
-    train_result = rl_agent.run(agent, num_of_episodes, method=TRAIN)
+    if not restored:
+        train_result = rl_agent.run(agent, num_of_episodes, method=TRAIN)
+    else:
+        train_result = None
 
     evaluation_result = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
 
@@ -233,10 +235,13 @@ def different_envs_experiment():
 
 
 def run_anticipated_dfs_search():
-    # cur_env_preconditions = load_pkl_file(PRECONDITIONS_PATH)
-    # precondition_graph = PreconditionsGraph(cur_env_preconditions.not_allowed_features, ANTICIPATED_POLICY)
-    precondition_graph = load_pkl_file(PRECONDITION_GRAPH_PATH)
-    # save_pkl_file("precondition_graph_small_taxi_env.pkl", precondition_graph)
+    cur_env_preconditions = load_pkl_file(PRECONDITIONS_PATH)
+    try:
+        precondition_graph = load_pkl_file(PRECONDITION_GRAPH_PATH)
+    except:
+        precondition_graph = PreconditionsGraph(SINGLE_TAXI_EXAMPLE, cur_env_preconditions.not_allowed_features,
+                                                ANTICIPATED_POLICY)
+        save_pkl_file("precondition_graph_small_taxi_env.pkl", precondition_graph)
     precondition_graph.bfs()
 
 

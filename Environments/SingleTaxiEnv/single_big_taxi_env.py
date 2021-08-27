@@ -1,9 +1,10 @@
 import sys
+import numpy as np
 from contextlib import closing
 from io import StringIO
 from gym import utils
 from gym.envs.toy_text import discrete
-import numpy as np
+from Environments.SingleTaxiEnv.single_taxi_constants import *
 
 MAP = [
     "+---------+",
@@ -14,38 +15,6 @@ MAP = [
     "|Y: :F| :B|",
     "+---------+",
 ]
-
-# SIMPLE_MAP = [
-#     "+---------+",
-#     "|R: | : : |",
-#     "| : | : : |",
-#     "| : : : : |",
-#     "| : : | : |",
-#     "| : :F| :B|",
-#     "+---------+",
-# ]
-
-SMALL_EXAMPLE = [
-    "+-----+",
-    "|R| :G|",
-    "| : : |",
-    "|Y:F|B|",
-    "+-----+",
-]
-
-SOUTH, NORTH, EAST, WEST, PICKUP, DROPOFF, REFUEL = 0, 1, 2, 3, 4, 5, 6
-# PASSENGER_IN_TAXI = -1
-STEP_REWARD, PICKUP_REWARD, BAD_PICKUP_REWARD, DROPOFF_REWARD, BAD_DROPOFF_REWARD, REFUEL_REWARD, BAD_REFUEL_REWARD, NO_FUEL_REWARD = "step", "good_pickup", "bad_pickup", "good_dropoff", "bad_dropoff", "good_refuel", "bad_refuel", "no_fuel"
-ACTIONS = [SOUTH, NORTH, EAST, WEST, PICKUP, DROPOFF, REFUEL]
-MAX_FUEL = 50
-REWARD_DICT = {STEP_REWARD: -1,
-               PICKUP_REWARD: 0, BAD_PICKUP_REWARD: -10,
-               DROPOFF_REWARD: 100, BAD_DROPOFF_REWARD: -10,
-               REFUEL_REWARD: 0, BAD_REFUEL_REWARD: -10, NO_FUEL_REWARD: -100}
-
-DETERMINISTIC_PROB = 1.0
-STOCHASTIC_PROB = 0.91
-STOCHASTIC_PROB_OTHER_ACTIONS = (DETERMINISTIC_PROB - STOCHASTIC_PROB) / 3
 
 
 def try_step_south_or_east(fuel, place, max_place):
@@ -62,7 +31,7 @@ def try_step_west_or_north(fuel, place, max_place):
     return fuel, new_place
 
 
-class SingleTaxiEnv(discrete.DiscreteEnv):
+class SingleBigTaxiEnv(discrete.DiscreteEnv):
     """
     The Taxi Problem
     from "Hierarchical Reinforcement Learning with the MAXQ Value Function Decomposition"
@@ -107,6 +76,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
     metadata = {'render.modes': ['human', 'ansi']}
 
     def __init__(self, deterministic=True):
+        self.init_state, self.init_row, self.init_col = 20154, 4, 0
         self.deterministic = deterministic
         self.desc = np.asarray(MAP, dtype='c')
         w, h = self.desc.shape
@@ -141,7 +111,7 @@ class SingleTaxiEnv(discrete.DiscreteEnv):
                             init_fuel = fuel
                             state = self.encode(row, col, pass_idx, dest_idx, fuel)
                             if self.is_possible_initial_state(pass_idx, dest_idx, row,
-                                                              col) and state == 20154:  # and state == 6152:
+                                                              col) and state == self.init_state:
                                 self.initial_state_distribution[state] += 1.0
                             for action in range(self.num_actions):
                                 new_row, new_col, new_pass_idx = row, col, pass_idx

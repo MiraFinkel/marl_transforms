@@ -1,4 +1,6 @@
 from collections import defaultdict
+
+from Transforms.single_taxi_transforms import generate_transformed_env
 from train_agent import *
 
 
@@ -25,7 +27,7 @@ class TransformNode:
 
 # This class represents a directed graph using adjacency list representation
 class PreconditionsGraph:
-    def __init__(self, preconditions, anticipated_policy):
+    def __init__(self, env_name, preconditions, anticipated_policy):
         self.root = TransformNode(actions=[], idxes=[], values=[], val=0, depth=0, parents=[],
                                   preconditions_graph=None)
         self.anticipated_policy = anticipated_policy
@@ -34,11 +36,13 @@ class PreconditionsGraph:
         self.graph = defaultdict(TransformNode)
         self.graph[ORIGINAL_ENV] = self.root
         self.build_preconditions_graph(preconditions, anticipated_policy)
+        self.original_env = get_env(env_name)
 
     def add_edge(self, u, v):
         self.graph[u].adjacent_nodes.append(v)
 
     def bfs(self):
+        self.original_env = get_env(SINGLE_TAXI_EXAMPLE)  # TODO - Temporary!! to delete!!
         satisfaction = False
         explanation_env = None
         while self.queue and not satisfaction:
@@ -48,7 +52,7 @@ class PreconditionsGraph:
                 if not neighbour_mdp.visited:
                     self.queue.append(neighbour_mdp)
                     neighbour_mdp.visited = True
-                    satisfaction = train_agent_and_save_results(neighbour_mdp)
+                    satisfaction = train_agent_and_save_results(self.original_env, neighbour_mdp)
                     if satisfaction:
                         explanation_env = neighbour_mdp
                         break
@@ -118,11 +122,26 @@ def is_transform_actions_influence_anticipated_policy(anticipated_actions, trans
     return influence
 
 
-def train_agent_and_save_results(neighbour_mdp):
-    transform_name, new_env = load_transform_by_name(neighbour_mdp.transform_name + ".pkl")
-    satisfaction = generate_agent(SINGLE_TAXI_EXAMPLE, KERAS_DQN, ITER_NUM, new_env, neighbour_mdp.transform_name)
-    return satisfaction
+def get_precondition_from_transform_node(mdp_node):
+    precondition = {}
+    for act, idx, val in zip(mdp_node.actions, mdp_node.idxes, mdp_node.values):
+        if act in precondition.keys():
+            if idx in precondition[act].keys():
+                precondition[act][idx].append(val)
+            else:
+                precondition[act][idx] = [val]
+        else:
+            precondition[act] = {idx: val}
+    return precondition
 
+
+def train_agent_and_save_results(original_env, mdp_node):
+    # transform_name, new_env = load_transform_by_name(neighbour_mdp.transform_name + ".pkl")
+    precondition = get_precondition_from_transform_node(mdp_node)
+    new_env = generate_transformed_env(precondition, env_file_name=TRANSFORMS_PATH + mdp_node.transform_name, save=True,
+                                       try_load_existing=True)
+    satisfaction = generate_agent(original_env, KERAS_DQN, ITER_NUM, new_env, mdp_node.transform_name)
+    return satisfaction
 
 # if __name__ == '__main__':
 #     from Transforms import env_precinditions

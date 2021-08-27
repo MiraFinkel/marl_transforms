@@ -149,14 +149,19 @@ def generate_single_transforms(env_preconditions):
                 generate_transformed_env(precondition, env_file_name, save=True)
 
 
-def generate_transformed_env(precondition, env_file_name='', save=True, env_default_values=None):
-    cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
-                      ALL_OUTCOME_DETERMINIZATION: False,
-                      MOST_LIKELY_OUTCOME: False,
-                      PRECONDITION_RELAXATION: precondition}
-    new_env = SingleTaxiTransformedEnv(cur_transforms)
-    if save:
-        save_pkl_file(env_file_name + ".pkl", new_env)
+def generate_transformed_env(precondition, env_file_name, save=True, try_load_existing=True, env_default_values=None):
+    new_env = None
+    if try_load_existing:
+        file_name = os.path.basename(env_file_name)
+        transform_name, new_env = load_transform_by_name(file_name)
+    if new_env is None:
+        cur_transforms = {STATE_VISIBILITY_TRANSFORM: ([], env_default_values),
+                          ALL_OUTCOME_DETERMINIZATION: False,
+                          MOST_LIKELY_OUTCOME: False,
+                          PRECONDITION_RELAXATION: precondition}
+        new_env = SingleTaxiTransformedEnv(cur_transforms)
+        if save:
+            save_pkl_file(env_file_name + ".pkl", new_env)
     return new_env
 
 # if __name__ == '__main__':
