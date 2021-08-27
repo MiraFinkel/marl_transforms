@@ -8,10 +8,8 @@ Environments/MultiTaxiEnv/__pycache__/
 Environments/SingleTaxiEnv/__pycache__/
 Environments/__pycache__/
 Transforms/__pycache__/
-Transforms/taxi_example_data/all_single_transformed_envs.pkl
-Agents/TrainedAgents/trained_models_on_small_taxi_env/
-Agents/TrainedAgents/trained_models_on_big_taxi_env/
-Transforms/taxi_example_data/small_taxi_transformed_env/
-Transforms/taxi_example_data/big_taxi_transformed_env/
+Data/big_taxi_env_data/
+Data/small_taxi_env_data/
+Data/TrainedAgentsDQN/
 results/
-Agents/TrainedAgents/results/
+TransformSearch/__pycache__/

@@ -1,5 +1,5 @@
 # ================= Train variables ================ #
-ITER_NUM = 1000
+ITER_NUM = 600000
 SPEAKER_LISTENER = "simple_speaker_listener"
 # =================== Transforms =================== #
 FUELS_TRANSFORM = "fuels_transform"
@@ -35,16 +35,22 @@ ANTICIPATED_POLICY = {(2, 0, 0, 3, None): [1],
                       (1, 2, 4, 3, None): [0],
                       (2, 2, 4, 3, None): [5]}
 
+MAX_GRAPH_DEPTH = 6
+
 # ---------------------- PATHS ----------------------- #
-TRAINED_AGENTS_DIR_PATH = "Agents/TrainedAgents/"
-TRAINED_AGENT_SAVE_PATH = TRAINED_AGENTS_DIR_PATH + "trained_models_on_big_taxi_env/"
+CUR_ENV_NAME = "big_taxi"
+
+DATA_FOLDER = "Data/"
+TRAINED_AGENTS_DIR_PATH = DATA_FOLDER + "TrainedAgentsDQN/"
+TRAINED_AGENT_SAVE_PATH = TRAINED_AGENTS_DIR_PATH + f"trained_models_on_{CUR_ENV_NAME}_env/"
 TRAINED_AGENT_SPECIFIC_PATH = "single_transform_envs/"
 TRAINED_AGENT_ON_SPECIFIC_TRANSFORM_NUM_PATH = TRAINED_AGENT_SAVE_PATH + TRAINED_AGENT_SPECIFIC_PATH
-TRAINED_AGENT_RESULTS_PATH = TRAINED_AGENTS_DIR_PATH + "results/trained_models_on_big_taxi_env_results/"
-TAXI_TRANSFORM_DATA_PATH = "Transforms/taxi_example_data/"
-PRECONDITIONS_FILE_NAME = "big_taxi_env_preconditions.pkl"
+TRAINED_AGENT_RESULTS_PATH = TRAINED_AGENTS_DIR_PATH + f"results/trained_models_on_{CUR_ENV_NAME}_env_results/"
+
+TAXI_TRANSFORM_DATA_PATH = DATA_FOLDER + f"{CUR_ENV_NAME}_env_data/"
+PRECONDITIONS_FILE_NAME = f"{CUR_ENV_NAME}_env_preconditions.pkl"
 PRECONDITIONS_PATH = TAXI_TRANSFORM_DATA_PATH + PRECONDITIONS_FILE_NAME
-RELATIVE_PRECONDITIONS_PATH = "taxi_example_data/" + PRECONDITIONS_FILE_NAME
-RELATIVE_SINGLE_SMALL_TAXI_TRANSFORMED_ENVS = "taxi_example_data/all_single_transformed_envs.pkl"
-TRANSFORMS_PATH = TAXI_TRANSFORM_DATA_PATH + "big_taxi_transformed_env/"
+PRECONDITION_GRAPH_PATH = TAXI_TRANSFORM_DATA_PATH + f"precondition_graph_{CUR_ENV_NAME}_env.pkl"
+ALL_SMALL_TAXI_TRANSFORMED_ENVS_PATH = TAXI_TRANSFORM_DATA_PATH + "all_single_transformed_envs.pkl"
+TRANSFORMS_PATH = TAXI_TRANSFORM_DATA_PATH + f"{CUR_ENV_NAME}_transformed_envs/"
 

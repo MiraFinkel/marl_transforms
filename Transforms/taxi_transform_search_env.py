@@ -12,8 +12,8 @@ class SingleTaxiTransformSearchEnv(SingleTaxiSimpleEnv):
         super().__init__()
         self.action_translation_dict = {}
         new_act = self.num_actions - 1
-        preconditions = load_pkl_file(RELATIVE_PRECONDITIONS_PATH)
-        all_single_transformed_envs = load_pkl_file(RELATIVE_SINGLE_SMALL_TAXI_TRANSFORMED_ENVS)
+        preconditions = load_pkl_file(PRECONDITIONS_PATH)
+        all_single_transformed_envs = load_pkl_file(ALL_SMALL_TAXI_TRANSFORMED_ENVS_PATH)
         for act, act_info in preconditions.not_allowed_features.items():
             for pre_idx, pre_val in act_info.items():
                 for val in pre_val:
@@ -35,8 +35,8 @@ class SingleTaxiTransformAnticipatedSearchEnv(SingleTaxiSimpleEnv):
         self.action_translation_dict = {}
         new_act = self.num_actions - 1
         basic_actions = [_ for _ in range(self.num_actions)]
-        preconditions = load_pkl_file(RELATIVE_PRECONDITIONS_PATH)
-        all_single_transformed_envs = load_pkl_file(RELATIVE_SINGLE_SMALL_TAXI_TRANSFORMED_ENVS)
+        preconditions = load_pkl_file(PRECONDITIONS_PATH)
+        all_single_transformed_envs = load_pkl_file(ALL_SMALL_TAXI_TRANSFORMED_ENVS_PATH)
         decoded_anticipated_states, anticipated_actions = anticipated_policy.keys(), anticipated_policy.values()
         # flatten_anticipated_actions = [item for sublist in anticipated_actions for item in sublist]
         for state, state_info in self.P.items():

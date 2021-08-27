@@ -1,9 +1,6 @@
-# from Environments.taxi_environment_wrapper import set_up_env_idx
 import multiprocessing
-import os
-import pickle
 import shutil
-from save_load_utils import save_trained_model, make_or_restore_model, load_transform_by_name
+from save_load_utils import *
 from utils import *
 from visualize import *
 from Agents.RL_agents.q_learning_agents import *
@@ -11,6 +8,7 @@ import Agents.RL_agents.rl_agent as rl_agent
 import tensorflow as tf
 from tensorflow.python.client import device_lib
 from tensorflow.python.keras import backend as K
+from TransformSearch.anticipation_BFS import *
 
 
 def get_available_gpus():
@@ -28,10 +26,13 @@ def log(string):
 def create_run_and_evaluate_agent(original_env, transformed_env, agent_name, env_name, num_of_episodes,
                                   anticipated_policy, result, explanation):
     # GPUtil.showUtilization()
-    agent = make_or_restore_model(transformed_env, agent_name)
+    agent, restored = make_or_restore_model(transformed_env, agent_name, env_name)
 
     print(f"\nTraining and evaluating the {agent_name} on \"{env_name}\" environment")
-    train_result = rl_agent.run(agent, num_of_episodes, method=TRAIN)
+    if not restored:
+        train_result = rl_agent.run(agent, num_of_episodes, method=TRAIN)
+    else:
+        train_result = None
 
     evaluation_result = rl_agent.run(agent, num_of_episodes, method=EVALUATE)
 
@@ -231,3 +232,18 @@ def different_envs_experiment():
     # plot_graph_by_transform_name_and_env(agent_name, all_env_evaluate_results, "300_env_evaluate_results_5000_episodes")
     # plot_success_rate_charts(names, [np.mean(v) for v in all_env_success_results.values()],
     #                          "success_rate_300_env_5000_episodes")
+
+
+def run_anticipated_dfs_search():
+    cur_env_preconditions = load_pkl_file(PRECONDITIONS_PATH)
+    try:
+        precondition_graph = load_pkl_file(PRECONDITION_GRAPH_PATH)
+    except:
+        precondition_graph = PreconditionsGraph(SINGLE_TAXI_EXAMPLE, cur_env_preconditions.not_allowed_features,
+                                                ANTICIPATED_POLICY)
+        save_pkl_file("precondition_graph_small_taxi_env.pkl", precondition_graph)
+    precondition_graph.bfs()
+
+
+if __name__ == '__main__':
+    run_anticipated_dfs_search()

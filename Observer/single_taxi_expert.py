@@ -1,5 +1,5 @@
 from Observer.abstract_expert import AbstractExpert
-from Environments.SingleTaxiEnv.single_taxi_env import *
+from Environments.SingleTaxiEnv.single_small_taxi_env import *
 from Observer.taxi_expert import shortest_path_tree
 
 
