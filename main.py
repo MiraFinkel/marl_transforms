@@ -30,7 +30,37 @@ def run_lunar_lander_env():
     default_experiment(agent_name, env_name, num_of_epochs, num_of_episodes_per_epoch, num_states_in_partial_policy)
 
 
-if __name__ == '__main__':
-    cur_env_preconditions = load_pkl_file(PRECONDITIONS_PATH)
-    generate_transforms_to_depth(cur_env_preconditions.not_allowed_features, ANTICIPATED_POLICY)
-    print("DONE!")
+def run_search_transform_taxi_env_example_colab():
+    env_name = SEARCH_TRANSFORM_TAXI_ENV
+    anticipated_policy = ANTICIPATED_POLICY
+    num_of_episodes_per_epoch = ITER_NUM
+    agent_name = KERAS_DQN
+
+    original_env = get_env(SINGLE_TAXI_EXAMPLE)
+    search_taxi_env = get_env(env_name)
+    agent = load_existing_agent(search_taxi_env, agent_name, env_name)
+    result = {}
+
+    # evaluate the performance of the agent
+    transformed_evaluation_result = rl_agent.run(agent, num_of_episodes_per_epoch, method=EVALUATE)
+
+    # check if the anticipated policy is achieved in trans_env
+    anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(original_env, agent, anticipated_policy,
+                                                                               search_taxi_env)
+
+    result[env_name] = load_pkl_file(TRAINED_AGENT_RESULT_FILE_PATH)
+    if anticipated_policy_achieved:
+        result[env_name][GOT_AN_EXPLANATION] = True
+
+    if result[env_name][GOT_AN_EXPLANATION]:
+        print(f"\nexplanation found! on the {env_name} environment.")
+        explanation = map_actions_to_explanation(original_env, agent, search_taxi_env, anticipated_policy)
+        for transform_name, actions in explanation.items():
+            print(f"transform name: {transform_name} for mapping action {actions[0]} to {actions[1]}")
+        print(explanation)
+    else:
+        print("no explanation found:-(")
+
+# if __name__ == '__main__':
+#
+#     print("DONE!")

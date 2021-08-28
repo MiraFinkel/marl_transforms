@@ -11,9 +11,11 @@ Transforms/__pycache__/
 TransformSearch/__pycache__/
 Data/big_taxi_env_data/big_taxi_transformed_envs/
 Data/small_taxi_env_data/
-Data/TrainedAgentsDQN/
+Data/TrainedAgentsDQN/results/trained_models_on_small_taxi_env_results/
+Data/TrainedAgentsDQN/trained_models_on_small_taxi_env/
 results/
 basic_preconditions_list.pkl
 big_taxi_env_preconditions.pkl
 call_bfs_bash.sh
 run_full_bfs.sh
+Data/frozen_lake_data/

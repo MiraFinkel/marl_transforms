@@ -83,7 +83,7 @@ class SingleTaxiTransformAnticipatedSearchEnv(SingleTaxiSimpleEnv):
         discrete.DiscreteEnv.__init__(self, self.num_states, self.num_actions, self.P, self.initial_state_distribution)
 
 
-def temp(env, env_preconditions, anticipated_policy):
+def create_transform_search_taxi_env(env, env_preconditions, anticipated_policy):
     default_data = [1.0, None, -1, False]
     translation_action_to_precondition_dict = dict()
     new_act_num = env.num_actions - 1
@@ -115,6 +115,7 @@ def temp(env, env_preconditions, anticipated_policy):
                         _, transformed_env = load_transform_by_name(precondition[PRECONDITION_NAME_IDX])
                         new_pre_action = translation_action_to_precondition_dict[precondition[PRECONDITION_NAME_IDX]]
                         env.P[anticipated_state][new_pre_action] = transformed_env.P[anticipated_state][anticipated_a]
+    env.translation_action_to_precondition_dict = translation_action_to_precondition_dict
     return env
 
 
