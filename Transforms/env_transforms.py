@@ -1,10 +1,5 @@
 import collections
-# import copy
-import itertools
-# import pickle
 import numpy as np
-
-from TransformSearch.anticipation_BFS import *
 from save_load_utils import *
 
 
@@ -36,12 +31,13 @@ def get_state_to_replace(env, preconditions_info, act, preconditions):
     state_to_replace = []
     for state in env.P.keys():
         decoded_state = np.array(env.decode(state))
-        for k, v in preconditions_info.items():
-            state_values = decoded_state[np.array([k])]
-            sufficient_for_action = is_sufficient_for_action(k, v, preconditions.not_allowed_features, act,
-                                                             decoded_state)
-            if (state_values == np.array(v)).all() and sufficient_for_action:
-                state_to_replace.append(state)
+        for idx, values in preconditions_info.items():
+            for v in values:
+                state_values = decoded_state[np.array([idx])]
+                sufficient_for_action = is_sufficient_for_action(idx, v, preconditions.not_allowed_features, act,
+                                                                 decoded_state)
+                if np.array([state_values == np.array(v)]).all() and sufficient_for_action:
+                    state_to_replace.append(state)
     return state_to_replace
 
 

@@ -31,4 +31,6 @@ def run_lunar_lander_env():
 
 
 if __name__ == '__main__':
-    run_single_taxi_env()
+    cur_env_preconditions = load_pkl_file(PRECONDITIONS_PATH)
+    generate_transforms_to_depth(cur_env_preconditions.not_allowed_features, ANTICIPATED_POLICY)
+    print("DONE!")

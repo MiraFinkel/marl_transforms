@@ -48,11 +48,3 @@ def create_single_taxi_transforms():
 
     for p in processes:
         p.join()
-
-# if __name__ == '__main__':
-# check_success_rate()
-# create_single_taxi_transforms()
-# a_file = open("Transforms/taxi_example_data/" + PRECONDITIONS_FILE_NAME, "rb")
-# cur_env_preconditions = pickle.load(a_file)
-# generate_triple_of_transforms(cur_env_preconditions)
-# print("DONE!")
