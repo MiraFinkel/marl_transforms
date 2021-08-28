@@ -95,6 +95,8 @@ def temp(env, env_preconditions, anticipated_policy):
                 default_data[NEXT_STATE_IDX] = s
                 env.P[s][new_act_num] = [tuple(default_data)]
                 translation_action_to_precondition_dict[pre[PRECONDITION_NAME_IDX]] = new_act_num
+    env.num_actions = new_act_num + 1
+    discrete.DiscreteEnv.__init__(env, env.num_states, env.num_actions, env.P, env.initial_state_distribution)
     for anticipated_s, anticipated_actions in anticipated_policy.items():
         anticipated_states = env.get_states_from_partial_obs(anticipated_s)
         for anticipated_a in anticipated_actions:
