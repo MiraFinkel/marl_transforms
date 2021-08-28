@@ -1,4 +1,4 @@
-from Environments.SingleTaxiEnv.single_big_taxi_env import *
+from Environments.SingleTaxiEnv.single_taxi_env import *
 
 SMALL_EXAMPLE_MAP = [
     "+-----+",
@@ -9,7 +9,7 @@ SMALL_EXAMPLE_MAP = [
 ]
 
 
-class SingleSmallTaxiEnv(SingleBigTaxiEnv):
+class SingleSmallTaxiEnv(SingleTaxiEnv):
     """
     The Taxi Problem
     from "Hierarchical Reinforcement Learning with the MAXQ Value Function Decomposition"

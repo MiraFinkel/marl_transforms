@@ -202,3 +202,15 @@ def get_transform_name(env_name, bool_params):
     elif env_name == LUNAR_LANDER:
         from Transforms.lunar_lander_transforms import get_lunar_lander_transform_name
         return get_lunar_lander_transform_name(bool_params)
+
+
+def is_transform_actions_influence_anticipated_policy(anticipated_actions, transform_actions):
+    influence = True
+    for act in transform_actions:
+        if not influence:
+            break
+        influence = False
+        for anti_act in anticipated_actions:
+            if act in anti_act:
+                influence = True
+    return influence

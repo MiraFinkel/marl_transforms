@@ -1,6 +1,6 @@
 from Environments.SingleTaxiEnv.single_taxi_wrapper import *
 from Transforms.env_transforms import *
-from Transforms.transform_constants import *
+from utils import *
 
 DETERMINISTIC = True
 
@@ -149,7 +149,50 @@ def generate_single_transforms(env_preconditions):
                 generate_transformed_env(precondition, env_file_name, save=True)
 
 
+def generate_transforms_to_depth(preconditions, anticipated_policy, max_depth=None):
+    if not max_depth:
+        max_depth = len(anticipated_policy)
+    basic_preconditions_list = []
+    for act, action_info in preconditions.items():
+        for idx, values in action_info.items():
+            for val in values:
+                pre_string = f"{act}_{idx}_{val}"
+                precondition_actions = get_precondition_actions_from_string(pre_string)
+                influence = is_transform_actions_influence_anticipated_policy(list(anticipated_policy.values()),
+                                                                              precondition_actions)
+                if influence:
+                    basic_preconditions_list.append(pre_string)
+                    precondition = {act: {idx: val}}
+                    env_file_name_path = f"{TRANSFORMS_PATH}" + pre_string
+                    generate_transformed_env(precondition, env_file_name_path, try_load_existing=False, save=True)
+    # basic_preconditions_list = load_pkl_file("basic_preconditions_list.pkl")
+
+    all_preconditions_list = {1: tuple(tuple([pre]) for pre in basic_preconditions_list)}
+    for i in range(2, max_depth):
+        print(f"depth: {i}")
+        all_preconditions_list[i] = tuple(itertools.combinations(basic_preconditions_list, i))
+        for pre in all_preconditions_list[i]:
+            precondition = dict()
+            env_file_name = ""
+            for p in pre:
+                act = get_precondition_actions_from_string(p)[0]
+                idx = get_precondition_idx_from_string(p)
+                val = get_precondition_val_from_string(p)
+                env_file_name += f"{act}_{idx}_{val}_"
+                if act in precondition.keys():
+                    if idx in precondition[act].keys():
+                        precondition[act][idx].append(val)
+                    else:
+                        precondition[act][idx] = [val]
+                else:
+                    precondition[act] = {idx: [val]}
+            env_file_name = env_file_name[:-1]
+            env_file_name_path = f"{TRANSFORMS_PATH}" + env_file_name
+            generate_transformed_env(precondition, env_file_name_path, save=True)
+
+
 def generate_transformed_env(precondition, env_file_name, save=True, try_load_existing=True, env_default_values=None):
+    print(f"Generating precondition env: {precondition}")
     new_env = None
     if try_load_existing:
         file_name = os.path.basename(env_file_name)

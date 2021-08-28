@@ -8,8 +8,12 @@ Environments/MultiTaxiEnv/__pycache__/
 Environments/SingleTaxiEnv/__pycache__/
 Environments/__pycache__/
 Transforms/__pycache__/
-Data/big_taxi_env_data/
+TransformSearch/__pycache__/
+Data/big_taxi_env_data/big_taxi_transformed_envs/
 Data/small_taxi_env_data/
 Data/TrainedAgentsDQN/
 results/
-TransformSearch/__pycache__/
+basic_preconditions_list.pkl
+big_taxi_env_preconditions.pkl
+call_bfs_bash.sh
+run_full_bfs.sh

@@ -26,17 +26,38 @@ GOT_AN_EXPLANATION = "explanation"
 ORIGINAL_ENV = "original_env"
 FUEL_TRANSFORMED_ENV = "fuel"
 
-ANTICIPATED_POLICY = {(2, 0, 0, 3, None): [1],
-                      (1, 0, 0, 3, None): [1],
-                      (0, 0, 0, 3, None): [4],
-                      (0, 0, 4, 3, None): [0],
-                      (1, 0, 4, 3, None): [2],
-                      (1, 1, 4, 3, None): [2],
-                      (1, 2, 4, 3, None): [0],
-                      (2, 2, 4, 3, None): [5]}
+SMALL_TAXI_ANTICIPATED_POLICY = {(2, 0, 0, 3, None): [1],
+                                 (1, 0, 0, 3, None): [1],
+                                 (0, 0, 0, 3, None): [4],
+                                 (0, 0, 4, 3, None): [0],
+                                 (1, 0, 4, 3, None): [2],
+                                 (1, 1, 4, 3, None): [2],
+                                 (1, 2, 4, 3, None): [0],
+                                 (2, 2, 4, 3, None): [5]}
 
-MAX_GRAPH_DEPTH = 6
+BIG_TAXI_ANTICIPATED_POLICY = {(4, 0, 0, 3, None): [1],
+                               (3, 0, 0, 3, None): [1],
+                               (2, 0, 0, 3, None): [1],
+                               (1, 0, 0, 3, None): [1],
+                               (0, 0, 0, 3, None): [4],
+                               (0, 0, 4, 3, None): [0, 2],
+                               (0, 1, 4, 3, None): [0],
+                               (1, 0, 4, 3, None): [0, 2],
+                               (1, 1, 4, 3, None): [0],
+                               (2, 0, 4, 3, None): [2],
+                               (2, 1, 4, 3, None): [2],
+                               (2, 2, 4, 3, None): [2],
+                               (2, 3, 4, 3, None): [0, 2],
+                               (2, 4, 4, 3, None): [0],
+                               (3, 3, 4, 3, None): [0, 2],
+                               (3, 4, 4, 3, None): [0],
+                               (4, 3, 4, 3, None): [2],
+                               (4, 4, 4, 3, None): [5]
+                               }
+ANTICIPATED_POLICY = BIG_TAXI_ANTICIPATED_POLICY
 
+PRECONDITION_NAME_IDX = 0
+NEXT_STATE_IDX = 1
 # ---------------------- PATHS ----------------------- #
 CUR_ENV_NAME = "big_taxi"
 
@@ -53,4 +74,3 @@ PRECONDITIONS_PATH = TAXI_TRANSFORM_DATA_PATH + PRECONDITIONS_FILE_NAME
 PRECONDITION_GRAPH_PATH = TAXI_TRANSFORM_DATA_PATH + f"precondition_graph_{CUR_ENV_NAME}_env.pkl"
 ALL_SMALL_TAXI_TRANSFORMED_ENVS_PATH = TAXI_TRANSFORM_DATA_PATH + "all_single_transformed_envs.pkl"
 TRANSFORMS_PATH = TAXI_TRANSFORM_DATA_PATH + f"{CUR_ENV_NAME}_transformed_envs/"
-

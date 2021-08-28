@@ -9,6 +9,7 @@ import tensorflow as tf
 from tensorflow.python.client import device_lib
 from tensorflow.python.keras import backend as K
 from TransformSearch.anticipation_BFS import *
+from Transforms.env_precinditions import *
 
 
 def get_available_gpus():
@@ -236,14 +237,19 @@ def different_envs_experiment():
 
 def run_anticipated_dfs_search():
     cur_env_preconditions = load_pkl_file(PRECONDITIONS_PATH)
-    try:
-        precondition_graph = load_pkl_file(PRECONDITION_GRAPH_PATH)
-    except:
+    precondition_graph = load_pkl_file(PRECONDITION_GRAPH_PATH)
+    if not precondition_graph:
         precondition_graph = PreconditionsGraph(SINGLE_TAXI_EXAMPLE, cur_env_preconditions.not_allowed_features,
                                                 ANTICIPATED_POLICY)
         save_pkl_file("precondition_graph_small_taxi_env.pkl", precondition_graph)
     precondition_graph.bfs()
 
 
-if __name__ == '__main__':
-    run_anticipated_dfs_search()
+# if __name__ == '__main__':
+#     from TransformSearch.taxi_transform_search_env import temp, reformat_preconditions
+#
+#     env = get_env(SINGLE_TAXI_EXAMPLE)
+#     preconditions = load_pkl_file(PRECONDITIONS_PATH)
+#     new_env_preconditions = reformat_preconditions(preconditions)
+#     new_env = temp(env, new_env_preconditions, ANTICIPATED_POLICY)
+#     a = 7

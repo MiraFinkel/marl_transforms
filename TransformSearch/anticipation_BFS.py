@@ -1,7 +1,5 @@
-from collections import defaultdict
-
-from Transforms.single_taxi_transforms import generate_transformed_env
 from train_agent import *
+from utils import is_transform_actions_influence_anticipated_policy
 
 
 class TransformNode:
@@ -35,6 +33,7 @@ class PreconditionsGraph:
         self.root.visited = True
         self.graph = defaultdict(TransformNode)
         self.graph[ORIGINAL_ENV] = self.root
+        self.max_depth = len(anticipated_policy) + 1
         self.build_preconditions_graph(preconditions, anticipated_policy)
         self.original_env = get_env(env_name)
 
@@ -91,7 +90,7 @@ class PreconditionsGraph:
                         self.root.adjacent_nodes.append(node)
 
         all_preconditions_list = {1: tuple(tuple([pre]) for pre in basic_preconditions_list)}
-        for i in range(2, MAX_GRAPH_DEPTH + 1):
+        for i in range(2, self.max_depth):
             depth += 1
             print(f"depth: {depth}")
             all_preconditions_list[i] = tuple(itertools.combinations(basic_preconditions_list, i))
@@ -108,18 +107,6 @@ class PreconditionsGraph:
                 node = TransformNode(actions=actions, idxes=idxes, values=vals, val=0, depth=depth, parents=[],
                                      preconditions_graph=self)
                 self.update_graph(all_preconditions_list, depth, node)
-
-
-def is_transform_actions_influence_anticipated_policy(anticipated_actions, transform_actions):
-    influence = True
-    for act in transform_actions:
-        if not influence:
-            break
-        influence = False
-        for anti_act in anticipated_actions:
-            if act in anti_act:
-                influence = True
-    return influence
 
 
 def get_precondition_from_transform_node(mdp_node):
