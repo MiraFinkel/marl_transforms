@@ -28,6 +28,10 @@ def get_env(env_name, number_of_agents=1):
     elif env_name == LUNAR_LANDER:
         from Environments.lunar_lander_wrapper import LunarLenderWrapper
         return LunarLenderWrapper()
+    elif env_name == SEARCH_TRANSFORM_TAXI_ENV:
+        from Environments.SingleTaxiEnv.single_taxi_wrapper import SingleTaxiSimpleEnv
+        new_env = load_pkl_file(TRANSFORM_SEARCH_TAXI_ENV_PATH)
+        return new_env
     elif env_name == SPEAKER_LISTENER:
         from supersuit import pad_observations_v0, pad_action_space_v0
         from pettingzoo.mpe import simple_speaker_listener_v3
@@ -103,21 +107,64 @@ def add_one_if_in_dict(given_dict, key):
     return given_dict
 
 
-def is_anticipated_policy_achieved(env, agent, anticipated_policy):
+def map_action(transformed_env, agent_action):
+    real_action = -1
+    transform_name = ""
+    for transform_name, abstract_action in transformed_env.translation_action_to_precondition_dict.items():
+        if agent_action == abstract_action:
+            real_action = int(transform_name[0])
+            break
+    return real_action, transform_name
+
+
+def map_actions_to_explanation(original_env, agent, search_taxi_env, anticipated_policy):
+    explanation = dict()
     agent.evaluating = True
-    success_policies_set, failed_policies_set, not_reached_policy_set = set(), set(), set()
-    cur_state = env.reset()
+    cur_state = search_taxi_env.reset()
     done, steps_num = False, 0
     while not done and steps_num < 100:
         agent_action = agent.compute_action(cur_state)
-        is_align, anticipated_action, anticipated_state = is_state_align_with_anticipated_policy(env, cur_state,
+        if agent_action not in [_ for _ in range(original_env.num_actions)]:
+            agent_real_action, transform_name = map_action(search_taxi_env, agent_action)
+            explanation[transform_name] = (agent_real_action, agent_action)
+        cur_state, reward, done, prob = search_taxi_env.step(agent_action)
+        steps_num += 1
+    return explanation
+
+
+    # for partial_obs in anticipated_policy.keys():
+    #     # original_partial_obs = partial_obs
+    #     partial_obs = list(partial_obs)
+    #     states_from_partial_obs = original_env.get_states_from_partial_obs(partial_obs)
+    #     for i, state in enumerate(states_from_partial_obs):
+    #         agent_action = agent.compute_action(state)
+    #         if agent_action not in [_ for _ in range(original_env.num_actions)]:
+    #             agent_real_action, transform_name = map_action(search_taxi_env, agent_action)
+    #             explanation[transform_name] = (agent_real_action, agent_action)
+    #             agent_action = agent_real_action
+    # agent.evaluating = False
+    # return explanation
+
+
+def is_anticipated_policy_achieved(original_env, agent, anticipated_policy, transformed_env=None):
+    agent.evaluating = True
+    success_policies_set, failed_policies_set, not_reached_policy_set = set(), set(), set()
+    cur_state = original_env.reset()
+    done, steps_num = False, 0
+    while not done and steps_num < 100:
+        agent_action = agent.compute_action(cur_state)
+        if transformed_env:
+            if agent_action not in [_ for _ in range(original_env.num_actions)]:
+                agent_action, _ = map_action(transformed_env, agent_action)
+        is_align, anticipated_action, anticipated_state = is_state_align_with_anticipated_policy(original_env,
+                                                                                                 cur_state,
                                                                                                  anticipated_policy)
         if is_align:
             if is_actions_align(agent_action, anticipated_action):
                 success_policies_set.add(anticipated_state)
             else:
                 failed_policies_set.add(anticipated_state)
-        cur_state, reward, done, prob = env.step(agent_action)
+        cur_state, reward, done, prob = original_env.step(agent_action)
         steps_num += 1
     for anticipated_state in anticipated_policy.keys():
         if anticipated_state not in success_policies_set and anticipated_state not in failed_policies_set:

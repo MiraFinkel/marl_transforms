@@ -4,15 +4,15 @@ from contextlib import closing
 from io import StringIO
 from gym import utils
 from gym.envs.toy_text import discrete
-from Environments.SingleTaxiEnv.single_taxi_constants import *
+from Environments.ApplePicking.apple_picking_constants import *
 
 MAP = [
     "+---------+",
-    "|A: | : :A|",
-    "| : | : : |",
+    "|A: :z: :A|",
+    "| : :z: : |",
     "| : : : : |",
-    "| : : | : |",
-    "|Y: :A| :A|",
+    "| : : :z: |",
+    "|S: :A:z:A|",
     "+---------+",
 ]
 
@@ -43,9 +43,6 @@ class ApplePickingEnv(discrete.DiscreteEnv):
     - 5: drop off passenger
     - 6: refuel the taxi
     Rewards:
-    There is a default per-step reward of -1,
-    except for delivering the passenger, which is +20,
-    or executing "pickup" and "drop-off" actions illegally, which is -10.
     Rendering:
     - blue: passenger
     - magenta: destination
@@ -63,16 +60,14 @@ class ApplePickingEnv(discrete.DiscreteEnv):
         self.desc = np.asarray(MAP, dtype='c')
         w, h = self.desc.shape
         self.last_action = None
-        self.apple_locations = self.get_info_from_map()
+        self.apple_locations, self.thorny_wall_locations, self.start_position = self.get_info_from_map()
         self.num_rows = int(w - 2)
         self.num_columns = int((h - 1) / 2)
-        self.num_states = (self.num_rows * self.num_columns) * (len(self.passengers_locations) + 1) * (
-            len(self.passengers_locations)) * MAX_FUEL
+        self.num_states = (self.num_rows * self.num_columns)  # * len(self.apple_locations)
         self.max_row = self.num_rows - 1
         self.max_col = self.num_columns - 1
         self.initial_state_distribution = np.zeros(self.num_states)
         self.num_actions = len(ACTIONS)
-        self.passenger_in_taxi = len(self.passengers_locations)
         self.P = self.build_transition_matrix(deterministic=deterministic)
         # self.initial_state_distribution /= self.initial_state_distribution.sum()
         discrete.DiscreteEnv.__init__(self, self.num_states, self.num_actions, self.P, self.initial_state_distribution)
@@ -86,43 +81,39 @@ class ApplePickingEnv(discrete.DiscreteEnv):
         P = {state: {action: [] for action in range(self.num_actions)} for state in range(self.num_states)}
         for row in range(self.num_rows):
             for col in range(self.num_columns):
-                for pass_idx in range(len(self.passengers_locations) + 1):  # +1 for being inside taxi
-                    for dest_idx in range(len(self.passengers_locations)):
-                        for fuel in range(self.taxi_fuel):
-                            init_fuel = fuel
-                            state = self.encode(row, col, pass_idx, dest_idx, fuel)
-                            if self.is_possible_initial_state(pass_idx, dest_idx, row,
-                                                              col) and state == self.init_state:
-                                self.initial_state_distribution[state] += 1.0
-                            for action in range(self.num_actions):
-                                new_row, new_col, new_pass_idx = row, col, pass_idx
-                                reward = REWARD_DICT[STEP_REWARD]  # default reward when there is no pickup/dropoff
-                                done = False
-                                taxi_loc = (row, col)
+                for num_of_picked_apples in range(len(self.apple_locations)):
+                    state = self.encode(row, col, num_of_picked_apples)
+                    if self.start_position[0] == row and self.start_position[1] == col and num_of_picked_apples == 0:
+                        self.initial_state_distribution[state] += 1.0
+                    for action in range(self.num_actions):
+                        new_row, new_col = row, col
+                        reward = REWARD_DICT[STEP_REWARD]  # default reward when there is no pickup/dropoff
+                        done = False
+                        taxi_loc = (row, col)
 
-                                if fuel == 0:
-                                    done = True
-                                    reward = REWARD_DICT[NO_FUEL_REWARD]
-                                else:
-                                    if action in [SOUTH, NORTH, WEST, EAST]:
-                                        new_row, new_col, fuel = self.try_to_move(action, fuel, row, col)
+                        if fuel == 0:
+                            done = True
+                            reward = REWARD_DICT[NO_FUEL_REWARD]
+                        else:
+                            if action in [SOUTH, NORTH, WEST, EAST]:
+                                new_row, new_col, fuel = self.try_to_move(action, fuel, row, col)
 
-                                    elif action == PICKUP:
-                                        new_pass_idx, reward = self.try_picking_up(pass_idx, taxi_loc, reward,
-                                                                                   new_pass_idx)
-                                    elif action == DROPOFF:
-                                        new_pass_idx, reward, done = self.try_dropping_off(taxi_loc, dest_idx, pass_idx,
-                                                                                           new_pass_idx, reward, done)
-                                    elif action == REFUEL:
-                                        fuel, reward = self.try_to_refuel(taxi_loc, fuel)
-                                new_state = self.encode(new_row, new_col, new_pass_idx, dest_idx, fuel)
-                                if deterministic:
-                                    P[state][action].append((DETERMINISTIC_PROB, new_state, reward, done))
-                                else:
-                                    probs = self.get_stochastic_probs(action, row, col, pass_idx, dest_idx, init_fuel,
-                                                                      new_state, reward, done)
-                                    P[state][action] = probs
-                                fuel = init_fuel
+                            elif action == PICKUP:
+                                new_pass_idx, reward = self.try_picking_up(pass_idx, taxi_loc, reward,
+                                                                           new_pass_idx)
+                            elif action == DROPOFF:
+                                new_pass_idx, reward, done = self.try_dropping_off(taxi_loc, dest_idx, pass_idx,
+                                                                                   new_pass_idx, reward, done)
+                            elif action == REFUEL:
+                                fuel, reward = self.try_to_refuel(taxi_loc, fuel)
+                        new_state = self.encode(new_row, new_col, new_pass_idx, dest_idx, fuel)
+                        if deterministic:
+                            P[state][action].append((DETERMINISTIC_PROB, new_state, reward, done))
+                        else:
+                            probs = self.get_stochastic_probs(action, row, col, pass_idx, dest_idx, init_fuel,
+                                                              new_state, reward, done)
+                            P[state][action] = probs
+                        fuel = init_fuel
         return P
 
     def encode(self, taxi_row, taxi_col, pass_loc, dest_idx, fuel):
@@ -267,41 +258,23 @@ class ApplePickingEnv(discrete.DiscreteEnv):
             reward = REWARD_DICT[BAD_PICKUP_REWARD]
         return new_pass_idx, reward
 
-    def try_dropping_off(self, taxi_loc, dest_idx, pass_idx, new_pass_idx, reward, done):
-        if (taxi_loc == self.passengers_locations[dest_idx]) and pass_idx == self.passenger_in_taxi:
-            new_pass_idx = dest_idx
-            done = True
-            reward = REWARD_DICT[DROPOFF_REWARD]
-        elif (taxi_loc in self.passengers_locations) and pass_idx == self.passenger_in_taxi:
-            new_pass_idx = self.passengers_locations.index(taxi_loc)
-        else:  # dropoff at wrong location
-            reward = REWARD_DICT[BAD_DROPOFF_REWARD]
-        return new_pass_idx, reward, done
-
-    def try_to_refuel(self, taxi_loc, fuel):
-        if taxi_loc == self.fuel_station and fuel < (MAX_FUEL - 10):
-            reward = REWARD_DICT[REFUEL_REWARD]
-            fuel = MAX_FUEL - 1
-        else:
-            reward = REWARD_DICT[BAD_REFUEL_REWARD]
-        return fuel, reward
-
     def is_possible_initial_state(self, pass_idx, dest_idx, row, col):
         return pass_idx < 4 and pass_idx != dest_idx
 
     def get_info_from_map(self):
-        fuel_station = None
-        passenger_locations = []
+        apple_locations, thorny_wall_locations, start_position = [], [], (4, 0)
         h, w = self.desc.shape
         h, w = (h - 2), (w - 2)
         for x in range(1, h + 1):
             for y in range(1, w + 1):
                 c = self.desc[x][y]
-                if c == b'R' or c == b'G' or c == b'B' or c == b'Y':
-                    passenger_locations.append((x - 1, int(y / 2)))
-                elif c == b'F':
-                    fuel_station = (x - 1, int(y / 2))
-        return passenger_locations, fuel_station
+                if c == b'A':
+                    apple_locations.append((x - 1, int(y / 2)))
+                elif c == b'z':
+                    thorny_wall_locations.append((x - 1, int(y / 2)))
+                elif c == b'S':
+                    start_position = (x - 1, int(y / 2))
+        return apple_locations, thorny_wall_locations, start_position
 
 #
 # if __name__ == '__main__':
