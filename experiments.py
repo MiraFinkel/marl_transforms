@@ -245,11 +245,11 @@ def run_anticipated_dfs_search():
     precondition_graph.bfs()
 
 
-if __name__ == '__main__':
-    from TransformSearch.taxi_transform_search_env import temp, reformat_preconditions
-
-    env = get_env(SINGLE_TAXI_EXAMPLE)
-    preconditions = load_pkl_file(PRECONDITIONS_PATH)
-    new_env_preconditions = reformat_preconditions(preconditions)
-    new_env = temp(env, new_env_preconditions, ANTICIPATED_POLICY)
-    a = 7
+# if __name__ == '__main__':
+#     from TransformSearch.taxi_transform_search_env import temp, reformat_preconditions
+#
+#     env = get_env(SINGLE_TAXI_EXAMPLE)
+#     preconditions = load_pkl_file(PRECONDITIONS_PATH)
+#     new_env_preconditions = reformat_preconditions(preconditions)
+#     new_env = temp(env, new_env_preconditions, ANTICIPATED_POLICY)
+#     a = 7
