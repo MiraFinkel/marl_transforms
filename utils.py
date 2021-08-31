@@ -25,6 +25,9 @@ def get_env(env_name, number_of_agents=1):
     elif env_name == SINGLE_TAXI_EXAMPLE:
         from Environments.SingleTaxiEnv.single_taxi_wrapper import SingleTaxiSimpleEnv
         return SingleTaxiSimpleEnv()
+    elif env_name == SINGLE_FROZEN_EXAMPLE:
+        from Environments.frozenlake_environment import FrozenLakeEnv
+        return FrozenLakeEnv()
     elif env_name == LUNAR_LANDER:
         from Environments.lunar_lander_wrapper import LunarLenderWrapper
         return LunarLenderWrapper()
