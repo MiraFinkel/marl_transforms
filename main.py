@@ -61,6 +61,9 @@ def run_search_transform_taxi_env_example_colab():
     else:
         print("no explanation found:-(")
 
+
 # if __name__ == '__main__':
-#
+#     from TransformSearch.greedy_search import greedy_search
+#     cur_env_preconditions = load_pkl_file(PRECONDITIONS_PATH)
+#     max_transformed_env_opt = greedy_search(cur_env_preconditions, ANTICIPATED_POLICY)
 #     print("DONE!")
