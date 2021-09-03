@@ -4,8 +4,10 @@ import os
 import pickle
 import re
 from Agents.RL_agents import rl_agent
-from Transforms.transform_constants import SINGLE_TAXI_EXAMPLE
+from Transforms.transform_constants import SINGLE_TAXI_EXAMPLE, SINGLE_FROZEN_EXAMPLE
 from constants import *
+
+
 import warnings
 
 
@@ -140,9 +142,10 @@ def load_existing_transforms_by_anticipated_policy(env_name, anticipated_policy,
 
 
 def load_transform_by_name(file_name, dir_name=TRANSFORMS_PATH):
-    if not file_name[:-4] == ".pkl":
+    if not file_name[-4:] == ".pkl":
         file_name += ".pkl"
     transform_name = os.path.basename(file_name)[:-4]
+
     try:
         file = open(dir_name + file_name, "rb")
         new_env = pickle.load(file)
