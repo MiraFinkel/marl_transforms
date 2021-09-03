@@ -106,9 +106,13 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
         self.desc = desc = np.asarray(desc, dtype='c')
         self.nrow, self.ncol = nrow, ncol = desc.shape
         self.reward_range = (0, 1)
-
+        self.num_actions = 4
+        self.num_columns = ncol
+        self.num_rows = nrow
         nA = 4
         nS = nrow * ncol
+        self.num_states = self.ncol * self.nrow
+
 
         isd = np.array(desc == b'S').astype('float64').ravel()
         isd /= isd.sum()
@@ -132,6 +136,7 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
                 row, col = inc(row, col, wind, recursion_on=False)
 
             return (row, col)
+
 
         def update_probability_matrix(row, col, action):
             newrow, newcol = inc(row, col, action)
@@ -164,6 +169,11 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
 
         super(FrozenLakeEnv, self).__init__(nS, nA, P, isd)
 
+    def decode(self, s):
+        col = s % self.num_columns
+        row = s // self.num_columns
+        return row, col
+
     def render(self, mode='human'):
         outfile = StringIO() if mode == 'ansi' else sys.stdout
 
@@ -171,8 +181,12 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
         desc = self.desc.tolist()
         desc = [[c.decode('utf-8') for c in line] for line in desc]
         desc[row][col] = utils.colorize(desc[row][col], "red", highlight=True)
+        action_names = ["Left", "Down", "Right", "Up"]
+        for i in range(4,self.num_actions):
+            action_names.append(f'custom_action_{i}')
+
         if self.lastaction is not None:
-            outfile.write("  ({})\n".format(["Left", "Down", "Right", "Up"][self.lastaction]))
+            outfile.write("  ({})\n".format(action_names[self.lastaction]))
         else:
             outfile.write("\n")
         outfile.write("\n".join(''.join(line) for line in desc) + "\n")
