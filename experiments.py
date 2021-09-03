@@ -178,10 +178,10 @@ def plot_results_by_number_of_transforms(pkl_name, output_folder, num_episodes):
 
 
 def default_experiment(agent_name, env_name, num_of_epochs, num_of_episodes_per_epoch, num_states_in_partial_policy):
-    output_folder = "./output/"
-    if os.path.isdir(output_folder):
-        shutil.rmtree(output_folder)
-    os.makedirs(output_folder)
+    # output_folder = "./output/"
+    # if os.path.isdir(output_folder):
+    #     shutil.rmtree(output_folder)
+    # os.makedirs(output_folder)
 
     result = []
 
@@ -191,7 +191,7 @@ def default_experiment(agent_name, env_name, num_of_epochs, num_of_episodes_per_
         result.append(episode_result)
 
     # save result
-    pkl_name = output_folder + agent_name + '_all_stats_' + str(num_of_episodes_per_epoch) + "_states_" + str(
+    pkl_name = DATA_FOLDER + agent_name + '_all_stats_' + str(num_of_episodes_per_epoch) + "_states_" + str(
         num_states_in_partial_policy) + ".pkl"
     output = open(pkl_name, 'wb')
     pickle.dump(result, output)

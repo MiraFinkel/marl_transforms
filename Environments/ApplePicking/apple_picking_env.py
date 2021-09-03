@@ -1,3 +1,5 @@
+import copy
+import math
 import sys
 import numpy as np
 from contextlib import closing
@@ -5,30 +7,40 @@ from io import StringIO
 from gym import utils
 from gym.envs.toy_text import discrete
 from Environments.ApplePicking.apple_picking_constants import *
+from Environments.ApplePicking.BiDict import bidict
 
 MAP = [
     "+---------+",
     "|A: :z: :A|",
-    "| : :z: : |",
     "| : : : : |",
+    "|z: : : : |",
     "| : : :z: |",
-    "|S: :A:z:A|",
+    "|S:z:A:z:A|",
     "+---------+",
 ]
 
+global idx
 
-def try_step_south_or_east(fuel, place, max_place):
+
+def try_step_south_or_east(place, max_place):
     new_place = min(place + 1, max_place)
-    if new_place == place + 1:
-        fuel -= 1
-    return fuel, new_place
+    return new_place
 
 
-def try_step_west_or_north(fuel, place, max_place):
+def try_step_west_or_north(place, max_place):
     new_place = max(place - 1, max_place)
-    if new_place == place - 1:
-        fuel -= 1
-    return fuel, new_place
+    return new_place
+
+
+def apples_valid(a1, a2, a3, a4):
+    result = not (
+            a1 != 0 and a1 == a2 and a1 == a3 and a1 == a4 and a2 != 0 and a2 == a3 and a2 == a4 and a3 != 0 and a3 == a4)
+    tamp_apple_arr = [a1, a2, a3, a4]
+    max_apple = max([a1, a2, a3, a4])
+    for i in range(1, max_apple):
+        if i not in tamp_apple_arr:
+            result = False
+    return result
 
 
 class ApplePickingEnv(discrete.DiscreteEnv):
@@ -39,9 +51,7 @@ class ApplePickingEnv(discrete.DiscreteEnv):
     - 1: move north
     - 2: move east
     - 3: move west
-    - 4: pickup passenger
-    - 5: drop off passenger
-    - 6: refuel the taxi
+    - 4: pickup an apple
     Rewards:
     Rendering:
     - blue: passenger
@@ -55,19 +65,22 @@ class ApplePickingEnv(discrete.DiscreteEnv):
     metadata = {'render.modes': ['human', 'ansi']}
 
     def __init__(self, deterministic=True):
-        self.init_state, self.init_row, self.init_col = 20154, 4, 0
         self.deterministic = deterministic
         self.desc = np.asarray(MAP, dtype='c')
         w, h = self.desc.shape
         self.last_action = None
-        self.apple_locations, self.thorny_wall_locations, self.start_position = self.get_info_from_map()
+        self.apple_locations, self.thorny_locations, self.start_position = self.get_info_from_map()
+        self.original_apple_locations = copy.deepcopy(self.apple_locations)
+        self.num_of_picked_apples = 0
         self.num_rows = int(w - 2)
         self.num_columns = int((h - 1) / 2)
-        self.num_states = (self.num_rows * self.num_columns)  # * len(self.apple_locations)
+        # actually it is 209 but for decoding we need 5 ^ 5
+        self.num_states = (self.num_rows * self.num_columns) * int(math.pow(5, 5))
         self.max_row = self.num_rows - 1
         self.max_col = self.num_columns - 1
         self.initial_state_distribution = np.zeros(self.num_states)
         self.num_actions = len(ACTIONS)
+        self.translation_dict = bidict()
         self.P = self.build_transition_matrix(deterministic=deterministic)
         # self.initial_state_distribution /= self.initial_state_distribution.sum()
         discrete.DiscreteEnv.__init__(self, self.num_states, self.num_actions, self.P, self.initial_state_distribution)
@@ -79,86 +92,106 @@ class ApplePickingEnv(discrete.DiscreteEnv):
         return: dictionary with the transition matrix
         """
         P = {state: {action: [] for action in range(self.num_actions)} for state in range(self.num_states)}
+        global idx
+        idx = -1
         for row in range(self.num_rows):
             for col in range(self.num_columns):
-                for num_of_picked_apples in range(len(self.apple_locations)):
-                    state = self.encode(row, col, num_of_picked_apples)
-                    if self.start_position[0] == row and self.start_position[1] == col and num_of_picked_apples == 0:
-                        self.initial_state_distribution[state] += 1.0
-                    for action in range(self.num_actions):
-                        new_row, new_col = row, col
-                        reward = REWARD_DICT[STEP_REWARD]  # default reward when there is no pickup/dropoff
-                        done = False
-                        taxi_loc = (row, col)
+                for apple1 in range(len(self.apple_locations) + 1):
+                    for apple2 in range(len(self.apple_locations) + 1):
+                        for apple3 in range(len(self.apple_locations) + 1):
+                            for apple4 in range(len(self.apple_locations) + 1):
+                                if not apples_valid(apple1, apple2, apple3, apple4):
+                                    continue
+                                state = self.encode(row, col, apple1, apple2, apple3, apple4)
+                                apple_arr = [apple1, apple2, apple3, apple4]
+                                num_of_picked_apples = sum(apple_arr)
+                                if row == self.start_position[0] and col == self.start_position[
+                                    1] and num_of_picked_apples == 0:
+                                    self.initial_state_distribution[state] += 1.0
+                                for action in range(self.num_actions):
+                                    new_row, new_col = row, col
+                                    new_apple1, new_apple2, new_apple3, new_apple4 = apple1, apple2, apple3, apple4
+                                    new_apple_arr = [new_apple1, new_apple2, new_apple3, new_apple4]
+                                    reward = REWARD_DICT[STEP_REWARD]  # default reward when there is no pickup
+                                    done = False
+                                    collector_loc = (row, col)
 
-                        if fuel == 0:
-                            done = True
-                            reward = REWARD_DICT[NO_FUEL_REWARD]
-                        else:
-                            if action in [SOUTH, NORTH, WEST, EAST]:
-                                new_row, new_col, fuel = self.try_to_move(action, fuel, row, col)
+                                    if action in [SOUTH, NORTH, WEST, EAST]:
+                                        new_row, new_col, reward = self.try_to_move(action, row, col)
 
-                            elif action == PICKUP:
-                                new_pass_idx, reward = self.try_picking_up(pass_idx, taxi_loc, reward,
-                                                                           new_pass_idx)
-                            elif action == DROPOFF:
-                                new_pass_idx, reward, done = self.try_dropping_off(taxi_loc, dest_idx, pass_idx,
-                                                                                   new_pass_idx, reward, done)
-                            elif action == REFUEL:
-                                fuel, reward = self.try_to_refuel(taxi_loc, fuel)
-                        new_state = self.encode(new_row, new_col, new_pass_idx, dest_idx, fuel)
-                        if deterministic:
-                            P[state][action].append((DETERMINISTIC_PROB, new_state, reward, done))
-                        else:
-                            probs = self.get_stochastic_probs(action, row, col, pass_idx, dest_idx, init_fuel,
-                                                              new_state, reward, done)
-                            P[state][action] = probs
-                        fuel = init_fuel
+                                    elif action == PICKUP:
+                                        new_apple_arr, reward, done = self.try_picking_up(collector_loc, done,
+                                                                                          new_apple_arr, reward)
+                                    self.num_of_picked_apples = num_of_picked_apples
+                                    new_state = self.encode(new_row, new_col, *new_apple_arr)
+                                    if deterministic:
+                                        P[state][action].append((DETERMINISTIC_PROB, new_state, reward, done))
+                                    else:
+                                        probs = self.get_stochastic_probs(action, row, col, new_state, reward, done)
+                                        P[state][action] = probs
         return P
 
-    def encode(self, taxi_row, taxi_col, pass_loc, dest_idx, fuel):
-        # (5), 5, 5, 4, 50
-        # (num_rows), num_columns, len(passengers_locations) + 1, len(passengers_locations), MAX_FUEL
-        i = taxi_row
-        i *= self.num_columns
-        i += taxi_col
-        i *= (len(self.passengers_locations) + 1)  # +1 for in taxi location
-        i += pass_loc
-        i *= len(self.passengers_locations)
-        i += dest_idx
-        i *= MAX_FUEL
-        i += fuel
-        return i
+    def encode(self, collector_row, collector_col, apple1, apple2, apple3, apple4):
+        # (5), 5, 5, 5, 5, 5
+        # (num_rows), num_columns, (len(self.apple_locations) + 1) X 4
+        if self.check_if_state_is_legal((collector_row, collector_col, apple1, apple2, apple3, apple4)):
+            global idx
+            if (collector_row, collector_col, apple1, apple2, apple3, apple4) not in self.translation_dict.values():
+                idx += 1
+                self.translation_dict[idx] = (collector_row, collector_col, apple1, apple2, apple3, apple4)
+            return self.translation_dict[(collector_row, collector_col, apple1, apple2, apple3, apple4)]
+        else:
+            raise Exception(f"Not legal state{collector_row, collector_col, apple1, apple2, apple3, apple4}")
+        # i = collector_row
+        # i *= self.num_columns
+        # i += collector_col
+        # i *= (len(self.apple_locations) + 1)
+        # i += apple1
+        # i *= (len(self.apple_locations) + 1)
+        # i += apple2
+        # i *= (len(self.apple_locations) + 1)
+        # i += apple3
+        # i *= (len(self.apple_locations) + 1)
+        # i += apple4
+        # return i
 
     def decode(self, i):
-        # 50, 4, 5, 5, (5)
-        # MAX_FUEL, len(passengers_locations), len(passengers_locations) + 1, num_columns, (num_rows)
-        out = []
-        out.append(i % MAX_FUEL)
-        i = i // MAX_FUEL
-        out.append(i % len(self.passengers_locations))
-        i = i // len(self.passengers_locations)
-        out.append(i % (len(self.passengers_locations) + 1))
-        i = i // (len(self.passengers_locations) + 1)  # +1 for in taxi location
-        out.append(i % self.num_columns)
-        i = i // self.num_columns
-        out.append(i)
-        assert 0 <= i < self.num_rows
-        return list(reversed(out))
+        # (5, 5, 5, 5), 5, (5)
+        # (len(self.apple_locations) + 1) X 4, num_columns, (num_rows)
+        return self.translation_dict[i]
+        # out = []
+        # out.append(i % len(self.apple_locations))
+        # i = i // len(self.apple_locations)
+        # out.append(i % self.num_columns)
+        # i = i // self.num_columns
+        # out, i = self.decode_helper_append_apple(out, i)
+        # out, i = self.decode_helper_append_apple(out, i)
+        # out, i = self.decode_helper_append_apple(out, i)
+        # out, i = self.decode_helper_append_apple(out, i)
+        # out.append(i)
+        # assert 0 <= i < self.num_rows
+        # # for j in range(len(self.thorny_locations) - 1, 0, -1):
+        # #     out.append(self.thorny_locations[j][1])
+        # #     out.append(self.thorny_locations[j][0])
+        # return list(reversed(out))
+
+    def decode_helper_append_apple(self, out, i):
+        out.append(i % (len(self.apple_locations) + 1))
+        i = i // (len(self.apple_locations) + 1)
+        return out, i
 
     def check_if_state_is_legal(self, state, return_idxes=False):
-        taxi_row, taxi_col, pass_loc, dest_idx, fuel = state
+        if isinstance(state, int):
+            collector_row, collector_col, apple_locations = self.decode(state)  # TODO - bug!!!
+        else:
+            collector_row, collector_col, apple_locations = state
         not_valid_idx = []
-        if taxi_row < 0 or taxi_row >= self.num_rows:
+        if collector_row < 0 or collector_row >= self.num_rows:
             not_valid_idx.append(0)
-        if taxi_col < 0 or taxi_col >= self.num_columns:
+        if collector_col < 0 or collector_col >= self.num_columns:
             not_valid_idx.append(1)
-        if pass_loc < 0 or pass_loc > len(self.passengers_locations):
+        if apple_locations < 0 or apple_locations > len(self.apple_locations):
             not_valid_idx.append(2)
-        if dest_idx < 0 or dest_idx >= len(self.passengers_locations):
-            not_valid_idx.append(3)
-        if fuel < 0 or fuel > MAX_FUEL:
-            not_valid_idx.append(4)
         state_is_legal = (len(not_valid_idx) == 0)
         if return_idxes:
             return state_is_legal, not_valid_idx
@@ -169,28 +202,33 @@ class ApplePickingEnv(discrete.DiscreteEnv):
 
         out = self.desc.copy().tolist()
         out = [[c.decode('utf-8') for c in line] for line in out]
-        taxi_row, taxi_col, pass_idx, dest_idx, fuel = self.decode(self.s)
+        collector_row, collector_col, apple_locations = self.decode(self.s)
 
         def ul(x):
             return "_" if x == " " else x
 
-        if pass_idx < 4:
-            out[1 + taxi_row][2 * taxi_col + 1] = utils.colorize(out[1 + taxi_row][2 * taxi_col + 1], 'yellow',
-                                                                 highlight=True)
-            pi, pj = self.passengers_locations[pass_idx]
-            out[1 + pi][2 * pj + 1] = utils.colorize(out[1 + pi][2 * pj + 1], 'blue', bold=True)
-        else:  # passenger in taxi
-            out[1 + taxi_row][2 * taxi_col + 1] = utils.colorize(ul(out[1 + taxi_row][2 * taxi_col + 1]), 'green',
-                                                                 highlight=True)
+        def colorize_loc(j, cur_color):
+            x, y = self.apple_locations[j]
+            if x == -1 and y == -1:
+                xc, yc = self.original_apple_locations[j]
+                out[1 + xc][2 * yc + 1] = utils.colorize(out[1 + xc][2 * yc + 1], cur_color)
 
-        di, dj = self.passengers_locations[dest_idx]
-        out[1 + di][2 * dj + 1] = utils.colorize(out[1 + di][2 * dj + 1], 'magenta')
+        out[1 + collector_row][2 * collector_col + 1] = utils.colorize(out[1 + collector_row][2 * collector_col + 1],
+                                                                       'gray', highlight=True)
+
+        for (di, dj) in self.thorny_locations:
+            out[1 + di][2 * dj + 1] = utils.colorize(ul(out[1 + di][2 * dj + 1]), 'green', bold=True)
+
+        colors = ['magenta', 'blue', 'cyan', 'crimson', 'yellow', 'red', 'white']
+        for j in range(len(self.apple_locations)):
+            colorize_loc(j, colors[j])
+
         outfile.write("\n".join(["".join(row) for row in out]) + "\n")
         if self.lastaction is not None:
-            outfile.write("  ({})\n".format(["South", "North", "East", "West", "Pickup", "Dropoff"][self.lastaction]))
+            outfile.write("  ({})\n".format(["South", "North", "East", "West", "Pickup"][self.lastaction]))
         else:
             outfile.write("\n")
-        print("current state: ", self.decode(self.s), ", last action: ", self.last_action)
+        # print("current state: ", self.decode(self.s), ", last action: ", self.last_action)
         # No need to return anything for human
         if mode != 'human':
             with closing(outfile):
@@ -209,17 +247,19 @@ class ApplePickingEnv(discrete.DiscreteEnv):
         self.last_action = a
         return int(s), r, d, {"prob": p}
 
-    def try_to_move(self, action, fuel, row, col):
+    def try_to_move(self, action, row, col):
         new_row, new_col = row, col
-        if action == SOUTH and fuel != 0:
-            fuel, new_row = try_step_south_or_east(fuel, row, self.max_row)
-        elif action == NORTH and fuel != 0:
-            fuel, new_row = try_step_west_or_north(fuel, row, 0)
-        elif action == EAST and self.no_wall_to_the_right(row, col) and fuel != 0:
-            fuel, new_col = try_step_south_or_east(fuel, col, self.max_col)
-        elif action == WEST and self.no_wall_to_the_left(row, col) and fuel != 0:
-            fuel, new_col = try_step_west_or_north(fuel, col, 0)
-        return new_row, new_col, fuel
+        if action == SOUTH:
+            new_row = try_step_south_or_east(row, self.max_row)
+        elif action == NORTH:
+            new_row = try_step_west_or_north(row, 0)
+        elif action == EAST and self.no_wall_to_the_right(row, col):
+            new_col = try_step_south_or_east(col, self.max_col)
+        elif action == WEST and self.no_wall_to_the_left(row, col):
+            new_col = try_step_west_or_north(col, 0)
+        reward = REWARD_DICT[STEP_INTO_THORN_REWARD] if (new_row, new_col) in self.thorny_locations else REWARD_DICT[
+            STEP_REWARD]
+        return new_row, new_col, reward
 
     def get_stochastic_probs(self, action, row, col, pass_idx, dest_idx, fuel, new_state, reward, done):
         if action in [REFUEL, PICKUP, DROPOFF]:
@@ -251,18 +291,22 @@ class ApplePickingEnv(discrete.DiscreteEnv):
     def no_wall_to_the_left(self, row, col):
         return self.desc[1 + row, 2 * col] == b":"
 
-    def try_picking_up(self, pass_idx, taxi_loc, reward, new_pass_idx):
-        if pass_idx < self.passenger_in_taxi and taxi_loc == self.passengers_locations[pass_idx]:
-            new_pass_idx = self.passenger_in_taxi
-        else:  # passenger not at location
-            reward = REWARD_DICT[BAD_PICKUP_REWARD]
-        return new_pass_idx, reward
-
-    def is_possible_initial_state(self, pass_idx, dest_idx, row, col):
-        return pass_idx < 4 and pass_idx != dest_idx
+    def try_picking_up(self, collector_loc, done, new_apple_arr, reward):
+        for i, apple_loc in enumerate(self.apple_locations):
+            if collector_loc == apple_loc:
+                last_collected = max(new_apple_arr)
+                if last_collected == 4:
+                    done = True
+                else:
+                    new_apple_arr[i] = last_collected + 1
+                reward = REWARD_DICT[APPLE_PICKUP_REWARD]
+                break
+        if reward != REWARD_DICT[APPLE_PICKUP_REWARD]:
+            reward = REWARD_DICT[BAD_APPLE_PICKUP_REWARD]
+        return new_apple_arr, reward, done
 
     def get_info_from_map(self):
-        apple_locations, thorny_wall_locations, start_position = [], [], (4, 0)
+        apple_locations, thorny_wall_locations, start_position = [], [], None
         h, w = self.desc.shape
         h, w = (h - 2), (w - 2)
         for x in range(1, h + 1):
@@ -274,31 +318,20 @@ class ApplePickingEnv(discrete.DiscreteEnv):
                     thorny_wall_locations.append((x - 1, int(y / 2)))
                 elif c == b'S':
                     start_position = (x - 1, int(y / 2))
+
         return apple_locations, thorny_wall_locations, start_position
 
+
 #
-# if __name__ == '__main__':
-#     new_env = SingleTaxiEnv(deterministic=True)
-#     new_env.reset()
-#     actions = [2, 6, 6, 6, 6, 6, 3, 1, 1, 1, 4, 0, 2, 2, 0, 0, 5]
-#   actions = [2, 2, 6, 1, 1, 3, 3, 1, 1, 4, 0, 0, 2, 2, 2, 2, 0, 0, 5]
-#     all_reward = 0
-#     for act in actions:
-#         new_env.render()
-#         next_s, r, d, prob = new_env.step(act)
-#         all_reward += r
-#         print("state:", new_env.decode(next_s))
-#         print("reward:", r, "done:", d, "prob:", prob)
-#         print("all_reward:", all_reward)
-#
-#     passenger_locations, fuel_station = new_env.get_info_from_map()
-# new_env.reset()
-# actions = [2, 2, 6, 1, 1, 3, 3, 1, 1, 4, 0, 0, 2, 2, 2, 2, 0, 0, 5]
-# all_reward = 0
-# for act in actions:
-#     new_env.render()
-#     next_s, r, d, prob = new_env.step(act)
-#     all_reward += r
-#     print("state:", new_env.decode(next_s))
-#     print("reward:", r, "done:", d, "prob:", prob)
-#     print("all_reward:", all_reward)
+if __name__ == '__main__':
+    new_env = ApplePickingEnv(deterministic=True)
+    new_env.reset()
+    actions = [1, 1, 1, 1, 4, 2, 2, 2, 2, 4, 0, 0, 0, 0, 4, 3, 3, 4]
+    all_reward = 0
+    for act in actions:
+        new_env.render()
+        next_s, r, d, prob = new_env.step(act)
+        all_reward += r
+        print("state:", new_env.decode(next_s))
+        print("reward:", r, "done:", d, "prob:", prob)
+        print("all_reward:", all_reward)
