@@ -1,6 +1,5 @@
 # ================= Train variables ================ #
 ITER_NUM = 600000
-SPEAKER_LISTENER = "simple_speaker_listener"
 # =================== Transforms =================== #
 FUELS_TRANSFORM = "fuels_transform"
 REWARD_TRANSFORM = "reward_transform"
@@ -8,9 +7,10 @@ NO_WALLS_TRANSFORM = "no_walls_transform"
 WITHOUT_TRANSFORM = "Without transform"
 # ================== Environments ================== #
 TAXI = "taxi"
+SPEAKER_LISTENER = "simple_speaker_listener"
 TAXI_STATES_NUM = 5000
 SEARCH_TRANSFORM_TAXI_ENV = "big_taxi_search_transform_env"
-# ----------------- Env variables ------------------ #
+# ================= Env variables ================== #
 
 TRAIN = "train"
 EVALUATE = "evaluate"
