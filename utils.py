@@ -35,6 +35,9 @@ def get_env(env_name, number_of_agents=1):
         from Environments.SingleTaxiEnv.single_taxi_wrapper import SingleTaxiSimpleEnv
         new_env = load_pkl_file(TRANSFORM_SEARCH_TAXI_ENV_PATH)
         return new_env
+    elif env_name == APPLE_PICKING:
+        from Environments.ApplePicking.apple_picking_env import ApplePickingEnv
+        return ApplePickingEnv()
     elif env_name == SPEAKER_LISTENER:
         from supersuit import pad_observations_v0, pad_action_space_v0
         from pettingzoo.mpe import simple_speaker_listener_v3

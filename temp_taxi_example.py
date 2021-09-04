@@ -2,8 +2,6 @@ from experiments import *
 from Transforms.single_taxi_transforms import *
 from save_load_utils import *
 
-# AGENT_DATA_PATH = "Agents/TrainedAgents/"
-# TRAINED_AGENTS_DIR_PATH = AGENT_DATA_PATH + "trained_models_on_big_taxi_env/"
 
 
 def main():
