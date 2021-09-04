@@ -18,9 +18,6 @@ MAP = [
     "+---------+",
 ]
 
-ABOVE = -1
-UNDER = 1
-
 
 def try_step_south_or_east(place, max_place):
     new_place = min(place + 1, max_place)
@@ -119,16 +116,13 @@ class ApplePickingEnv(discrete.DiscreteEnv):
                                     new_state = self.encode(new_row, new_col, *new_apple_arr)
                                     if self.near_thorny_wall(row, col, ABOVE):
                                         P[state][action] = self.get_stochastic_probs(action, row, col, apple_arr,
-                                                                                     new_apple_arr, new_state, reward,
-                                                                                     done, ABOVE)
+                                                                                     new_state, reward, done, ABOVE)
                                     elif self.near_thorny_wall(row, col, UNDER):
                                         P[state][action] = self.get_stochastic_probs(action, row, col, apple_arr,
-                                                                                     new_apple_arr, new_state, reward,
-                                                                                     done, UNDER)
+                                                                                     new_state, reward, done, UNDER)
                                     else:
                                         P[state][action] = self.get_stochastic_probs(action, row, col, apple_arr,
-                                                                                     new_apple_arr, new_state, reward,
-                                                                                     done)
+                                                                                     new_state, reward, done)
         return P
 
     def encode(self, collector_row, collector_col, apple1, apple2, apple3, apple4):
@@ -171,30 +165,17 @@ class ApplePickingEnv(discrete.DiscreteEnv):
                 return True
         return False
 
-    #
-    # def above_thorny_wall(self, new_row, new_col):
-    #     for thorny_wall in self.thorny_locations:
-    #         if new_row == thorny_wall[0] - 1 and new_col == thorny_wall[1]:
-    #             return True
-    #     return False
-    #
-    # def under_thorny_wall(self, new_row, new_col):
-    #     for thorny_wall in self.thorny_locations:
-    #         if new_row == thorny_wall[0] + 1 and new_col == thorny_wall[1]:
-    #             return True
-    #     return False
-
     def check_if_state_is_legal(self, state, return_idxes=False):
         if isinstance(state, int):
-            collector_row, collector_col, apple_locations = self.decode(state)  # TODO - bug!!!
+            collector_row, collector_col, apple1, apple2, apple3, apple4 = self.decode(state)
         else:
-            collector_row, collector_col, apple_locations = state
+            collector_row, collector_col, apple1, apple2, apple3, apple4 = state
         not_valid_idx = []
         if collector_row < 0 or collector_row >= self.num_rows:
             not_valid_idx.append(0)
         if collector_col < 0 or collector_col >= self.num_columns:
             not_valid_idx.append(1)
-        if apple_locations < 0 or apple_locations > len(self.apple_locations):
+        if apple_locations < 0 or apple_locations > len(self.apple_locations):  # TODO - bug!!!
             not_valid_idx.append(2)
         state_is_legal = (len(not_valid_idx) == 0)
         if return_idxes:
@@ -213,7 +194,7 @@ class ApplePickingEnv(discrete.DiscreteEnv):
             return "_" if x == " " else x
 
         def colorize_loc(j, cur_color, apple_arr):
-            if apple_arr[j] == 1:
+            if apple_arr[j] == NOT_COLLECTED:
                 xc, yc = self.apple_locations[j]
                 out[1 + xc][2 * yc + 1] = utils.colorize(out[1 + xc][2 * yc + 1], cur_color)
 
@@ -223,9 +204,9 @@ class ApplePickingEnv(discrete.DiscreteEnv):
         for (di, dj) in self.thorny_locations:
             out[1 + di][2 * dj + 1] = utils.colorize(ul(out[1 + di][2 * dj + 1]), 'green', bold=True)
 
-        colors = ['magenta', 'cyan', 'crimson', 'yellow', 'red', 'white']
+        # colors = ['magenta', 'cyan', 'crimson', 'yellow', 'red', 'white']
         for j in range(len(self.apple_locations)):
-            colorize_loc(j, colors[j], apple_arr)
+            colorize_loc(j, 'magenta', apple_arr)
 
         outfile.write("\n".join(["".join(row) for row in out]) + "\n")
         if self.lastaction is not None:
@@ -265,7 +246,7 @@ class ApplePickingEnv(discrete.DiscreteEnv):
             STEP_REWARD]
         return new_row, new_col, reward
 
-    def get_stochastic_probs(self, action, row, col, apple_arr, new_apple_arr, new_state, reward, done, near_thorny=0):
+    def get_stochastic_probs(self, action, row, col, apple_arr, new_state, reward, done, near_thorny=0):
         if near_thorny == 0:
             return self.prob_list_for_no_move_action(action, new_state, reward, done)
         risky_action = None
@@ -304,10 +285,9 @@ class ApplePickingEnv(discrete.DiscreteEnv):
     def try_picking_up(self, collector_loc, done, new_apple_arr, reward):
         for i, apple_loc in enumerate(self.apple_locations):
             if collector_loc == apple_loc:
+                new_apple_arr[i] = COLLECTED
                 if sum(new_apple_arr) == 4:
                     done = True
-                else:
-                    new_apple_arr[i] = 1
                 reward = REWARD_DICT[APPLE_PICKUP_REWARD]
                 break
         if reward != REWARD_DICT[APPLE_PICKUP_REWARD]:
@@ -335,12 +315,12 @@ class ApplePickingEnv(discrete.DiscreteEnv):
 # if __name__ == '__main__':
 #     new_env = ApplePickingEnv()
 #     new_env.reset()
-#     actions = [1, 1, 1, 1, 4, 2, 0, 2, 2, 1, 2, 2, 4, 0, 0, 0, 0, 4, 1, 3, 3, 0, 4, 1]
+#     actions = [1, 1, 1, 1, 4, 2, 0, 0, 2, 2, 1, 1, 2, 4, 0, 0, 0, 0, 4, 1, 1, 3, 3, 0, 0, 4, 1]
 #     all_reward = 0
 #     for act in actions:
 #         new_env.render()
 #         next_s, r, d, prob = new_env.step(act)
 #         all_reward += r
 #         print("state:", new_env.decode(next_s))
-#         print("reward:", r, "done:", d, "prob:", prob)
+#         print(f"{next_s}, {r}, {d}, {prob}")
 #         print("all_reward:", all_reward)
