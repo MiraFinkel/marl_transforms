@@ -1,6 +1,5 @@
 import copy
 from collections import defaultdict
-import numpy as np
 
 from Transforms.single_taxi_transforms import generate_transformed_env
 
@@ -22,7 +21,6 @@ def cluster_transforms_by_features(preconditions):
 
 def calculate_possible_satisfaction_rate(transformed_env, anticipated_policy):
     pos, neg, = 0, 0
-    cur_state = transformed_env.reset()
     for anticipated_state, anticipated_actions in anticipated_policy.items():
         states_from_anticipated_state = transformed_env.get_states_from_partial_obs(anticipated_state)
         for state in states_from_anticipated_state:
@@ -70,7 +68,7 @@ def dict_intersection(working_cluster, temp_cluster):
 def greedy_search(preconditions, anticipated_policy):
     clusters = cluster_transforms_by_features(preconditions.not_allowed_features)
     transformed_envs1, satisfaction_rates1, transformed_envs2, satisfaction_rates2 = [], [], [], []
-    max_transformed_env_opt = None
+    max_transformed_env_opt, best_cluster = None, None
     k, msr_opt = 0, 0.0
     while k < 100 and msr_opt != 1.0:
         msr, max_cluster, max_transformed_env = 0, None, None

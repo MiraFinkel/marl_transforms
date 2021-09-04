@@ -63,7 +63,15 @@ def run_search_transform_taxi_env_example_colab():
 
 
 # if __name__ == '__main__':
-#     from TransformSearch.greedy_search import greedy_search
-#     cur_env_preconditions = load_pkl_file(PRECONDITIONS_PATH)
-#     max_transformed_env_opt = greedy_search(cur_env_preconditions, ANTICIPATED_POLICY)
+#     agent_name = KERAS_DQN
+#     env_name = APPLE_PICKING
+#     new_env = get_env(APPLE_PICKING)
+#
+#     agent, restored = make_or_restore_model(new_env, agent_name, env_name)
+#
+#     print(f"\nTraining and evaluating the {agent_name} on \"{env_name}\" environment")
+#     if not restored:
+#         train_result = rl_agent.run(agent, ITER_NUM, method=TRAIN)
+#     else:
+#         train_result = None
 #     print("DONE!")

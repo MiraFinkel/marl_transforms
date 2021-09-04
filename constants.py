@@ -10,6 +10,7 @@ TAXI = "taxi"
 SPEAKER_LISTENER = "simple_speaker_listener"
 TAXI_STATES_NUM = 5000
 SEARCH_TRANSFORM_TAXI_ENV = "big_taxi_search_transform_env"
+APPLE_PICKING = "apple_picking_env"
 # ================= Env variables ================== #
 
 TRAIN = "train"
