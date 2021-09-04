@@ -266,6 +266,8 @@ class ApplePickingEnv(discrete.DiscreteEnv):
                     prob_list[prob_act] = (STOCHASTIC_PROB_THORNY, new_state, reward, done)
                 else:
                     prob_list[prob_act] = (0.0, new_state, reward, done)
+            elif action == risky_action:
+                prob_list[prob_act] = (1.0, new_state, reward, done)
         return prob_list
 
     def prob_list_for_no_move_action(self, action, new_state, reward, done):
@@ -311,7 +313,7 @@ class ApplePickingEnv(discrete.DiscreteEnv):
         return apple_locations, thorny_wall_locations, start_position
 
 
-#
+
 # if __name__ == '__main__':
 #     new_env = ApplePickingEnv()
 #     new_env.reset()
@@ -324,3 +326,5 @@ class ApplePickingEnv(discrete.DiscreteEnv):
 #         print("state:", new_env.decode(next_s))
 #         print(f"{next_s}, {r}, {d}, {prob}")
 #         print("all_reward:", all_reward)
+#         if d:
+#             break

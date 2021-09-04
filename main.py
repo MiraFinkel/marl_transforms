@@ -70,8 +70,6 @@ def run_search_transform_taxi_env_example_colab():
 #     agent, restored = make_or_restore_model(new_env, agent_name, env_name)
 #
 #     print(f"\nTraining and evaluating the {agent_name} on \"{env_name}\" environment")
-#     if not restored:
-#         train_result = rl_agent.run(agent, ITER_NUM, method=TRAIN)
-#     else:
-#         train_result = None
+#     train_result = rl_agent.run(agent, ITER_NUM, method=TRAIN)
+#     rl_agent.run(agent, ITER_NUM, method=EVALUATE)
 #     print("DONE!")
