@@ -103,7 +103,7 @@ class ApplePickingEnv(discrete.DiscreteEnv):
                                     new_apple1, new_apple2, new_apple3, new_apple4 = apple1, apple2, apple3, apple4
                                     new_apple_arr = [new_apple1, new_apple2, new_apple3, new_apple4]
                                     reward = REWARD_DICT[STEP_REWARD]  # default reward when there is no pickup
-                                    done = False
+                                    done = True if num_of_picked_apples == 4 else False
                                     collector_loc = (row, col)
 
                                     if action in [SOUTH, NORTH, WEST, EAST]:
