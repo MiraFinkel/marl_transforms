@@ -27,7 +27,7 @@ def get_env(env_name, number_of_agents=1):
         return SingleTaxiSimpleEnv()
     elif env_name == SINGLE_FROZEN_EXAMPLE:
         from Environments.frozenlake_environment import FrozenLakeEnv
-        return FrozenLakeEnv()
+        return FrozenLakeEnv(map_name=FROZEN_MAP_NAME, is_slippery = IS_SLIPPERY, wind=WIND)
     elif env_name == LUNAR_LANDER:
         from Environments.lunar_lander_wrapper import LunarLenderWrapper
         return LunarLenderWrapper()
@@ -148,6 +148,39 @@ def map_actions_to_explanation(original_env, agent, search_taxi_env, anticipated
     # agent.evaluating = False
     # return explanation
 
+def is_anticipated_policy_achieved_stochastic(original_env, agent, anticipated_policy, transformed_env):
+    agent.evaluating = True
+    success_policies_set, failed_policies_set, not_reached_policy_set = set(), set(), set()
+    cur_state = transformed_env.reset()
+    done, steps_num = False, 0
+    while not done and steps_num < 100:
+        agent_action = agent.compute_action(cur_state)
+        agent_action_map = agent_action
+        if agent_action not in [_ for _ in range(original_env.num_actions)]:
+            agent_action_map, _ = map_action(transformed_env, agent_action)
+        is_align, anticipated_action, anticipated_state = is_state_align_with_anticipated_policy(original_env,
+                                                                                                 cur_state,
+                                                                                                 anticipated_policy)
+
+        if is_align:
+            if is_actions_align(agent_action_map, anticipated_action):
+                success_policies_set.add(anticipated_state)
+            else:
+                failed_policies_set.add(anticipated_state)
+        cur_state, reward, done, prob = transformed_env.step(agent_action) #original_env.step(agent_action)
+        steps_num += 1
+    for anticipated_state in anticipated_policy.keys():
+        if anticipated_state not in success_policies_set and anticipated_state not in failed_policies_set:
+            not_reached_policy_set.add(anticipated_state)
+    num_of_success_policies, num_of_failed_policies = len(success_policies_set), len(failed_policies_set)
+    all_policies = num_of_success_policies + num_of_failed_policies
+    success_rate = num_of_success_policies / (all_policies if all_policies != 0 else 1)
+    print("\nSuccess rate:", success_rate)
+    if len(not_reached_policy_set) != 0:
+        print(f"There are some states that the agent can't reach: {not_reached_policy_set}")
+    agent.evaluating = False
+    return success_rate == 1.0, success_rate
+
 
 def is_anticipated_policy_achieved(original_env, agent, anticipated_policy, transformed_env=None):
     agent.evaluating = True
@@ -194,7 +227,7 @@ def is_state_align_with_anticipated_state(env, state, anticipated_state):
 def is_state_align_with_anticipated_policy(env, state, anticipated_policy):
     for anticipated_state, anticipated_action in anticipated_policy.items():
         if is_state_align_with_anticipated_state(env, state, anticipated_state):
-            return True, anticipated_action[0], anticipated_state
+            return True, anticipated_action, anticipated_state
     return False, None, None
 
 
