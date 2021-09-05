@@ -8,13 +8,23 @@ from gym import utils
 from gym.envs.toy_text import discrete
 from Environments.ApplePicking.apple_picking_constants import *
 
+# MAP = [
+#     "+---------+",
+#     "|A: |z| :A|",
+#     "| : : : : |",
+#     "| : : : : |",
+#     "| : : : : |",
+#     "|S|z|A|z|A|",
+#     "+---------+",
+# ]
+
 MAP = [
     "+---------+",
-    "|A: |z| :A|",
+    "|A: : : :A|",
     "| : : : : |",
     "| : : : : |",
     "| : : : : |",
-    "|S|z|A|z|A|",
+    "|S: :A: :A|",
     "+---------+",
 ]
 
@@ -247,28 +257,29 @@ class ApplePickingEnv(discrete.DiscreteEnv):
         return new_row, new_col, reward
 
     def get_stochastic_probs(self, action, row, col, apple_arr, new_state, reward, done, near_thorny=0):
-        if near_thorny == 0:
-            return self.prob_list_for_no_move_action(action, new_state, reward, done)
-        risky_action = None
-        prob_list = [tuple() for _ in range(self.num_actions)]
-        if near_thorny == ABOVE:
-            risky_action = SOUTH
-        elif near_thorny == UNDER:
-            risky_action = NORTH
-        action_prob = (STOCHASTIC_PROB, new_state, reward, done)
-        prob_list[action] = action_prob
-        for prob_act in range(len(prob_list)):
-            if prob_act != action:
-                if prob_act == risky_action:
-                    new_row, new_col, reward = self.try_to_move(prob_act, row, col)
-                    done = False
-                    new_state = self.encode(new_row, new_col, *apple_arr)
-                    prob_list[prob_act] = (STOCHASTIC_PROB_THORNY, new_state, reward, done)
-                else:
-                    prob_list[prob_act] = (0.0, new_state, reward, done)
-            elif action == risky_action:
-                prob_list[prob_act] = (1.0, new_state, reward, done)
-        return prob_list
+        # if near_thorny == 0:
+        # return self.prob_list_for_no_move_action(action, new_state, reward, done)
+        return [(DETERMINISTIC_PROB, new_state, reward, done)]
+        # risky_action = None
+        # prob_list = [tuple() for _ in range(self.num_actions)]
+        # if near_thorny == ABOVE:
+        #     risky_action = SOUTH
+        # elif near_thorny == UNDER:
+        #     risky_action = NORTH
+        # action_prob = (STOCHASTIC_PROB, new_state, reward, done)
+        # prob_list[action] = action_prob
+        # for prob_act in range(len(prob_list)):
+        #     if prob_act != action:
+        #         if prob_act == risky_action:
+        #             new_row, new_col, reward = self.try_to_move(prob_act, row, col)
+        #             done = False
+        #             new_state = self.encode(new_row, new_col, *apple_arr)
+        #             prob_list[prob_act] = (STOCHASTIC_PROB_THORNY, new_state, reward, done)
+        #         else:
+        #             prob_list[prob_act] = (0.0, new_state, reward, done)
+        #     elif action == risky_action:
+        #         prob_list[prob_act] = (1.0, new_state, reward, done)
+        # return prob_list
 
     def prob_list_for_no_move_action(self, action, new_state, reward, done):
         prob_list = [tuple() for _ in range(self.num_actions)]
@@ -287,8 +298,9 @@ class ApplePickingEnv(discrete.DiscreteEnv):
     def try_picking_up(self, collector_loc, done, new_apple_arr, reward):
         for i, apple_loc in enumerate(self.apple_locations):
             if collector_loc == apple_loc:
+                old_apple_arr = copy.deepcopy(new_apple_arr)
                 new_apple_arr[i] = COLLECTED
-                if sum(new_apple_arr) == 4:
+                if sum(new_apple_arr) == 4 and sum(old_apple_arr) != 4:
                     done = True
                 reward = REWARD_DICT[APPLE_PICKUP_REWARD]
                 break
@@ -313,11 +325,11 @@ class ApplePickingEnv(discrete.DiscreteEnv):
         return apple_locations, thorny_wall_locations, start_position
 
 
-
 # if __name__ == '__main__':
 #     new_env = ApplePickingEnv()
 #     new_env.reset()
 #     actions = [1, 1, 1, 1, 4, 2, 0, 0, 2, 2, 1, 1, 2, 4, 0, 0, 0, 0, 4, 1, 1, 3, 3, 0, 0, 4, 1]
+#     actions = [1, 1, 1, 1, 4, 2, 0, 2, 2, 1, 1, 2, 4, 0, 0, 0, 0, 4, 1, 1, 3, 3, 0, 0, 4, 1]
 #     all_reward = 0
 #     for act in actions:
 #         new_env.render()
