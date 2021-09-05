@@ -2,7 +2,7 @@ import sys
 import numpy as np
 from Agents.RL_agents.rllib_agents import *
 from Agents.RL_agents.q_learning_agents import *
-# from Agents.RL_agents.sarsa_agents import KerasSarsaAgent
+from Agents.RL_agents.sarsa_agents import *
 
 from Agents.value_iteration_agent import ValueIterationAgent
 
