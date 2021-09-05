@@ -146,7 +146,7 @@ class QLearningAgent(AbstractAgent):
         self.episodeRewards = result[TOTAL_EPISODE_REWARD]
         return result
 
-    def evaluate(self):
+    def evaluate(self, visualize=False):
         # print("================ DISPLAY ====================")
         self.evaluating = True
         result = rl_agent.run_episode(self.env, self, method=EVALUATE)
