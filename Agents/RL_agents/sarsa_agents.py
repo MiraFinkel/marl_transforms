@@ -140,7 +140,7 @@ class KerasSarsaAgent(AbstractAgent):
         "episode_len_mean": __}
         """
         self.agent.compile(Adam(lr=0.001), metrics=["mse"])
-        history = self.agent.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
+        history = self.agent.fit(self.env, nb_steps=ITER_NUM, visualize=False, verbose=1)
         result = {EPISODE_REWARD_MEAN: np.array(history.history["episode_reward"]),
                   EPISODE_STEP_NUM_MEAN: np.array(history.history["nb_episode_steps"]),
                   EPISODE_REWARD_MIN: np.empty([]),

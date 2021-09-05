@@ -255,3 +255,9 @@ def create_transform_search_env():
     return new_env
 
 
+# if __name__ == '__main__':
+#     from TransformSearch.greedy_search import greedy_search
+#
+#     preconditions = load_pkl_file(PRECONDITIONS_PATH)
+#     max_transformed_env_opt, best_cluster = greedy_search(preconditions, ANTICIPATED_POLICY)
+#     a = 7
