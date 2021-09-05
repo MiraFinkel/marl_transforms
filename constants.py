@@ -11,6 +11,12 @@ SPEAKER_LISTENER = "simple_speaker_listener"
 TAXI_STATES_NUM = 5000
 SEARCH_TRANSFORM_TAXI_ENV = "big_taxi_search_transform_env"
 APPLE_PICKING = "apple_picking_env"
+
+FROZEN="frozen"
+WIND = None
+IS_SLIPPERY = True
+FROZEN_MAP_NAME = "4x4"
+
 # ================= Env variables ================== #
 
 TRAIN = "train"
