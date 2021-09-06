@@ -1,15 +1,7 @@
-import random
-from collections import deque
-from tensorflow.keras import Model, Sequential
-from tensorflow.keras.layers import Dense, Embedding, Reshape
-from tensorflow.keras.optimizers import Adam
-import progressbar
-import time
 from Agents.RL_agents.rl_agent import *
 import Agents.RL_agents.rl_agent as rl_agent
 from Agents.abstract_agent import AbstractAgent
 import numpy as np
-import gym
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Embedding, Reshape
 # from keras.optimizers import Adam
@@ -17,12 +9,13 @@ from rl.agents.dqn import DQNAgent
 from rl.policy import EpsGreedyQPolicy
 from rl.memory import SequentialMemory
 from constants import *
-import tensorflow as tf
+# import tensorflow as tf
 
 HANDS_ON_DQN = "hands_on_dqn"
 KERAS_DQN = "keras_dqn"
 Q_LEARNING = "q_learning"
 KERAS_SARSA = "keras_sarsa"
+KERAS_CEM = "cem_sarsa"
 VALUE_ITERATION = "value_iteration"
 
 MAX_EXPLORATION_RATE = 1

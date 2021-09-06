@@ -1,5 +1,7 @@
 import sys
 import numpy as np
+
+from Agents.RL_agents.cem_agents import *
 from Agents.RL_agents.rllib_agents import *
 from Agents.RL_agents.q_learning_agents import *
 from Agents.RL_agents.sarsa_agents import *
@@ -26,8 +28,8 @@ def get_rl_agent(agent_name, env, callbacks=None,  env_name=None, env_to_agent=N
         agent = QLearningAgent(env=env)
     elif agent_name == KERAS_SARSA:
         agent = KerasSarsaAgent(env=env)
-    # elif agent_name == KERAS_CEM:
-    #     agent =
+    elif agent_name == KERAS_CEM:
+        agent = KerasCEMAgent(env=env)
     elif agent_name == VALUE_ITERATION:
         agent = ValueIterationAgent(env=env)
     else:

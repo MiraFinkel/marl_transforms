@@ -69,14 +69,16 @@ class ApplePickingEnv(discrete.DiscreteEnv):
     - 3: move west
     - 4: pickup an apple
     Rewards:
+    - (-1): step
+    - (-3): entering thorny area
+    - (-10): excecute "pick
     Rendering:
-    - blue: passenger
-    - magenta: destination
-    - yellow: empty taxi
-    - green: full taxi
-    - other letters (R, G, Y and B): locations for passengers and destinations
+    - Purple A: not collected apple
+    - White A: collected apple
+    - Green z: thorn
+    - Blue: the collector
     state space is represented by:
-        (taxi_row, taxi_col, passenger_location, destination)
+        (collector_row, collector_col, apple1_location, apple2_location, apple3_location, apple4_location)
     """
     metadata = {'render.modes': ['human', 'ansi']}
 
