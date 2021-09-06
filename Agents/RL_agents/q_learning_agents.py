@@ -4,7 +4,7 @@ from Agents.abstract_agent import AbstractAgent
 import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Flatten, Embedding, Reshape
-# from keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
 from rl.agents.dqn import DQNAgent
 from rl.policy import EpsGreedyQPolicy
 from rl.memory import SequentialMemory
