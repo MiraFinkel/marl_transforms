@@ -2,7 +2,7 @@ import numpy as np
 
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten
-from keras.optimizers import Adam
+# from keras.optimizers import Adam
 
 from rl.agents.cem import CEMAgent
 from rl.memory import EpisodeParameterMemory
@@ -29,7 +29,7 @@ class KerasCEMAgent(AbstractAgent):
         "episode_len_mean": __}
         """
         self.agent.compile()
-        history = self.agent.fit(self.env, nb_steps=ITER_NUM, visualize=False, verbose=2)
+        history = self.agent.fit(self.env, nb_steps=ITER_NUM, visualize=False, verbose=1)
         if len(history.history) > 0:
             episode_reward = history.history["episode_reward"]
             nb_episode_steps = history.history["nb_episode_steps"]
