@@ -8,25 +8,25 @@ from gym import utils
 from gym.envs.toy_text import discrete
 from Environments.ApplePicking.apple_picking_constants import *
 
-MAP = [
-    "+---------+",
-    "|A: |z| :A|",
-    "| : : : : |",
-    "| : : : : |",
-    "| : : : : |",
-    "|S|z|A|z|A|",
-    "+---------+",
-]
-
 # MAP = [
 #     "+---------+",
-#     "|A: : : :A|",
+#     "|A: |z| :A|",
 #     "| : : : : |",
 #     "| : : : : |",
 #     "| : : : : |",
-#     "|S: :A: :A|",
+#     "|S|z|A|z|A|",
 #     "+---------+",
 # ]
+
+MAP = [
+    "+---------+",
+    "|A: : : :A|",
+    "| : : : : |",
+    "| : : : : |",
+    "| : : : : |",
+    "|S: :A: :A|",
+    "+---------+",
+]
 
 
 # MAP = [
@@ -266,29 +266,29 @@ class ApplePickingEnv(discrete.DiscreteEnv):
         return new_row, new_col, reward
 
     def get_stochastic_probs(self, action, row, col, apple_arr, new_state, reward, done, near_thorny=0):
-        if near_thorny == 0:
-            return self.prob_list_for_no_move_action(action, new_state, reward, done)
-        # return [(DETERMINISTIC_PROB, new_state, reward, done)]
-        risky_action = None
-        prob_list = [tuple() for _ in range(self.num_actions)]
-        if near_thorny == ABOVE:
-            risky_action = SOUTH
-        elif near_thorny == UNDER:
-            risky_action = NORTH
-        action_prob = (STOCHASTIC_PROB, new_state, reward, done)
-        prob_list[action] = action_prob
-        for prob_act in range(len(prob_list)):
-            if prob_act != action:
-                if prob_act == risky_action:
-                    new_row, new_col, reward = self.try_to_move(prob_act, row, col)
-                    done = False
-                    new_state = self.encode(new_row, new_col, *apple_arr)
-                    prob_list[prob_act] = (STOCHASTIC_PROB_THORNY, new_state, reward, done)
-                else:
-                    prob_list[prob_act] = (0.0, new_state, reward, done)
-            elif action == risky_action:
-                prob_list[prob_act] = (1.0, new_state, reward, done)
-        return prob_list
+        # if near_thorny == 0:
+        #     return self.prob_list_for_no_move_action(action, new_state, reward, done)
+        return [(DETERMINISTIC_PROB, new_state, reward, done)]
+        # risky_action = None
+        # prob_list = [tuple() for _ in range(self.num_actions)]
+        # if near_thorny == ABOVE:
+        #     risky_action = SOUTH
+        # elif near_thorny == UNDER:
+        #     risky_action = NORTH
+        # action_prob = (STOCHASTIC_PROB, new_state, reward, done)
+        # prob_list[action] = action_prob
+        # for prob_act in range(len(prob_list)):
+        #     if prob_act != action:
+        #         if prob_act == risky_action:
+        #             new_row, new_col, reward = self.try_to_move(prob_act, row, col)
+        #             done = False
+        #             new_state = self.encode(new_row, new_col, *apple_arr)
+        #             prob_list[prob_act] = (STOCHASTIC_PROB_THORNY, new_state, reward, done)
+        #         else:
+        #             prob_list[prob_act] = (0.0, new_state, reward, done)
+        #     elif action == risky_action:
+        #         prob_list[prob_act] = (1.0, new_state, reward, done)
+        # return prob_list
 
     def prob_list_for_no_move_action(self, action, new_state, reward, done):
         prob_list = [tuple() for _ in range(self.num_actions)]
