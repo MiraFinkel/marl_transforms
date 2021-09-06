@@ -1,5 +1,5 @@
 # ================= Train variables ================ #
-ITER_NUM = 600000
+ITER_NUM = 6000000
 # =================== Transforms =================== #
 FUELS_TRANSFORM = "fuels_transform"
 REWARD_TRANSFORM = "reward_transform"
