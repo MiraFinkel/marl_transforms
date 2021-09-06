@@ -141,8 +141,13 @@ class KerasSarsaAgent(AbstractAgent):
         """
         self.agent.compile(Adam(lr=0.001), metrics=["mse"])
         history = self.agent.fit(self.env, nb_steps=ITER_NUM, visualize=False, verbose=1)
-        result = {EPISODE_REWARD_MEAN: np.array(history.history["episode_reward"]),
-                  EPISODE_STEP_NUM_MEAN: np.array(history.history["nb_episode_steps"]),
+        if len(history.history) > 0:
+            episode_reward = history.history["episode_reward"]
+            nb_episode_steps = history.history["nb_episode_steps"]
+        else:
+            episode_reward, nb_episode_steps = [0], [0]  # TODO - placeholder
+        result = {EPISODE_REWARD_MEAN: np.array(episode_reward),
+                  EPISODE_STEP_NUM_MEAN: np.array(nb_episode_steps),
                   EPISODE_REWARD_MIN: np.empty([]),
                   EPISODE_REWARD_MAX: np.empty([]), EPISODE_VARIANCE: np.empty([])}
         return result
@@ -172,8 +177,8 @@ class KerasSarsaAgent(AbstractAgent):
     def episode_callback(self, state, action, reward, next_state, terminated):
         pass
 
-    def evaluate(self):
-        self.agent.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=60)
+    def evaluate(self, visualize=False):
+        self.agent.test(self.env, nb_episodes=5, visualize=visualize, nb_max_episode_steps=60)
 
     def replay_experiences(self):
         pass

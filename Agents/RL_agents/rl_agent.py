@@ -26,6 +26,8 @@ def get_rl_agent(agent_name, env, callbacks=None,  env_name=None, env_to_agent=N
         agent = QLearningAgent(env=env)
     elif agent_name == KERAS_SARSA:
         agent = KerasSarsaAgent(env=env)
+    # elif agent_name == KERAS_CEM:
+    #     agent =
     elif agent_name == VALUE_ITERATION:
         agent = ValueIterationAgent(env=env)
     else:
@@ -48,10 +50,10 @@ def run(agent, num_of_episodes, method=TRAIN, print_process=True, visualize=True
                 print("\rEpisode {}/{}.".format(it + 1, num_of_episodes), end="")
                 sys.stdout.flush()
 
-            result[EPISODE_REWARD_MEAN][it] = (episode_result[EPISODE_REWARD_MEAN])
+            result[EPISODE_REWARD_MEAN][it] = sum(episode_result[EPISODE_REWARD_MEAN]) / len(episode_result[EPISODE_REWARD_MEAN])
             result[EPISODE_REWARD_MAX][it] = (episode_result[EPISODE_REWARD_MAX])
             result[EPISODE_REWARD_MIN][it] = (episode_result[EPISODE_REWARD_MIN])
-            result[EPISODE_STEP_NUM_MEAN][it] = (episode_result[EPISODE_STEP_NUM_MEAN])
+            result[EPISODE_STEP_NUM_MEAN][it] = sum(episode_result[EPISODE_STEP_NUM_MEAN]) / len(episode_result[EPISODE_STEP_NUM_MEAN])
             result[EPISODE_VARIANCE][it] = (episode_result[EPISODE_VARIANCE])
         if method == EVALUATE:
             agent.evaluate(visualize)

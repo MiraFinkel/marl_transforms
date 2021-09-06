@@ -63,13 +63,13 @@ def run_search_transform_taxi_env_example_colab():
 
 
 # if __name__ == '__main__':
-#     agent_name = KERAS_DQN
+#     agent_name = KERAS_SARSA
 #     env_name = APPLE_PICKING
 #     new_env = get_env(APPLE_PICKING)
 #
 #     agent, restored = make_or_restore_model(new_env, agent_name, env_name)
 #
 #     print(f"\nTraining and evaluating the {agent_name} on \"{env_name}\" environment")
-#     train_result = rl_agent.run(agent, ITER_NUM, method=TRAIN)
-#     rl_agent.run(agent, ITER_NUM, method=EVALUATE)
+#     train_result = rl_agent.run(agent, 5, method=TRAIN)
+#     rl_agent.run(agent, 5, method=EVALUATE)
 #     print("DONE!")
