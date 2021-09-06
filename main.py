@@ -63,7 +63,7 @@ def run_search_transform_taxi_env_example_colab():
 
 
 # if __name__ == '__main__':
-#     agent_name = KERAS_SARSA
+#     agent_name = KERAS_CEM
 #     env_name = APPLE_PICKING
 #     new_env = get_env(APPLE_PICKING)
 #
