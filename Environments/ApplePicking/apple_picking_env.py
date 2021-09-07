@@ -20,7 +20,7 @@ from Environments.ApplePicking.apple_picking_constants import *
 
 MAP = [
     "+---------+",
-    "|A: |z| :A|",
+    "|A: : : :A|",
     "| : : : : |",
     "| : : : : |",
     "| : : : : |",
