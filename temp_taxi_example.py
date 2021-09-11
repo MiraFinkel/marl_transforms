@@ -3,8 +3,7 @@ from Transforms.single_taxi_transforms import *
 from save_load_utils import *
 
 
-
-def main():
+def temp_taxi_example_main():
     # define the environment
     env_name = SINGLE_TAXI_EXAMPLE
     agent_name = KERAS_DQN
@@ -17,7 +16,7 @@ def main():
 
     new_agent = load_existing_agent(original_env, agent_name, ORIGINAL_ENV, TRAINED_AGENTS_DIR_PATH)
 
-    evaluation_result = rl_agent.run(new_agent, 5, method=EVALUATE, print_process=False, visualize=False)
+    evaluation_result = rl_agent.run(new_agent, 1, method=EVALUATE, print_process=False, visualize=False)
 
     anticipated_policy_achieved, success_rate = is_anticipated_policy_achieved(original_env, new_agent,
                                                                                anticipated_policy)
@@ -75,4 +74,9 @@ def main():
     plt.show()
     a = 7
 
-# main()
+
+def colab_notebook_example():
+    original_env = get_env(env_name=SINGLE_TAXI_EXAMPLE)
+    actor = load_existing_agent(env=original_env, agent_name=KERAS_DQN, env_name=ORIGINAL_ENV,
+                                trained_agents_path=TRAINED_AGENTS_DIR_PATH)
+    rl_agent.run(actor, 1, method=EVALUATE, print_process=True, visualize=True)

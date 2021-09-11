@@ -155,8 +155,8 @@ def load_transform_by_name(file_name, dir_name=TRANSFORMS_PATH):
     return transform_name, new_env
 
 
-def load_existing_agent(env, agent_name, transform_name, trained_agents_path=TRAINED_AGENT_SAVE_PATH):
-    model_name = agent_name + '_' + transform_name
+def load_existing_agent(env, agent_name, env_name, trained_agents_path=TRAINED_AGENT_SAVE_PATH):
+    model_name = agent_name + '_' + env_name
     dir_path = trained_agents_path + model_name + '/'
     new_agent = rl_agent.create_agent(env, agent_name)
     try:
