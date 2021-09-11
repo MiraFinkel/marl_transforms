@@ -19,7 +19,7 @@ def get_available_gpus():
 
 def log(string):
     print(string)
-    f = open('mira.log', 'wb')
+    f = open('output_log.log', 'wb')
     f.write(string)
     f.close()
 

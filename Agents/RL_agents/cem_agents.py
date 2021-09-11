@@ -65,7 +65,7 @@ class KerasCEMAgent(AbstractAgent):
         Computes the best action from a given state.
         Returns: a int that represents the best action.
         """
-        state = np.array([[state]])
+        # state = np.array([[state]])
         return int(np.argmax(self.model.predict(state)))
 
     def stop_episode(self):
