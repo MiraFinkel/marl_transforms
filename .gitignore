@@ -1,7 +1,6 @@
 /venv
 /.idea
 /__pycache__
-pyvenv.cfg
 Agents/RL_agents/__pycache__/
 Environments/LunarLander/__pycache__/
 Environments/MultiTaxiEnv/__pycache__/

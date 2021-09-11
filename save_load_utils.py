@@ -43,7 +43,7 @@ def save_trained_model(agent, agent_name, transform_name):
     dir_path = TRAINED_AGENT_SAVE_PATH
     make_dir(dir_path + model_name)
     dir_path = dir_path + model_name + '/'
-    agent.q_network.save_weights(dir_path + model_name)
+    agent.model.save_weights(dir_path + model_name)
 
 
 def make_or_restore_model(env, agent_name, transform_name):

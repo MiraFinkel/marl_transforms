@@ -244,10 +244,10 @@ class DQNKeras(AbstractAgent):
         if hasattr(env, '_seed'):
             env._seed(123)
         # Build networks
-        self.q_network = self._build_compile_model()
+        self.model = self._build_compile_model()
         memory = SequentialMemory(limit=50000, window_length=1)
         policy = EpsGreedyQPolicy()
-        self.dqn_only_embedding = DQNAgent(model=self.q_network, nb_actions=self.action_size, memory=memory,
+        self.dqn_only_embedding = DQNAgent(model=self.model, nb_actions=self.action_size, memory=memory,
                                            nb_steps_warmup=500,
                                            target_model_update=1e-2, policy=policy)
 
@@ -291,7 +291,7 @@ class DQNKeras(AbstractAgent):
         # if np.random.random() < self.epsilon:
         #     return self.env.action_space.sample()
         state = np.array([[state]])
-        return int(np.argmax(self.q_network.predict(state)))
+        return int(np.argmax(self.model.predict(state)))
 
     def stop_episode(self):
         pass
@@ -303,6 +303,6 @@ class DQNKeras(AbstractAgent):
         self.dqn_only_embedding.test(self.env, nb_episodes=1, visualize=visualize, nb_max_episode_steps=70)
 
     def load_existing_agent(self, dir_path):
-        self.q_network.load_weights(dir_path)
+        self.model.load_weights(dir_path)
         self.dqn_only_embedding.compile(Adam(lr=1e-3), metrics=['mae'])
         return self
